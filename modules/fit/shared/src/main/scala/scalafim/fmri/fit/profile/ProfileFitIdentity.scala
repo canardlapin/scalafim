@@ -46,16 +46,17 @@ private[profile] object ProfileFitIdentity:
         strings(modulators.map(_.value)), option(mainEffect.map(_.toString)))
 
   def term(value: EventTerm): String =
-    val EventTerm(events, _, _, _, tag, phase, provenance, sourceRows) = value
+    // Ordinary caller-row attribution belongs to DesignFingerprint v3, not
+    // this fixed-condition numerical preparation identity.
+    val EventTerm(events, _, _, _, tag, phase, provenance, _) = value
     val rows = provenance.map: row =>
       val scalafim.fmri.design.EventRowProvenance(parent, phase, source, block, onset, duration) = row
       record("source_row", parent.value, option(phase.map(_.value)), source.toString,
         block.toString, number(onset.value), number(duration.value))
     val design = value.designMatrix(dropEmpty = false)
-    val parts = Vector(schedule(value.schedule), record("events", events.map(event)*),
+    record("term", schedule(value.schedule), record("events", events.map(event)*),
       option(tag), option(phase.map(_.value)), record("source_rows", rows*),
       strings(design.conditionTags), mat(design.data))
-    record("term", (parts ++ Option.when(sourceRows.nonEmpty)(record("table_rows", ints(sourceRows))))*)
 
   def whitening(value: WhiteningPlan): String =
     val WhiteningPlan(scope, covered, initial, method) = value
@@ -104,10 +105,12 @@ private[profile] object ProfileFitIdentity:
       case LengthUnit.Millimeter => "millimeter"
       case LengthUnit.Meter => "meter"
       case LengthUnit.Micrometer => "micrometer"
+      case other => unsupported(s"unit ${LengthUnit.serializedName(other)}")
     val convention = physical.convention match
       case CoordinateConvention.Unspecified => "unspecified"
       case CoordinateConvention.RAS => "ras"
       case CoordinateConvention.LPS => "lps"
+      case other => unsupported(s"convention ${CoordinateConvention.serializedName(other)}")
     val axes = value.nonSpatialAxes.records.map: axis =>
       val AxisRecord(name, kind, coordinates) = axis
       val sampling = coordinates match
@@ -183,6 +186,9 @@ private[profile] object ProfileFitIdentity:
       s"prior=${ConditionProfileProvenance.priorCanonical(policy.prior)}|admission=${option(policy.observedAdmission.map(_.fingerprint))}|" +
       s"execution=${record("execution", blockSize.toString, workers.toString)}|route=${field(route)}|ml=${option(mlIdentity)}" +
       compactComparisonMarker(route, policy) + trialPreparationMarker(route, policy) + trialReferenceMarker(policy) + s"|exact-readout=$exactReadout"
+
+  private def unsupported(what: String): Nothing =
+    throw new IllegalArgumentException(s"profile-fit identity encodes only standard coordinates, not $what")
 
   private def trialReferenceMarker(policy: ProfileDecodePolicy): String =
     policy.trialReferences.fold(""): references =>

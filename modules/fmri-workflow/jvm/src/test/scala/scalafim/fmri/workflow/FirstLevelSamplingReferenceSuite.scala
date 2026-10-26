@@ -5,10 +5,10 @@ import scalafim.fmri.design.{EventSupportDisposition, EventSupportPolicy, Respon
 import scalafim.fmri.fit.{FitPlanExecutor, RunwiseFmriFitResult}
 import scalafim.fmri.hrf.*
 import scalafim.fmri.model.{FitStrategy, ModelBuildSpec}
-import scalafim.image.{SampleSpaces, SomeScalarVolume, SomeScalarSeries}
-import scalafim.image.SampleSpaces.*
-import scalafim.image.world.{WorldSpace, SpaceEvidence}
-import scalafim.image.io.Nifti
+import neuroim4s.image.{SampleSpaces, SomeScalarVolume, SomeScalarSeries}
+import neuroim4s.image.SampleSpaces.*
+import neuroim4s.spaces.{WorldSpace, SpaceEvidence}
+import neuroim4s.image.io.Nifti
 import image4s.nifti.{NiftiWriteOptions, NiftiCoordinateSystem}
 import java.nio.file.Files
 import scala.jdk.CollectionConverters.*
@@ -33,7 +33,7 @@ class FirstLevelSamplingReferenceSuite extends munit.FunSuite:
       Vector(1 -> 3.0, 2 -> 4.0, 3 -> 5.0, 4 -> 6.0, 299 -> 3.0).foreach { (index, beta) => response(index) += beta }
       val bold = root.resolve("bold.nii")
       Nifti.writeSeries(bold, SomeScalarSeries.unsafeCopyFromCanonicalArray(response,
-        space.addDim(ProviderAxes.time(300)), "bold"), options).fold(error => fail(error.message), identity)
+        space.typed.appendNonSpatial(ProviderAxes.time(300)).fold(error => throw new IllegalArgumentException(error.message), identity), "bold"), options).fold(error => fail(error.message), identity)
       // Verify the generated spatial declaration directly from NIfTI-1 bytes.
       // The model TR is declared by RunInput; the lightweight writer does not
       // yet expose temporal units/step (tracked separately in native Mote).

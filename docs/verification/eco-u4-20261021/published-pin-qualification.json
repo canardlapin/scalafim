@@ -1,0 +1,75 @@
+{
+  "schema": "scalafim.eco-u4-published-pin.v1",
+  "status": "PASS six nonempty JVM/JS consumer tasks",
+  "root": "a26648fbdd5056c800c88eb07d045807a9fe7754",
+  "provider": "fe9ce3272fce97c4c3b400b373db2a2336c24a7d",
+  "publication": "origin/eco/u4-locus-20261021 verified at exact provider SHA",
+  "noSourceProviderOverrides": true,
+  "log": "scalafim-eco-u4-published-pin-08.log.gz",
+  "rawSha256": "17344b37345b2c1a10bd7e4a69aa1d6526e793e34f2c3a77f30f39ac7cf203f1",
+  "rawBytes": 21068,
+  "execution": {
+    "schema_version": 1,
+    "started_utc": "2026-10-21T17:09:19.873957+00:00",
+    "finished_utc": "2026-10-21T17:11:59.707136+00:00",
+    "duration_seconds": 159.83153,
+    "command": [
+      "python3",
+      "tools/build/sbt-warm",
+      "mvpaSpatialJVM/test",
+      "mvpaSpatialJS/test",
+      "mvpaDatasetJVM/test",
+      "mvpaDatasetJS/test",
+      "workflowExamplesJVM/test",
+      "workflowExamplesJS/test"
+    ],
+    "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020",
+    "log": "/tmp/scalafim-eco-u4-published-pin-08.log",
+    "exit_code": 0,
+    "child_returncode": 0,
+    "reason": "exited",
+    "detail": null,
+    "timeout_seconds": 2400.0,
+    "log_bytes": 21068
+  },
+  "summaries": [
+    {
+      "Total": 15,
+      "Failed": 0,
+      "Errors": 0,
+      "Passed": 15
+    },
+    {
+      "Total": 15,
+      "Failed": 0,
+      "Errors": 0,
+      "Passed": 15
+    },
+    {
+      "Total": 13,
+      "Failed": 0,
+      "Errors": 0,
+      "Passed": 13
+    },
+    {
+      "Total": 13,
+      "Failed": 0,
+      "Errors": 0,
+      "Passed": 13
+    },
+    {
+      "Total": 3,
+      "Failed": 0,
+      "Errors": 0,
+      "Passed": 3
+    },
+    {
+      "Total": 2,
+      "Failed": 0,
+      "Errors": 0,
+      "Passed": 2
+    }
+  ],
+  "passed": 61,
+  "remaining": "Full Root compilation and bounded milestone regression, followed by final qualification review."
+}

@@ -37,6 +37,8 @@ run_batch() {
   sbt "${sbt_args[@]}" "$@"
 }
 
+run_batch ecosystem-boundaries ecosystemBoundaries
+
 # Run comparative compiler and platform controls first for prompt portability feedback.
 # Keep the comparative court separate: its real synthetic trial arm is expensive.
 run_batch phrf-comparison-jvm phrfComparisonJVM/test
@@ -45,55 +47,72 @@ run_batch phrf-comparison-js phrfComparisonJS/test
 # Start a fresh sbt JVM for each bounded group. Scala.js linking and Node test
 # runners otherwise accumulate enough heap to exhaust ordinary CI runners.
 run_batch core-jvm \
-  locusDataJVM/test pipelineJVM/test responseJVM/test responseLawsJVM/test \
-  latentJVM/test arJVM/test hrfJVM/test hrfLawsJVM/test \
-  scenarioTestkitJVM/test designJVM/test providerSpikeJVM/test
+  pipelineJVM/test responseJVM/test responseLawsJVM/test \
+  latentJVM/test arJVM/test hrfJVM/test \
+  scenarioTestkitJVM/test designJVM/test designViewJVM/test providerContractJVM/test
 run_batch core-js \
-  locusDataJS/test pipelineJS/test responseJS/test responseLawsJS/test \
-  latentJS/test arJS/test hrfJS/test hrfLawsJS/test \
-  scenarioTestkitJS/test designJS/test providerSpikeJS/test
+  pipelineJS/test responseJS/test responseLawsJS/test \
+  latentJS/test arJS/test hrfJS/test \
+  scenarioTestkitJS/test designJS/test designViewJS/test providerContractJS/test
 
-run_batch image-surface-jvm \
-  imageJVM/test imageViewJVM/test imageViewJava2dJVM/test thresholdJVM/test \
-  motionJVM/test surfaceJVM/test surfaceTestFixturesJVM/test surfaceViewJVM/test surfaceViewRasterJVM/test
-run_batch image-surface-js \
-  imageJS/test imageViewJS/test imageViewCanvasJS/test thresholdJS/test \
-  motionJS/test surfaceJS/test surfaceTestFixturesJS/test surfaceViewJS/test surfaceViewRasterJS/test \
-  surfaceViewThreeJS/test
+run_batch neuroim neuroimTestAll
+run_batch neuroim-transforms neuroimTransformTestAll
+run_batch neuroim-routing neuroimRoutingTestAll
+run_batch neuroim-view-jvm neuroimViewJvmTestAll
+run_batch neuroim-view-js neuroimViewJsTestAll
+run_batch neuroatlas-core neuroatlasCoreTestAll
+run_batch neuroatlas-volume neuroatlasVolumeTestAll
+run_batch neuroatlas-surface neuroatlasSurfaceTestAll
+run_batch neuroatlas-routing neuroatlasRoutingTestAll
+run_batch mvpa4s-core mvpa4sCoreTestAll
+run_batch mvpa4s-predictive mvpa4sPredictiveTestAll
+run_batch mvpa4s-locus mvpa4sLocusTestAll
+run_batch mvpa4s-imaging scalafimMvpaImagingTestAll
+
+run_batch neurosurf-Core neurosurfCoreTestAll
+run_batch neurosurf-Spatial neurosurfSpatialTestAll
+run_batch neurosurf-Fixture neurosurfFixtureTestAll
+run_batch neurosurf-ViewJvm neurosurfViewJvmTestAll
+run_batch neurosurf-ViewJs neurosurfViewJsTestAll
+run_batch neurosurf-Browser neurosurfBrowserTestAll
+run_batch neurosurf-ExamplesJvm neurosurfExamplesJvmTestAll
+
+run_batch threshold-motion-jvm thresholdJVM/test motionJVM/test
+run_batch threshold-motion-js thresholdJS/test motionJS/test
 
 run_batch data-jvm \
-  surfaceViewConnectivityJVM/test surfaceViewExamplesJVM/test transformJVM/test \
+  surfaceViewConnectivityJVM/test \
   spatialJVM/test \
-  atlasJVM/test archiveJVM/test archiveLnaJVM/test \
+  archiveJVM/test archiveLnaJVM/test \
   archivedResponseInteropJVM/test datasetJVM/test
 run_batch data-js \
-  surfaceViewConnectivityJS/test surfaceViewExamplesJS/test transformJS/test \
+  surfaceViewConnectivityJS/test \
   spatialJS/test \
-  atlasJS/test archiveJS/test archiveLnaJS/test \
+  archiveJS/test archiveLnaJS/test \
   archivedResponseInteropJS/test datasetJS/test
 
 run_batch estimates-jvm \
-  estimatesJVM/test estimatesIoJVM/test fitEstimatesJVM/test
+  estimatesJVM/test estimatesIoJVM/test
 run_batch estimates-js \
-  estimatesJS/test estimatesIoJS/test fitEstimatesJS/test
+  estimatesJS/test estimatesIoJS/test
 
 run_batch analysis-jvm \
-  modelJVM/test fitJVM/test firstLevelLawsJVM/test mvpaJVM/test mvpaFitJVM/test
+  fitJVM/test firstLevelLawsJVM/test mvpaPipelineJVM/test mvpaFitJVM/test
 run_batch analysis-js \
-  modelJS/test fitJS/test firstLevelLawsJS/test mvpaJS/test mvpaFitJS/test
+  fitJS/test firstLevelLawsJS/test mvpaPipelineJS/test mvpaFitJS/test
 
 run_batch downstream-jvm \
   connectivityJVM/test mvpaDatasetJVM/test mvpaArtifactsJVM/test mvpaSpatialJVM/test \
-  mvpaFoundationAdmissionJVM/test groupJVM/test mvpaGroupJVM/test \
+  groupJVM/test mvpaGroupJVM/test \
   fmriWorkflowJVM/test archiveZarrJVM/test datasetZarrJVM/test
 run_batch downstream-js \
   connectivityJS/test mvpaDatasetJS/test mvpaArtifactsJS/test mvpaSpatialJS/test \
-  mvpaFoundationAdmissionJS/test groupJS/test mvpaGroupJS/test \
+  groupJS/test mvpaGroupJS/test \
   fmriWorkflowJS/test archiveZarrJS/test datasetZarrJS/test
 
-# The JavaFX host tests require a display and are intentionally absent. Their
-# source still compiles in scalafimCompileAll; portable examples run here.
+# The surface JavaFX host tests require a display and are intentionally absent.
+# Volume JavaFX contract tests run in neuroim-view-jvm without the toolkit.
 run_batch examples \
-  surfaceExamplesJVM/test atlasExamplesJVM/test workflowExamplesJVM/test
+  atlasExamplesJVM/test workflowExamplesJVM/test
 run_batch examples-js \
   workflowExamplesJS/test

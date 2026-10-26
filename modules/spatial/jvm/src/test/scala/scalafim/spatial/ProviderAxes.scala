@@ -1,5 +1,7 @@
 package scalafim.spatial
 
+import neurosurf4s.routing.*
+
 import image4s.Axis
 import image4s.AxisKind
 

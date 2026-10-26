@@ -1,0 +1,241 @@
+{
+  "worktree": "/private/tmp/scalafim-simplify-a-20261019",
+  "owned_base": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+  "source_head": "1cb288d5f5fb955c953deec6a633a4c830bb56fe",
+  "source_inputs_unchanged": true,
+  "active_server": false,
+  "action": "Rename only stale incremental records whose product directory is absent; preserve original bytes in place and in evidence. No source or output directory deleted. Cause of the absent products is unknown.",
+  "records": [
+    {
+      "analysis": "staging/03b7f0d36fcba51e6ed8/ravel/modules/core/jvm/target/scala-3.7.4/zinc/inc_compile_3.zip",
+      "preserved_as": "staging/03b7f0d36fcba51e6ed8/ravel/modules/core/jvm/target/scala-3.7.4/zinc/inc_compile_3.zip.missing-products-20261019",
+      "evidence": "01",
+      "sha256": "20954cc56820bd8e2529813803c85e5cebe0f11493994aea4354dee96d16b128",
+      "missing_product_directory": "staging/03b7f0d36fcba51e6ed8/ravel/modules/core/jvm/target/scala-3.7.4/classes"
+    },
+    {
+      "analysis": "staging/03b7f0d36fcba51e6ed8/ravel/modules/packed/jvm/target/scala-3.7.4/zinc/inc_compile_3.zip",
+      "preserved_as": "staging/03b7f0d36fcba51e6ed8/ravel/modules/packed/jvm/target/scala-3.7.4/zinc/inc_compile_3.zip.missing-products-20261019",
+      "evidence": "02",
+      "sha256": "da0dd09cfaaec1d29ecd78b8b3ffbeef3785086abc8d6cef706b13ec3aa3b63f",
+      "missing_product_directory": "staging/03b7f0d36fcba51e6ed8/ravel/modules/packed/jvm/target/scala-3.7.4/classes"
+    },
+    {
+      "analysis": "staging/03b7f0d36fcba51e6ed8/ravel/modules/stencil/jvm/target/scala-3.7.4/zinc/inc_compile_3.zip",
+      "preserved_as": "staging/03b7f0d36fcba51e6ed8/ravel/modules/stencil/jvm/target/scala-3.7.4/zinc/inc_compile_3.zip.missing-products-20261019",
+      "evidence": "03",
+      "sha256": "3f495c0201dab3baa792693e8679fb6ddadad4263f3127b406f9d1f74aa663b6",
+      "missing_product_directory": "staging/03b7f0d36fcba51e6ed8/ravel/modules/stencil/jvm/target/scala-3.7.4/classes"
+    },
+    {
+      "analysis": "staging/135badde2a1fe78cfcb7/intaglio/modules/canvas/js/target/scala-3.3.8/zinc/inc_compile_3.zip",
+      "preserved_as": "staging/135badde2a1fe78cfcb7/intaglio/modules/canvas/js/target/scala-3.3.8/zinc/inc_compile_3.zip.missing-products-20261019",
+      "evidence": "04",
+      "sha256": "3ec73a15a2059fdace3f792366821dcdd579db6c5ffed00dabfa299a56093dd4",
+      "missing_product_directory": "staging/135badde2a1fe78cfcb7/intaglio/modules/canvas/js/target/scala-3.3.8/classes"
+    },
+    {
+      "analysis": "staging/135badde2a1fe78cfcb7/intaglio/modules/core/js/target/scala-3.3.8/zinc/inc_compile_3.zip",
+      "preserved_as": "staging/135badde2a1fe78cfcb7/intaglio/modules/core/js/target/scala-3.3.8/zinc/inc_compile_3.zip.missing-products-20261019",
+      "evidence": "05",
+      "sha256": "e1a728c7bfdecbe3a1d5d3a90b5db7454de0c49464d0a72360f40d4576fbc387",
+      "missing_product_directory": "staging/135badde2a1fe78cfcb7/intaglio/modules/core/js/target/scala-3.3.8/classes"
+    },
+    {
+      "analysis": "staging/135badde2a1fe78cfcb7/intaglio/modules/core/jvm/target/scala-3.3.8/zinc/inc_compile_3.zip",
+      "preserved_as": "staging/135badde2a1fe78cfcb7/intaglio/modules/core/jvm/target/scala-3.3.8/zinc/inc_compile_3.zip.missing-products-20261019",
+      "evidence": "06",
+      "sha256": "f3cdc11e3c942587800611f2c49f5e6449e62246e609d1aea3aaed2310e55dca",
+      "missing_product_directory": "staging/135badde2a1fe78cfcb7/intaglio/modules/core/jvm/target/scala-3.3.8/classes"
+    },
+    {
+      "analysis": "staging/135badde2a1fe78cfcb7/intaglio/modules/interaction/jvm/target/scala-3.3.8/zinc/inc_compile_3.zip",
+      "preserved_as": "staging/135badde2a1fe78cfcb7/intaglio/modules/interaction/jvm/target/scala-3.3.8/zinc/inc_compile_3.zip.missing-products-20261019",
+      "evidence": "07",
+      "sha256": "3ec7852c5bfff3f8593f3f390e4b6a0d7189525f06563ddc6b32a70f51f2c868",
+      "missing_product_directory": "staging/135badde2a1fe78cfcb7/intaglio/modules/interaction/jvm/target/scala-3.3.8/classes"
+    },
+    {
+      "analysis": "staging/135badde2a1fe78cfcb7/intaglio/modules/java2d/jvm/target/scala-3.3.8/zinc/inc_compile_3.zip",
+      "preserved_as": "staging/135badde2a1fe78cfcb7/intaglio/modules/java2d/jvm/target/scala-3.3.8/zinc/inc_compile_3.zip.missing-products-20261019",
+      "evidence": "08",
+      "sha256": "f4bf2af808c292d5883a7b4fa00575ab0707d48a53b8eebee916e6f4e9753d05",
+      "missing_product_directory": "staging/135badde2a1fe78cfcb7/intaglio/modules/java2d/jvm/target/scala-3.3.8/classes"
+    },
+    {
+      "analysis": "staging/135badde2a1fe78cfcb7/intaglio/modules/javafx/jvm/target/scala-3.3.8/zinc/inc_compile_3.zip",
+      "preserved_as": "staging/135badde2a1fe78cfcb7/intaglio/modules/javafx/jvm/target/scala-3.3.8/zinc/inc_compile_3.zip.missing-products-20261019",
+      "evidence": "09",
+      "sha256": "3c1fb486ea34990fd5d537d84d4fdfe077e871b68e31b0084da906e7e9382e28",
+      "missing_product_directory": "staging/135badde2a1fe78cfcb7/intaglio/modules/javafx/jvm/target/scala-3.3.8/classes"
+    },
+    {
+      "analysis": "staging/1acafa978adeaec8bfcf/gale/core/jvm/target/scala-3.7.4/zinc/inc_compile_3.zip",
+      "preserved_as": "staging/1acafa978adeaec8bfcf/gale/core/jvm/target/scala-3.7.4/zinc/inc_compile_3.zip.missing-products-20261019",
+      "evidence": "10",
+      "sha256": "7ca845723e39f17cd435df68aaaad056b9e0855d450d765f5653699e7b68c9a4",
+      "missing_product_directory": "staging/1acafa978adeaec8bfcf/gale/core/jvm/target/scala-3.7.4/classes"
+    },
+    {
+      "analysis": "staging/34c0071f90095ef07887/zarr4s/core/js/target/scala-3.7.4/zinc/inc_compile_3.zip",
+      "preserved_as": "staging/34c0071f90095ef07887/zarr4s/core/js/target/scala-3.7.4/zinc/inc_compile_3.zip.missing-products-20261019",
+      "evidence": "11",
+      "sha256": "178612d16754a4ea3f8ae122b9356a72b16d6cf6e40990d48a55465b4657acb7",
+      "missing_product_directory": "staging/34c0071f90095ef07887/zarr4s/core/js/target/scala-3.7.4/classes"
+    },
+    {
+      "analysis": "staging/34c0071f90095ef07887/zarr4s/core/jvm/target/scala-3.7.4/zinc/inc_compile_3.zip",
+      "preserved_as": "staging/34c0071f90095ef07887/zarr4s/core/jvm/target/scala-3.7.4/zinc/inc_compile_3.zip.missing-products-20261019",
+      "evidence": "12",
+      "sha256": "15be1fb7d463c9d6e07a14fc891dba26d6675c3eb4b24b1b9eb315c9b7ea8297",
+      "missing_product_directory": "staging/34c0071f90095ef07887/zarr4s/core/jvm/target/scala-3.7.4/classes"
+    },
+    {
+      "analysis": "staging/70890b60a1c9586a474b/image4s/modules/image4s-core/jvm/target/scala-3.7.4/zinc/inc_compile_3.zip",
+      "preserved_as": "staging/70890b60a1c9586a474b/image4s/modules/image4s-core/jvm/target/scala-3.7.4/zinc/inc_compile_3.zip.missing-products-20261019",
+      "evidence": "13",
+      "sha256": "1700c98ead61c13e736beee23779cdecbb76cc2f5bc1c1cd6fe5168e28c21140",
+      "missing_product_directory": "staging/70890b60a1c9586a474b/image4s/modules/image4s-core/jvm/target/scala-3.7.4/classes"
+    },
+    {
+      "analysis": "staging/70890b60a1c9586a474b/image4s/modules/image4s-filter/jvm/target/scala-3.7.4/zinc/inc_compile_3.zip",
+      "preserved_as": "staging/70890b60a1c9586a474b/image4s/modules/image4s-filter/jvm/target/scala-3.7.4/zinc/inc_compile_3.zip.missing-products-20261019",
+      "evidence": "14",
+      "sha256": "e1a158d7069d53765917d4ee1b9abd7dd58300669c3ae82df9632c8940e9473b",
+      "missing_product_directory": "staging/70890b60a1c9586a474b/image4s/modules/image4s-filter/jvm/target/scala-3.7.4/classes"
+    },
+    {
+      "analysis": "staging/70890b60a1c9586a474b/image4s/modules/image4s-geometry/jvm/target/scala-3.7.4/zinc/inc_compile_3.zip",
+      "preserved_as": "staging/70890b60a1c9586a474b/image4s/modules/image4s-geometry/jvm/target/scala-3.7.4/zinc/inc_compile_3.zip.missing-products-20261019",
+      "evidence": "15",
+      "sha256": "e88abfe83ff4c9f9df709616b9efecda4ba0d573bbee775cff1f1a153be09149",
+      "missing_product_directory": "staging/70890b60a1c9586a474b/image4s/modules/image4s-geometry/jvm/target/scala-3.7.4/classes"
+    },
+    {
+      "analysis": "staging/70890b60a1c9586a474b/image4s/modules/image4s-locus/jvm/target/scala-3.7.4/zinc/inc_compile_3.zip",
+      "preserved_as": "staging/70890b60a1c9586a474b/image4s/modules/image4s-locus/jvm/target/scala-3.7.4/zinc/inc_compile_3.zip.missing-products-20261019",
+      "evidence": "16",
+      "sha256": "a564ab5daf0f9ec614038cfe189baf49006b4c7431bea927e0d0436c45d4ae98",
+      "missing_product_directory": "staging/70890b60a1c9586a474b/image4s/modules/image4s-locus/jvm/target/scala-3.7.4/classes"
+    },
+    {
+      "analysis": "staging/70890b60a1c9586a474b/image4s/modules/image4s-nifti/jvm/target/scala-3.7.4/zinc/inc_compile_3.zip",
+      "preserved_as": "staging/70890b60a1c9586a474b/image4s/modules/image4s-nifti/jvm/target/scala-3.7.4/zinc/inc_compile_3.zip.missing-products-20261019",
+      "evidence": "17",
+      "sha256": "c95257712d8a756a786b2cd3d98ad5074d410ec969cc8eb2fa8ec8e4a6890762",
+      "missing_product_directory": "staging/70890b60a1c9586a474b/image4s/modules/image4s-nifti/jvm/target/scala-3.7.4/classes"
+    },
+    {
+      "analysis": "staging/70890b60a1c9586a474b/image4s/modules/image4s-ops-core/jvm/target/scala-3.7.4/zinc/inc_compile_3.zip",
+      "preserved_as": "staging/70890b60a1c9586a474b/image4s/modules/image4s-ops-core/jvm/target/scala-3.7.4/zinc/inc_compile_3.zip.missing-products-20261019",
+      "evidence": "18",
+      "sha256": "a9e36682bfd7d64e6b443b725579f1310554bc2023a1f03dae5076ed8aa66a35",
+      "missing_product_directory": "staging/70890b60a1c9586a474b/image4s/modules/image4s-ops-core/jvm/target/scala-3.7.4/classes"
+    },
+    {
+      "analysis": "staging/77e7bdc71bddb8077fcd/bids4s/modules/core/jvm/target/scala-3.3.8/zinc/inc_compile_3.zip",
+      "preserved_as": "staging/77e7bdc71bddb8077fcd/bids4s/modules/core/jvm/target/scala-3.3.8/zinc/inc_compile_3.zip.missing-products-20261019",
+      "evidence": "19",
+      "sha256": "3ae7b71cd98c0de50091d2952c6f56a777ac90d9ddd1ae5f611fed4eac1ec272",
+      "missing_product_directory": "staging/77e7bdc71bddb8077fcd/bids4s/modules/core/jvm/target/scala-3.3.8/classes"
+    },
+    {
+      "analysis": "staging/784ef883a6e00dffd47c/spatial4s/modules/spatial4s-core/jvm/target/scala-3.7.4/zinc/inc_compile_3.zip",
+      "preserved_as": "staging/784ef883a6e00dffd47c/spatial4s/modules/spatial4s-core/jvm/target/scala-3.7.4/zinc/inc_compile_3.zip.missing-products-20261019",
+      "evidence": "20",
+      "sha256": "478aa616d3c3a7b28dbf8b10c04962d57c69c190f47ff8a1f4d890a86b457174",
+      "missing_product_directory": "staging/784ef883a6e00dffd47c/spatial4s/modules/spatial4s-core/jvm/target/scala-3.7.4/classes"
+    },
+    {
+      "analysis": "staging/8396538c6d21f1d20214/neuroim4s/modules/neuroim4s-spaces/jvm/target/scala-3.7.4/zinc/inc_compile_3.zip",
+      "preserved_as": "staging/8396538c6d21f1d20214/neuroim4s/modules/neuroim4s-spaces/jvm/target/scala-3.7.4/zinc/inc_compile_3.zip.missing-products-20261019",
+      "evidence": "21",
+      "sha256": "082ba703cf26bbdfb212ecf1a02add81722b429e1c04a4e38bd2b0c8ba4706aa",
+      "missing_product_directory": "staging/8396538c6d21f1d20214/neuroim4s/modules/neuroim4s-spaces/jvm/target/scala-3.7.4/classes"
+    },
+    {
+      "analysis": "staging/c42ffad74301778951e7/locus4s/modules/locus4s-core/jvm/target/scala-3.7.4/zinc/inc_compile_3.zip",
+      "preserved_as": "staging/c42ffad74301778951e7/locus4s/modules/locus4s-core/jvm/target/scala-3.7.4/zinc/inc_compile_3.zip.missing-products-20261019",
+      "evidence": "22",
+      "sha256": "e2619ea2521e8dee0f4018a4021a9bde4ebbcb729ab11c382efe8b542e931203",
+      "missing_product_directory": "staging/c42ffad74301778951e7/locus4s/modules/locus4s-core/jvm/target/scala-3.7.4/classes"
+    },
+    {
+      "analysis": "staging/c42ffad74301778951e7/locus4s/modules/locus4s-data/jvm/target/scala-3.7.4/zinc/inc_compile_3.zip",
+      "preserved_as": "staging/c42ffad74301778951e7/locus4s/modules/locus4s-data/jvm/target/scala-3.7.4/zinc/inc_compile_3.zip.missing-products-20261019",
+      "evidence": "23",
+      "sha256": "a407b47344ef9fa2cb6278db8b8a7a096a1f41355c52bbdaf81f53d54becf2d2",
+      "missing_product_directory": "staging/c42ffad74301778951e7/locus4s/modules/locus4s-data/jvm/target/scala-3.7.4/classes"
+    },
+    {
+      "analysis": "staging/c42ffad74301778951e7/locus4s/modules/locus4s-provenance/js/target/scala-3.7.4/zinc/inc_compile_3.zip",
+      "preserved_as": "staging/c42ffad74301778951e7/locus4s/modules/locus4s-provenance/js/target/scala-3.7.4/zinc/inc_compile_3.zip.missing-products-20261019",
+      "evidence": "24",
+      "sha256": "47b22a860ac86da3f6f8029bc793d74bd8fd65ebdecafedb6c5074a883acb630",
+      "missing_product_directory": "staging/c42ffad74301778951e7/locus4s/modules/locus4s-provenance/js/target/scala-3.7.4/classes"
+    },
+    {
+      "analysis": "staging/c42ffad74301778951e7/locus4s/modules/locus4s-provenance/jvm/target/scala-3.7.4/zinc/inc_compile_3.zip",
+      "preserved_as": "staging/c42ffad74301778951e7/locus4s/modules/locus4s-provenance/jvm/target/scala-3.7.4/zinc/inc_compile_3.zip.missing-products-20261019",
+      "evidence": "25",
+      "sha256": "c58d176eb77d5fc90b0190414b47e34e9be07cb7add7a1f48d3c75df8a0d8146",
+      "missing_product_directory": "staging/c42ffad74301778951e7/locus4s/modules/locus4s-provenance/jvm/target/scala-3.7.4/classes"
+    },
+    {
+      "analysis": "staging/dea3d4c9ff8d564020ce/reframe4s/modules/reframe4s-core/jvm/target/scala-3.7.4/zinc/inc_compile_3.zip",
+      "preserved_as": "staging/dea3d4c9ff8d564020ce/reframe4s/modules/reframe4s-core/jvm/target/scala-3.7.4/zinc/inc_compile_3.zip.missing-products-20261019",
+      "evidence": "26",
+      "sha256": "17a462abde723f28cf2109c7d72c9254408ae41c4d9099eaa4ec8ee62d833f24",
+      "missing_product_directory": "staging/dea3d4c9ff8d564020ce/reframe4s/modules/reframe4s-core/jvm/target/scala-3.7.4/classes"
+    },
+    {
+      "analysis": "staging/dea3d4c9ff8d564020ce/reframe4s/modules/reframe4s-field/jvm/target/scala-3.7.4/zinc/inc_compile_3.zip",
+      "preserved_as": "staging/dea3d4c9ff8d564020ce/reframe4s/modules/reframe4s-field/jvm/target/scala-3.7.4/zinc/inc_compile_3.zip.missing-products-20261019",
+      "evidence": "27",
+      "sha256": "6f4c317d6688713fce618a01f755e9cb4059c3fa97acf04f35ab0e259406d872",
+      "missing_product_directory": "staging/dea3d4c9ff8d564020ce/reframe4s/modules/reframe4s-field/jvm/target/scala-3.7.4/classes"
+    },
+    {
+      "analysis": "staging/dea3d4c9ff8d564020ce/reframe4s/modules/reframe4s-lie/jvm/target/scala-3.7.4/zinc/inc_compile_3.zip",
+      "preserved_as": "staging/dea3d4c9ff8d564020ce/reframe4s/modules/reframe4s-lie/jvm/target/scala-3.7.4/zinc/inc_compile_3.zip.missing-products-20261019",
+      "evidence": "28",
+      "sha256": "22aea5d9b3fd14a16ba5efa2864198d10f3f1d2c3fbe6b8fcd88efcbdee74601",
+      "missing_product_directory": "staging/dea3d4c9ff8d564020ce/reframe4s/modules/reframe4s-lie/jvm/target/scala-3.7.4/classes"
+    },
+    {
+      "analysis": "staging/dea3d4c9ff8d564020ce/reframe4s/modules/reframe4s-resample/jvm/target/scala-3.7.4/zinc/inc_compile_3.zip",
+      "preserved_as": "staging/dea3d4c9ff8d564020ce/reframe4s/modules/reframe4s-resample/jvm/target/scala-3.7.4/zinc/inc_compile_3.zip.missing-products-20261019",
+      "evidence": "29",
+      "sha256": "e1a26ba3b29125eae0e54c750c1fa3ca5f027c6f15c52891d35fc857ea22ac83",
+      "missing_product_directory": "staging/dea3d4c9ff8d564020ce/reframe4s/modules/reframe4s-resample/jvm/target/scala-3.7.4/classes"
+    },
+    {
+      "analysis": "staging/e6c88898cf2a580290f7/graph4s/algorithms/.jvm/target/scala-3.7.4/zinc/inc_compile_3.zip",
+      "preserved_as": "staging/e6c88898cf2a580290f7/graph4s/algorithms/.jvm/target/scala-3.7.4/zinc/inc_compile_3.zip.missing-products-20261019",
+      "evidence": "30",
+      "sha256": "6b4c097c606da036fb76fe0eed245b28fd8d4b96c2fcfd224dbfa991d3cd62d4",
+      "missing_product_directory": "staging/e6c88898cf2a580290f7/graph4s/algorithms/.jvm/target/scala-3.7.4/classes"
+    },
+    {
+      "analysis": "staging/e6c88898cf2a580290f7/graph4s/core/.jvm/target/scala-3.7.4/zinc/inc_compile_3.zip",
+      "preserved_as": "staging/e6c88898cf2a580290f7/graph4s/core/.jvm/target/scala-3.7.4/zinc/inc_compile_3.zip.missing-products-20261019",
+      "evidence": "31",
+      "sha256": "e10a911445a7d92958b22f0c027ef92ace30cda780b2dca26ace38f5eabc40e6",
+      "missing_product_directory": "staging/e6c88898cf2a580290f7/graph4s/core/.jvm/target/scala-3.7.4/classes"
+    },
+    {
+      "analysis": "staging/e6c88898cf2a580290f7/graph4s/data/.jvm/target/scala-3.7.4/zinc/inc_compile_3.zip",
+      "preserved_as": "staging/e6c88898cf2a580290f7/graph4s/data/.jvm/target/scala-3.7.4/zinc/inc_compile_3.zip.missing-products-20261019",
+      "evidence": "32",
+      "sha256": "1bc8c589e785a82fb626a00b227eed5b6947847ab368e0de0eab49a6f10f57d0",
+      "missing_product_directory": "staging/e6c88898cf2a580290f7/graph4s/data/.jvm/target/scala-3.7.4/classes"
+    },
+    {
+      "analysis": "staging/e6c88898cf2a580290f7/graph4s/indexed/.jvm/target/scala-3.7.4/zinc/inc_compile_3.zip",
+      "preserved_as": "staging/e6c88898cf2a580290f7/graph4s/indexed/.jvm/target/scala-3.7.4/zinc/inc_compile_3.zip.missing-products-20261019",
+      "evidence": "33",
+      "sha256": "69abdbc20b96f79c0eb1ad623059f69486e0cc6d633b54ca84ea2072291cd639",
+      "missing_product_directory": "staging/e6c88898cf2a580290f7/graph4s/indexed/.jvm/target/scala-3.7.4/classes"
+    }
+  ]
+}

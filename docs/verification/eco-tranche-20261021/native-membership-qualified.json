@@ -1,0 +1,47 @@
+{
+  "status": "qualified actual native source-membership witness",
+  "sourceCommit": "0855cb9fa8b81f5ff1dbe83967e3337494fb4400",
+  "scalafimRevision": "e4e55d59cb7599168c97739abf84c8ffc95d3c07",
+  "testSource": "consumer-probes/EventSourceMembershipProbe.scala",
+  "testSourceSha256": "01c6ae50603f424fec8e8c9eabe6665e7e069aa6d4dbd28f7394959617d032ec",
+  "execution": {
+    "schema_version": 1,
+    "started_utc": "2026-10-21T06:51:23.480275+00:00",
+    "finished_utc": "2026-10-21T06:53:25.518124+00:00",
+    "duration_seconds": 122.035846,
+    "command": [
+      "env",
+      "TMPDIR=/Volumes/My Passport for Mac/e01tmp",
+      "sbt",
+      "-batch",
+      "-J-Xmx4g",
+      "-J-Djava.io.tmpdir=/Volumes/My Passport for Mac/e01tmp",
+      "-Dsbt.supershell=false",
+      "-Dsbt.log.noformat=true",
+      "-Dsbt.global.base=/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/fresh-integration-global",
+      "-Dplsneuro.providers=/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/main-imaging-providers",
+      "set glmReviewJavafx / Test / unmanagedSources := Seq(file(\"/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/main-imaging-providers/scalafim-e4e55d59cb7599168c97739abf84c8ffc95d3c07/docs/verification/eco-tranche-20261021/consumer-probes/EventSourceMembershipProbe.scala\"))",
+      "glmReviewJavafx/Test/runMain glm.review.fx.EventSourceMembershipProbe"
+    ],
+    "cwd": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/plsneuro-main-qualified-05",
+    "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/pls-event-membership-02.log",
+    "exit_code": 0,
+    "child_returncode": 0,
+    "reason": "exited",
+    "detail": null,
+    "timeout_seconds": 900.0,
+    "log_bytes": 13644
+  },
+  "logSha256": "cc9639d53865b324c9c0fc7a0f1e1edf2fd64841d4c9ecf45177fb8f2066db2a",
+  "productionSourceFilter": null,
+  "testSelection": "One unchanged native witness; no claim of full GLM test suite.",
+  "contracts": [
+    "Source rows0,2,4,6 after explicitcategoricalformula/subset.",
+    "Unequal3/4row runs, reversed table and review display ordering.",
+    "Incomplete reviews remainNotreviewed, not fabricatedmodeled/unmodeled evidence."
+  ],
+  "limits": [
+    "Not whole desktop or all maintained caller acceptance.",
+    "Runtime reported existing JavaFXunnamedmodule/Unsafewarnings; exit0 and PASS are retained."
+  ]
+}

@@ -10,7 +10,7 @@ import scalafim.fmri.fit.fixtures.MixedTrFixedEffectsRFixture as R
 import scalafim.fmri.hrf.*
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.model.{FitPlan, FitStrategy, FmriModelBuilder, ModelBuildSpec}
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 import scalafim.fmri.fit.GaleTestMatrix
 
 class FirstLevelFixedEffectsEstimatesSuite extends munit.FunSuite:

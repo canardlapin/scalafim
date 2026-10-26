@@ -3,7 +3,7 @@ package scalafim.fmri.fit.io
 import scalafim.fmri.fit.*
 import scalafim.fmri.fit.ContrastId.*
 import scalafim.fmri.fit.ResultMapName.*
-import scalafim.image.io.Nifti
+import neuroim4s.image.io.Nifti
 import gale.linalg.DMat
 
 import java.nio.charset.StandardCharsets
@@ -22,7 +22,7 @@ object ResultExportStem:
     else Left(ResultManifestIoError.InvalidTarget("export stem must be one BIDS-safe path segment"))
 
   def unsafe(value: String): ResultExportStem =
-    apply(value).fold(error => throw new IllegalArgumentException(error.message), identity)
+    apply(value).fold(error => throw new IllegalArgumentException(error.message), value => value)
 
   extension (stem: ResultExportStem)
     inline def value: String = stem

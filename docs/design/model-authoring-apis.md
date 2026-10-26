@@ -1,6 +1,8 @@
 # Model authoring APIs
 
-These APIs live in the portable `hrf`, `design`, `model`, and `fit` modules. They expose an
+These APIs live in the portable `hrf`, `design`, and `fit` modules; the merged
+`fit` module retains the `scalafim.fmri.model` package. Renderer-neutral review
+graphics and raster exports live in `design-view`. Together they expose an
 inspectable compiled design, source-preserving event summaries, and versioned
 model specifications. Builders return `Either` where a request can be rejected;
 renderers return recipes or scenes rather than a UI.
@@ -138,6 +140,37 @@ non-finite timing evidence return the typed `EventTrialSummaryError`. Unphased
 provenance remains validated but has no parent-relative offset. Summaries are
 keyed by the model's unique term key, so two terms sharing a tag are never
 pooled.
+
+Ordinary formula terms retain their original caller-table rows in
+`EventTerm.sourceRowIndices` and `DesignAudit.sourceEvents`. Each `SourceEventRow`
+names its term, term-local event index, caller row, block, onset and duration.
+Subsets, term-specific missing-value removal and derived-column row removal
+preserve those caller rows. This evidence does not invent parent trials;
+`eventProvenance` continues to describe explicit trial/phase provenance.
+Hand-built terms without source evidence return an empty source-row vector.
+
+## Design identity and saved specifications
+
+New compiled schemas use `design-schema/v3`, including available source-event
+evidence. The matrix, structural column identities and previous audit semantics
+are unchanged by adding that evidence. `DesignFingerprint.from` and
+`DesignSchema.validated` accept current identities only.
+
+For a stored fingerprint string, use
+`DesignFingerprintCompatibility.compareSavedValue(schema, savedValue)`. It
+returns `CurrentV3DigestMatch` or `LegacyV2DigestMatch`, or a typed malformed,
+unsupported-version or mismatch error. The v2 comparison freezes the old
+encoding and omits only the new source-event field. A legacy match cannot
+verify ordinary source-row provenance, establish current fingerprint equality,
+or grant coefficient compatibility. Neither digest match is collision-free
+proof of identity. Fingerprint v1 receipts require rebuilding and are not
+supported by this v2 projection.
+
+`ModelBuildSpecJsonCodec` and `ModelDocumentJsonCodec` retain their existing
+authoring formats. They store specifications rather than compiled matrices or
+fingerprints. Existing specifications decode unchanged and rebuild a v3 schema
+using the supplied dataset, including original caller rows for ordinary and
+derived designs.
 
 ## Formula text, source locations, and JSON
 

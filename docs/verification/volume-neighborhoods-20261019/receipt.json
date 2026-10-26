@@ -1,0 +1,308 @@
+{
+  "schema_version": 1,
+  "recorded_utc": "2026-10-19T22:34:04.247530+00:00",
+  "baseline_commit": "c3f29b158704ffd23d56b35dc4d7a2be6bb029b9",
+  "qualified_source_blobs": {
+    "modules/image/jvm/src/test/scala/scalafim/image/NativeImageAllocationSuite.scala": "8be5481ea66cb54cf2ab3175f82e62fb3b812b8d",
+    "modules/image/shared/src/main/scala/scalafim/image/ExactVolumeSearchlight.scala": "710fdcdf22d4f10455f97d81fbeb5babebd3b575",
+    "modules/image/shared/src/test/scala/scalafim/image/DomainValiditySuite.scala": "4f2cec0f64c96d44aea1405ae08df8e2b966c464",
+    "modules/image/shared/src/test/scala/scalafim/image/VolumeSearchlightSuite.scala": "fb92fc5aec65e535f5f79799c9dd5f337e2d9ef4",
+    "modules/mvpa-spatial/shared/src/main/scala/scalafim/fmri/mvpa/spatial/SpatialMeasurementFrames.scala": "fd58ce7d7961fc59826175ae799c35627dbc1e20",
+    "modules/mvpa-spatial/shared/src/test/scala/scalafim/fmri/mvpa/spatial/PyMvpaSearchlightParitySuite.scala": "08cfd3721bc23f631b6db7285a0ba0605f2c54d6",
+    "modules/mvpa-spatial/shared/src/test/scala/scalafim/fmri/mvpa/spatial/SpatialMeasurementFramesSuite.scala": "d0ab5128c69c03e7cbc13c1663816f58195ff081",
+    "build.sbt": "da9e4f97b12f3ae1f97fc32b6dcd1c12abc6dd34"
+  },
+  "source_inputs_unchanged": true,
+  "unchanged_method_bodies": [
+    "metricBalls",
+    "cubes",
+    "ellipsoids",
+    "blobbyBalls",
+    "boundedOrdinals",
+    "ordinalOf",
+    "axisSpacing",
+    "physicalBallBounds",
+    "worldSquaredDistance",
+    "materializePreparedVolume"
+  ],
+  "owner": "locus4s.CenteredNeighborhoodSystem[C,S]",
+  "locus4s_revision": "e32b0aeba5c4d19c457b2329272b95b26c061943",
+  "provider_pin_changes": false,
+  "provider_publication": false,
+  "scalafim_publication": false,
+  "production_line_delta": -34,
+  "full_test_executions": 738,
+  "skips": 0,
+  "scalafim_compile_all": "passed JVM and JS",
+  "scala_source_warnings": [],
+  "existing_prepared_window_allocation_gate": {
+    "samples": 64000,
+    "allocated_bytes": 2050632,
+    "unchanged_limit_bytes": 2244608,
+    "budget_source_unchanged": true
+  },
+  "contracts": [
+    "seeded ellipsoid and blobby rows match original JVM and JS behavior",
+    "ambient IDs and complete frame identity match independently assembled sites",
+    "compact center permutation preserves frame identity",
+    "compact center 0 maps to voxel 4 in windows and exclusion errors",
+    "CSR row offsets depend on actual center count",
+    "empty center support stays valid with no rows",
+    "legacy relation admission retains earliest ambient error",
+    "compile-time rejection of ambient indices in center positions"
+  ],
+  "prototype_failures_retained": {
+    "production-compile.log": "Compiler rejected compact C index in ambient S window constructor; fixed using prepared.center",
+    "cutover-focused.log": "Nested polymorphic helper needed a stable intermediate to capture existential center type; fixed without casts"
+  },
+  "checks": [
+    {
+      "name": "baseline-contracts.log",
+      "raw_log_sha256": "b7f47ffb3465c96e4053a61bf39211e37c20711a3ea59563c90dce064d0e8674",
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-19T22:26:02.692116+00:00",
+        "finished_utc": "2026-10-19T22:26:32.185873+00:00",
+        "duration_seconds": 29.493615,
+        "command": [
+          "python3",
+          "tools/build/sbt-warm",
+          "imageJVM/testOnly scalafim.image.VolumeSearchlightSuite scalafim.image.DomainValiditySuite",
+          "imageJS/testOnly scalafim.image.VolumeSearchlightSuite scalafim.image.DomainValiditySuite",
+          "mvpaSpatialJVM/testOnly scalafim.fmri.mvpa.spatial.SpatialMeasurementFramesSuite",
+          "mvpaSpatialJS/testOnly scalafim.fmri.mvpa.spatial.SpatialMeasurementFramesSuite"
+        ],
+        "cwd": "/private/tmp/scalafim-simplify-a-20261019",
+        "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/volume-neighborhoods-20261019/baseline-contracts.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 1200.0,
+        "log_bytes": 5981
+      },
+      "test_totals": [
+        {
+          "total": 16,
+          "failed": 0,
+          "errors": 0,
+          "passed": 16
+        },
+        {
+          "total": 16,
+          "failed": 0,
+          "errors": 0,
+          "passed": 16
+        },
+        {
+          "total": 8,
+          "failed": 0,
+          "errors": 0,
+          "passed": 8
+        },
+        {
+          "total": 8,
+          "failed": 0,
+          "errors": 0,
+          "passed": 8
+        }
+      ]
+    },
+    {
+      "name": "seeded-row-capture.log",
+      "raw_log_sha256": "9d52585ab2265dfd0e023d10595d8aa765c0346dea7d553ba6d1e528b52123ae",
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-19T22:25:25.725207+00:00",
+        "finished_utc": "2026-10-19T22:25:28.882143+00:00",
+        "duration_seconds": 3.156776,
+        "command": [
+          "python3",
+          "tools/build/sbt-warm",
+          "imageJVM/testOnly scalafim.image.VolumeSearchlightSuite"
+        ],
+        "cwd": "/private/tmp/scalafim-simplify-a-20261019",
+        "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/volume-neighborhoods-20261019/seeded-row-capture.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 300.0,
+        "log_bytes": 1476
+      },
+      "test_totals": [
+        {
+          "total": 9,
+          "failed": 0,
+          "errors": 0,
+          "passed": 9
+        }
+      ]
+    },
+    {
+      "name": "production-compile.log",
+      "raw_log_sha256": "67f982ee860956dddacdf65b0eab9e3f3f471de24bbefa44cd39317577dd16a7",
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-19T22:27:17.939346+00:00",
+        "finished_utc": "2026-10-19T22:27:21.322854+00:00",
+        "duration_seconds": 3.383364,
+        "command": [
+          "python3",
+          "tools/build/sbt-warm",
+          "imageJVM/compile",
+          "mvpaSpatialJVM/compile"
+        ],
+        "cwd": "/private/tmp/scalafim-simplify-a-20261019",
+        "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/volume-neighborhoods-20261019/production-compile.log",
+        "exit_code": 1,
+        "child_returncode": 1,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 900.0,
+        "log_bytes": 825
+      },
+      "test_totals": []
+    },
+    {
+      "name": "cutover-focused.log",
+      "raw_log_sha256": "461e29ac80ef5d3e9a464669d4ab09d025bf57ef637baba8bb6ce2bb7c251a89",
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-19T22:28:28.850063+00:00",
+        "finished_utc": "2026-10-19T22:28:38.773583+00:00",
+        "duration_seconds": 9.923374,
+        "command": [
+          "python3",
+          "tools/build/sbt-warm",
+          "imageJVM/testOnly scalafim.image.VolumeSearchlightSuite scalafim.image.DomainValiditySuite",
+          "mvpaSpatialJVM/testOnly scalafim.fmri.mvpa.spatial.SpatialMeasurementFramesSuite scalafim.fmri.mvpa.spatial.PyMvpaSearchlightParitySuite scalafim.fmri.mvpa.spatial.SpatialPredictiveAcceptanceSuite"
+        ],
+        "cwd": "/private/tmp/scalafim-simplify-a-20261019",
+        "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/volume-neighborhoods-20261019/cutover-focused.log",
+        "exit_code": 1,
+        "child_returncode": 1,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 1200.0,
+        "log_bytes": 3377
+      },
+      "test_totals": [
+        {
+          "total": 16,
+          "failed": 0,
+          "errors": 0,
+          "passed": 16
+        }
+      ]
+    },
+    {
+      "name": "compact-contracts.log",
+      "raw_log_sha256": "bceb6e41b117bfbfaeb046e24359a16e9857062dae333eda95a2d97f2c461d25",
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-19T22:29:37.790553+00:00",
+        "finished_utc": "2026-10-19T22:30:02.777360+00:00",
+        "duration_seconds": 24.986667,
+        "command": [
+          "python3",
+          "tools/build/sbt-warm",
+          "imageJVM/testOnly scalafim.image.VolumeSearchlightSuite scalafim.image.DomainValiditySuite",
+          "imageJS/testOnly scalafim.image.VolumeSearchlightSuite scalafim.image.DomainValiditySuite",
+          "mvpaSpatialJVM/testOnly scalafim.fmri.mvpa.spatial.SpatialMeasurementFramesSuite scalafim.fmri.mvpa.spatial.PyMvpaSearchlightParitySuite scalafim.fmri.mvpa.spatial.SpatialPredictiveAcceptanceSuite",
+          "mvpaSpatialJS/testOnly scalafim.fmri.mvpa.spatial.SpatialMeasurementFramesSuite scalafim.fmri.mvpa.spatial.PyMvpaSearchlightParitySuite scalafim.fmri.mvpa.spatial.SpatialPredictiveAcceptanceSuite"
+        ],
+        "cwd": "/private/tmp/scalafim-simplify-a-20261019",
+        "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/volume-neighborhoods-20261019/compact-contracts.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 1200.0,
+        "log_bytes": 8807
+      },
+      "test_totals": [
+        {
+          "total": 20,
+          "failed": 0,
+          "errors": 0,
+          "passed": 20
+        },
+        {
+          "total": 20,
+          "failed": 0,
+          "errors": 0,
+          "passed": 20
+        },
+        {
+          "total": 14,
+          "failed": 0,
+          "errors": 0,
+          "passed": 14
+        },
+        {
+          "total": 14,
+          "failed": 0,
+          "errors": 0,
+          "passed": 14
+        }
+      ]
+    },
+    {
+      "name": "full-cutover-gates.log",
+      "raw_log_sha256": "709f32ff6b810d10cf7e9b002b5c8c094f73a49a9f83be8d6c029d35ace131b2",
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-19T22:31:16.728554+00:00",
+        "finished_utc": "2026-10-19T22:33:37.637379+00:00",
+        "duration_seconds": 140.908553,
+        "command": [
+          "python3",
+          "tools/build/sbt-warm",
+          "imageJVM/test",
+          "imageJS/test",
+          "mvpaSpatialJVM/test",
+          "mvpaSpatialJS/test",
+          "scalafimCompileAll"
+        ],
+        "cwd": "/private/tmp/scalafim-simplify-a-20261019",
+        "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/volume-neighborhoods-20261019/full-cutover-gates.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 1800.0,
+        "log_bytes": 63149
+      },
+      "test_totals": [
+        {
+          "total": 359,
+          "failed": 0,
+          "errors": 0,
+          "passed": 359
+        },
+        {
+          "total": 329,
+          "failed": 0,
+          "errors": 0,
+          "passed": 329
+        },
+        {
+          "total": 25,
+          "failed": 0,
+          "errors": 0,
+          "passed": 25
+        },
+        {
+          "total": 25,
+          "failed": 0,
+          "errors": 0,
+          "passed": 25
+        }
+      ]
+    }
+  ],
+  "hosted_ci": "not run",
+  "full_scalafim_test_all": "not run",
+  "new_scientific_or_performance_claim": "none"
+}

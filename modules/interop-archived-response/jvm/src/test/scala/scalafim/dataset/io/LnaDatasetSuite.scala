@@ -1,7 +1,7 @@
 package scalafim.dataset.io
 
-import scalafim.image.SampleSpaces
-import scalafim.image.world.WorldSpace
+import neuroim4s.image.SampleSpaces
+import neuroim4s.spaces.WorldSpace
 
 import gale.linalg.{DMat, DVec}
 import scalafim.archive.RunLabel
@@ -19,7 +19,7 @@ import scalafim.dataset.{
 import scalafim.fmri.hrf.design.SamplingFrame
 import image4s.geometry.Grid
 import scalafim.archive.lna.GaleArchiveTestData
-import scalafim.image.{Mask, SomeSampleSpace}
+import neuroim4s.image.{Mask}
 import scalafim.latent.{
   BoldZipCoarseBasis,
   BoldZipDetailBasis,
@@ -250,8 +250,8 @@ class LnaDatasetSuite extends munit.FunSuite:
       assertEquals(relativeBackend.shape.spatialDims, backend.shape.spatialDims)
       assertEquals(relativeBackend.shape.timepoints, backend.shape.timepoints)
       val world = WorldSpace.declare("LNA path-resolution fixture shared world").toOption.get
-      val relativeSpace = SampleSpaces.requireD3(SampleSpaces.inWorld(relativeBackend.shape.space, world).toOption.get).toOption.get
-      val absoluteSpace = SampleSpaces.requireD3(SampleSpaces.inWorld(backend.shape.space, world).toOption.get).toOption.get
+      val relativeSpace = (SampleSpaces.inWorld(relativeBackend.shape.space, world).toOption.get).requireD3.toOption.get
+      val absoluteSpace = (SampleSpaces.inWorld(backend.shape.space, world).toOption.get).requireD3.toOption.get
       assert(Grid.exactCongruence(relativeSpace.grid, absoluteSpace.grid).isRight)
 
       val selection = DataSelection(

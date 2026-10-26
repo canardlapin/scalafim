@@ -1,7 +1,9 @@
 package scalafim.dataset
 
+import image4s.SomeSampleSpace
+
 import gale.linalg.DMat
-import scalafim.image.{Mask, SomeSampleSpace}
+import neuroim4s.image.{Mask}
 
 final case class InMemoryDatasetBackend(
     id: DatasetId,

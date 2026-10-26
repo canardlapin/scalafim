@@ -1,0 +1,86 @@
+{
+  "sourceCommit": "dcc0892bd882908abde8d747ee6a4fefb9e1c750",
+  "freshCheckout": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/plsneuro-linked-qualified-03",
+  "sourceCleanAfter": true,
+  "privateProviders": {
+    "scalafim": {
+      "revision": "bf84f9d8c897d274cb1bde9811b71b574b677ec6",
+      "checkout": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/qualified-linked-fresh-providers/scalafim",
+      "sourceCleanBefore": true,
+      "sourceCleanAfter": true
+    },
+    "image4s": {
+      "revision": "aef5e223169f0831c942694c4b109ab20d152217",
+      "checkout": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/qualified-linked-fresh-providers/image4s",
+      "sourceCleanBefore": true,
+      "sourceCleanAfter": true
+    },
+    "bids4s": {
+      "revision": "a33678390614a91fadbdef13f22970e78c26e091",
+      "checkout": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/qualified-linked-fresh-providers/bids4s",
+      "sourceCleanBefore": true,
+      "sourceCleanAfter": true
+    }
+  },
+  "privateGlobal": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/fresh-linked-global-03",
+  "execution": {
+    "schema_version": 1,
+    "started_utc": "2026-10-21T05:30:33.767973+00:00",
+    "finished_utc": "2026-10-21T05:35:24.553263+00:00",
+    "duration_seconds": 290.785433,
+    "command": [
+      "env",
+      "TMPDIR=/Volumes/My Passport for Mac/e01tmp",
+      "sbt",
+      "-batch",
+      "-J-Xmx4g",
+      "-J-Djava.io.tmpdir=/Volumes/My Passport for Mac/e01tmp",
+      "-Dsbt.supershell=false",
+      "-Dsbt.log.noformat=true",
+      "-Dsbt.global.base=/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/fresh-linked-global-03",
+      "-Dimaging.providers=/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/qualified-linked-fresh-providers",
+      "Test/runMain plsneuro.adapters.AtlasCursorQueryProbe",
+      "Test/runMain plsneuro.adapters.SurfaceFingerprintProbe",
+      "Test/runMain plsneuro.adapters.ResultGeometryConsumerProbe",
+      "Test/runMain plsneuro.desktop.StandaloneVolumeProbe",
+      "Test/runMain plsneuro.desktop.ImagingConsumerProbe",
+      "Test/runMain plsneuro.desktop.ImagingConsumerProbe after-stage",
+      "Test/runMain plsneuro.desktop.ImagingConsumerProbe cleanup",
+      "Test/runMain plsneuro.desktop.LinkedSpatialProbe"
+    ],
+    "cwd": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/plsneuro-linked-qualified-03/tools/imaging-consumer",
+    "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/pls-linked-fresh-dcc0892-01.log",
+    "exit_code": 0,
+    "child_returncode": 0,
+    "reason": "exited",
+    "detail": null,
+    "timeout_seconds": 1800.0,
+    "log_bytes": 45726
+  },
+  "logSha256": "7741c1b9ccf48858d8106de753ec47a9fa09149376f778f4afcdd66eb8c15b92",
+  "executedAssertions": [
+    "PASS: atlas membership, native voxel-boundary affine oracle, deterministic ties and grid/source identity",
+    "SurfaceFingerprintProbe PASS",
+    "ResultGeometryConsumerProbe PASS",
+    "StandaloneVolumeProbe PASS",
+    "ImagingConsumerProbe PASS",
+    "failure-path PASS: after-stage",
+    "failure-path PASS: cleanup",
+    "LinkedSpatialProbe PASS"
+  ],
+  "runtimeOrigins": [
+    "gale/linalg/Matrix.class -> jar:file:/Volumes/My%20Passport%20for%20Mac/codex-work/scalafim-eco-01a153cc-20261021/plsneuro-linked-qualified-03/tools/imaging-consumer/target/bg-jobs/sbt_7e9182d2/target/1d39acbe/885ea174/gale-core_3-0.1.0+153-779ed3d8-SNAPSHOT.jar!/gale/linalg/Matrix.class",
+    "image4s/SomeSampleSpace.class -> jar:file:/Volumes/My%20Passport%20for%20Mac/codex-work/scalafim-eco-01a153cc-20261021/plsneuro-linked-qualified-03/tools/imaging-consumer/target/bg-jobs/sbt_7e9182d2/target/730c4af0/5d158799/image4s-core_3-0.1.0-SNAPSHOT.jar!/image4s/SomeSampleSpace.class",
+    "intaglio/RenderPlan.class -> jar:file:/Volumes/My%20Passport%20for%20Mac/codex-work/scalafim-eco-01a153cc-20261021/plsneuro-linked-qualified-03/tools/imaging-consumer/target/bg-jobs/sbt_7e9182d2/target/88e8a013/4989e4ef/intaglio-core_3-0.0.0+292-d553c327-SNAPSHOT.jar!/intaglio/RenderPlan.class",
+    "locus4s/FiniteDomain.class -> jar:file:/Volumes/My%20Passport%20for%20Mac/codex-work/scalafim-eco-01a153cc-20261021/plsneuro-linked-qualified-03/tools/imaging-consumer/target/bg-jobs/sbt_7e9182d2/target/c202c930/0786e699/locus4s-core_3-0.1.0+19-e32b0aeb-SNAPSHOT.jar!/locus4s/FiniteDomain.class",
+    "neuroim4s/view/ViewerModel.class -> jar:file:/Volumes/My%20Passport%20for%20Mac/codex-work/scalafim-eco-01a153cc-20261021/plsneuro-linked-qualified-03/tools/imaging-consumer/target/bg-jobs/sbt_7e9182d2/target/7748271f/46d00311/neuroim4s-view_3-0.1.0-SNAPSHOT.jar!/neuroim4s/view/ViewerModel.class"
+  ],
+  "scope": "Eight executed checks from a clean committed source and fresh provider/global outputs. Whole actual production imaging-file closure, including linked workspace, atlas cursor query, real source codecs and retained geometry conversion.",
+  "reviewBoundRevision": "dcc0892bd882908abde8d747ee6a4fefb9e1c750",
+  "limits": [
+    "Known whole application compile04 still reports41functional support/provenance/fixed-effects/morphometry errors.",
+    "No full application, cold-open performance or scientific inference acceptance.",
+    "Representative runtime class-owner checks cover five public classes; not proof of every loaded class in the graph.",
+    "Explicit private image4s/BIDS4s/ScalaFIM source inputs are checked; source defaults for other providers use immutable pins."
+  ]
+}

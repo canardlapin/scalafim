@@ -1,0 +1,72 @@
+{
+  "root_source": "7724e60c30625863f2cfeb091c3513305f564d72",
+  "neuroatlas_revision": "4df875d8a1cd20afd3b83ed49446422bc507e5ec",
+  "neurosurf_revision": "73a244fbe5d7b4db2f0c946d98fa2a3c00101ab7",
+  "gate": {
+    "schema_version": 1,
+    "started_utc": "2026-10-22T02:18:06.901472+00:00",
+    "finished_utc": "2026-10-22T02:21:46.380373+00:00",
+    "duration_seconds": 219.477486,
+    "command": [
+      "env",
+      "-u",
+      "JAVA_TOOL_OPTIONS",
+      "JAVA_HOME=/Users/bbuchsbaum/Library/Java/JavaVirtualMachines/openjdk-22/Contents/Home",
+      "SBT_WARM_HEAP=6g",
+      "python3",
+      "tools/build/sbt-warm",
+      "atlasExamplesJVM/test",
+      "workflowExamplesJVM/test",
+      "workflowExamplesJS/test",
+      "spatialJVM/test",
+      "spatialJS/test",
+      "scalafimCompileAll"
+    ],
+    "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021",
+    "log": "/tmp/scalafim-eco-a1-callers-09.log",
+    "exit_code": 0,
+    "child_returncode": 0,
+    "reason": "exited",
+    "detail": null,
+    "timeout_seconds": 2400.0,
+    "log_bytes": 34328
+  },
+  "passed": {
+    "atlasExamplesJVM": 5,
+    "workflowExamplesJVM": 3,
+    "workflowExamplesJS": 2,
+    "spatialJVM": 115,
+    "spatialJS": 108
+  },
+  "total_passed": 233,
+  "skipped": 0,
+  "compile_all_exit": 0,
+  "log_sha256": "8e2c2ea460ed7ff591ab4b2920191ec1cc13a72863d8dd1deffd8e3192efe49d",
+  "provider_evidence": "canardlapin/neuroatlas4s branch eco/a1-surface-20261022 docs/verification/eco-a1-20261022/; source 467f3832cea5c48557661f95fd1a0eddd623cb99; source plus qualification 4df875d8a1cd20afd3b83ed49446422bc507e5ec; independent public consumer receipt at 60b9d46a06653752baa07d8a1ceae4a14a0ee3b7",
+  "provider_tests": {
+    "passed": 274,
+    "skipped": 0,
+    "moved_root_cases": 142,
+    "original_provider_cases": 132,
+    "public_consumer_cases": 7
+  },
+  "retired_root_paths": [
+    "modules/atlas/",
+    "tools/r-parity/check_neuroatlas_atlas_parity.R",
+    "tools/surface/fslr-qualification/"
+  ],
+  "review": {
+    "root_source": "7724e60c30625863f2cfeb091c3513305f564d72",
+    "verdict": "APPROVE",
+    "minor_doc_fix": "Correct stale fixture dependency paragraph after gate; documentation only."
+  },
+  "task_closed": "eco-neuroatlas-surface",
+  "implementation_tasks_closed": 30,
+  "implementation_tasks_total": 36,
+  "limits": [
+    "External PLSNeuro integration and U6 remain open.",
+    "Build reports existing Intaglio unused-key warnings; no Scala compiler warning was observed.",
+    "No hosted CI, final U6 full campaign or new native/rendering qualification.",
+    "Preserve previous real-asset residuals, unavailable 15-map replay and timing flags off."
+  ]
+}

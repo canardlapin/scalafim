@@ -1,0 +1,44 @@
+{
+  "kind": "independent IEEE-double arithmetic replay, not Scala execution",
+  "thinTriangle": {
+    "vertices": [
+      [
+        0,
+        0,
+        0
+      ],
+      [
+        1,
+        0,
+        0
+      ],
+      [
+        1,
+        1e-10,
+        0
+      ]
+    ],
+    "oldGramArea": 0.0,
+    "analyticArea": 5e-11
+  },
+  "minimumSubnormalDirections": {
+    "minimumPositiveDouble": 5e-324,
+    "first": [
+      5e-324,
+      5e-324,
+      0
+    ],
+    "second": [
+      5e-324,
+      0,
+      0
+    ],
+    "unscaledHypotNorms": [
+      5e-324,
+      5e-324
+    ],
+    "oldNormalizedAngle": 0.0,
+    "analyticAngle": 0.7853981633974483
+  },
+  "contract": "Preserve endpoint and mean-radius admission; correct angular normalization. Checked area refuses nonfinite differences/cross components, allows finite-cross squared-norm overflow."
+}

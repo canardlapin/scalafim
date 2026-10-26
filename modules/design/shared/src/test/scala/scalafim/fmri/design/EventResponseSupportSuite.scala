@@ -52,6 +52,31 @@ class EventResponseSupportSuite extends munit.FunSuite:
         assertEquals(receipt.decisions.filter(_.disposition == EventSupportDisposition.Rejected).map(_.sourceRow), Vector(1))
       case other => fail(s"expected typed support rejection, got $other")
 
+  test("excluded-only source rows must be covered by a derived-row remapping"):
+    import scalafim.fmri.design.formula.{DerivedMissingRows, DerivedRowsReceipt}
+    val data = DataTable.fromColumns("onset" -> Column.Doubles(Vector(1.0, 100.0)),
+      "condition" -> Column.Strings(Vector("A", "A")))
+    val model = checked(build("onset ~ hrf(condition, id = task)", data,
+      Some(ResponseSupportRequest(scans, EventSupportPolicy.ExcludeUnobservedAllowPartial))))
+    val schema = model.designSchema
+    val exclusionsOnly = model.copy(compiledSchema = Some(checked(DesignSchema.validated(
+      schema.matrix, schema.rows, schema.columns, schema.audit.copy(responseSupport = Vector.empty)))))
+    val short = DerivedRowsReceipt(DerivedMissingRows.Drop, Vector(ColumnId.unsafe("gain")), Vector(10), Vector.empty)
+    for value <- Vector(model, exclusionsOnly) do
+      assertEquals(value.withDerivedRowsEither(short),
+        Left(DesignError.InvalidSchema("compiled source row 1 has no retained caller row")))
+    val complete = checked(model.withDerivedRowsEither(short.copy(retainedRows = Vector(10, 20))))
+    assertEquals(complete.designSchema.audit.responseSupport.head.decisions.map(_.sourceRow), Vector(10, 20))
+    assertEquals(complete.designSchema.audit.excludedEvents.map(_.eventIndex), Vector(20))
+
+  test("different terms excluding the same source row retain distinct term attribution"):
+    val data = DataTable.fromColumns("onset" -> Column.Doubles(Vector(1.0, 100.0)),
+      "condition" -> Column.Strings(Vector("A", "A")))
+    val model = checked(build("onset ~ hrf(condition, id = first) + hrf(condition, id = second)", data,
+      Some(ResponseSupportRequest(scans, EventSupportPolicy.ExcludeUnobservedAllowPartial))))
+    assertEquals(model.designSchema.audit.excludedEvents.map(row => (row.eventIndex, row.term.map(_.value))),
+      Vector((1, Some("first")), (1, Some("second"))))
+
   test("partial FIR windows require an explicit accepting policy"):
     val data = DataTable.fromColumns("onset" -> Column.Doubles(Vector(-1.0, 10.0)),
       "condition" -> Column.Strings(Vector("A", "A")))

@@ -1,0 +1,112 @@
+{
+  "sourceCommit": "0918fb8a5bdc0c34aabcbbcea3f39ec53eaef3db",
+  "donors": [
+    "043419a9c2adf2f10bdf22fd510e508ad91150ee",
+    "fade9ed02d7036c39b449e5533d0519c430614dc",
+    "230c3754e70fb0548110306e8d742e05453c8ba7",
+    "d8a01c8694c033810e78c1d3d00b95b8e0715b6d",
+    "a6943c411d55c1a61885ac267523ef161fd86894"
+  ],
+  "review": {
+    "reviewer": "volume_view_astra_review",
+    "verdict": "APPROVE; six production files and migrated Scala tests match approved endpoint exactly"
+  },
+  "checks": [
+    {
+      "execution": {
+        "schema_version": 1,
+        "started_utc": "2026-10-21T05:55:30.962196+00:00",
+        "finished_utc": "2026-10-21T05:56:28.895495+00:00",
+        "duration_seconds": 57.933328,
+        "command": [
+          "env",
+          "TMPDIR=/Volumes/My Passport for Mac/e01tmp",
+          "SBT_WARM_HEAP=4g",
+          "python3",
+          "tools/build/sbt-warm",
+          "designJVM/test",
+          "designJS/test"
+        ],
+        "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020",
+        "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/provenance-v3-design-rerun-jvm-js.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 1800.0,
+        "log_bytes": 93667
+      },
+      "sha256": "01d9f9a1723f73a735178e6b152144a3017f9c17d825a375fce2e2afd2a822d5"
+    },
+    {
+      "execution": {
+        "schema_version": 1,
+        "started_utc": "2026-10-21T05:56:36.847898+00:00",
+        "finished_utc": "2026-10-21T05:56:51.355529+00:00",
+        "duration_seconds": 14.507521,
+        "command": [
+          "env",
+          "TMPDIR=/Volumes/My Passport for Mac/e01tmp",
+          "SBT_WARM_HEAP=4g",
+          "python3",
+          "tools/build/sbt-warm",
+          "modelJVM/test",
+          "modelJS/test"
+        ],
+        "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020",
+        "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/provenance-v3-model-jvm-js.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 1800.0,
+        "log_bytes": 18447
+      },
+      "sha256": "48a983367611155517547ff524c7e093b937ff090f56854a20c6ab84609100d8"
+    },
+    {
+      "execution": {
+        "schema_version": 1,
+        "started_utc": "2026-10-21T05:58:06.340054+00:00",
+        "finished_utc": "2026-10-21T05:59:47.714396+00:00",
+        "duration_seconds": 101.374592,
+        "command": [
+          "env",
+          "TMPDIR=/Volumes/My Passport for Mac/e01tmp",
+          "SBT_WARM_HEAP=4g",
+          "python3",
+          "tools/build/sbt-warm",
+          "fitJVM/test",
+          "fitJS/test"
+        ],
+        "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020",
+        "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/provenance-v3-fit-rerun-jvm-js.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 1800.0,
+        "log_bytes": 145661
+      },
+      "sha256": "a495c490a27a686f64d4d412645aba98f3d6c9a6509638dff343d1a0e9e9605a"
+    }
+  ],
+  "passed": {
+    "designJVM": 568,
+    "designJS": 567,
+    "modelJVM": 103,
+    "modelJS": 103,
+    "fitJVM": 763,
+    "fitJS": 705
+  },
+  "scope": "Truthful ordinary source-event attribution, derived row remapping and unknown identity; explicit v3 design identity with frozen v2 digest-only compatibility; numerical profile identity unchanged.",
+  "limits": [
+    "No signed-onset or response-support numerical change in this commit.",
+    "LegacyV2DigestMatch is not current identity or coefficient compatibility.",
+    "External actual PLS event membership witness is still being executed separately."
+  ],
+  "adverse": [
+    "Initial design run failed old provenance-equality assertion, corrected from donor permutation contract.",
+    "Initial fit run failed old sidecar v2 prefix assertion, corrected to explicit v3 writer contract."
+  ]
+}

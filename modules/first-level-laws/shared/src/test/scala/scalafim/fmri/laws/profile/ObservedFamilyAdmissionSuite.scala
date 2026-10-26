@@ -10,7 +10,7 @@ import scalafim.fmri.hrf.{PositiveSeconds, Seconds}
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.family.GaussianFamily
 import scalafim.fmri.model.{FitPlan, FmriModel}
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 
 class ObservedFamilyAdmissionSuite extends munit.FunSuite:
   private val family = GaussianFamily.Default

@@ -1,0 +1,788 @@
+{
+  "schema": "scalafim.eco-full-campaign.v1",
+  "status": "Interrupted",
+  "source_commit": "31a42a69004c6282e01ad939c370f249fdf5e604",
+  "expected_batch_names": [
+    "ecosystem-boundaries",
+    "phrf-comparison-jvm",
+    "phrf-comparison-js",
+    "core-jvm",
+    "core-js",
+    "neuroim",
+    "neuroim-transforms",
+    "neuroim-routing",
+    "neuroim-view-jvm",
+    "neuroim-view-js",
+    "neuroatlas-core",
+    "neuroatlas-volume",
+    "neuroatlas-surface",
+    "neuroatlas-routing",
+    "mvpa4s-core",
+    "mvpa4s-predictive",
+    "mvpa4s-locus",
+    "mvpa4s-imaging",
+    "neurosurf-Core",
+    "neurosurf-Spatial",
+    "neurosurf-Fixture",
+    "neurosurf-ViewJvm",
+    "neurosurf-ViewJs",
+    "neurosurf-Browser",
+    "neurosurf-ExamplesJvm",
+    "threshold-motion-jvm",
+    "threshold-motion-js",
+    "data-jvm",
+    "data-js",
+    "estimates-jvm",
+    "estimates-js",
+    "analysis-jvm",
+    "analysis-js",
+    "downstream-jvm",
+    "downstream-js",
+    "examples",
+    "examples-js"
+  ],
+  "completed_batches": [
+    {
+      "expanded_test_targets": [
+        "ecosystemBoundaries"
+      ],
+      "expected_behavioral_summaries": 0,
+      "success_markers": 1,
+      "known_empty_targets": {},
+      "batch": "ecosystem-boundaries",
+      "summaries": [],
+      "passed": 0,
+      "skipped": 0,
+      "declared_nonexecutions": [],
+      "no_test_messages": []
+    },
+    {
+      "expanded_test_targets": [
+        "phrfComparisonJVM/test"
+      ],
+      "expected_behavioral_summaries": 1,
+      "success_markers": 1,
+      "known_empty_targets": {},
+      "batch": "phrf-comparison-jvm",
+      "summaries": [
+        {
+          "total": 548,
+          "failed": 0,
+          "errors": 0,
+          "passed": 544,
+          "skipped": 4
+        }
+      ],
+      "passed": 544,
+      "skipped": 4,
+      "declared_nonexecutions": [
+        "==> s scalafim.phrfcmp.run.GlmSingleBridgeSuite.real GLMsingle on T-TX-fast: E-trial in input order equals the converter output bit for bit; scratch gone skipped 0.006s",
+        "==> s scalafim.phrfcmp.run.GlmSingleBridgeSuite.disk leak: no file created during a real bridge run contains a beta value (planted sentinel and real betas) skipped 0.001s",
+        "==> s scalafim.phrfcmp.run.GlmSingleBridgeSuite.F3/F4: a successful attempt reports both CPU figures and the output hash; guard is rusage, timing is the sidecar skipped 0.002s",
+        "==> s scalafim.phrfcmp.prep.RhoBiasHeavySuite.frozen rho bias criterion over 50 harness datasets: trial and condition cells (opt-in) skipped 0.001s"
+      ],
+      "no_test_messages": []
+    },
+    {
+      "expanded_test_targets": [
+        "phrfComparisonJS/test"
+      ],
+      "expected_behavioral_summaries": 1,
+      "success_markers": 1,
+      "known_empty_targets": {},
+      "batch": "phrf-comparison-js",
+      "summaries": [
+        {
+          "total": 254,
+          "failed": 0,
+          "errors": 0,
+          "passed": 254,
+          "skipped": 0
+        }
+      ],
+      "passed": 254,
+      "skipped": 0,
+      "declared_nonexecutions": [],
+      "no_test_messages": []
+    },
+    {
+      "expanded_test_targets": [
+        "pipelineJVM/test",
+        "responseJVM/test",
+        "responseLawsJVM/test",
+        "latentJVM/test",
+        "arJVM/test",
+        "hrfJVM/test",
+        "scenarioTestkitJVM/test",
+        "designJVM/test",
+        "providerSpikeJVM/test"
+      ],
+      "expected_behavioral_summaries": 9,
+      "success_markers": 9,
+      "known_empty_targets": {},
+      "batch": "core-jvm",
+      "summaries": [
+        {
+          "total": 38,
+          "failed": 0,
+          "errors": 0,
+          "passed": 38,
+          "skipped": 0
+        },
+        {
+          "total": 16,
+          "failed": 0,
+          "errors": 0,
+          "passed": 16,
+          "skipped": 0
+        },
+        {
+          "total": 2,
+          "failed": 0,
+          "errors": 0,
+          "passed": 2,
+          "skipped": 0
+        },
+        {
+          "total": 45,
+          "failed": 0,
+          "errors": 0,
+          "passed": 45,
+          "skipped": 0
+        },
+        {
+          "total": 172,
+          "failed": 0,
+          "errors": 0,
+          "passed": 172,
+          "skipped": 0
+        },
+        {
+          "total": 412,
+          "failed": 0,
+          "errors": 0,
+          "passed": 412,
+          "skipped": 0
+        },
+        {
+          "total": 5,
+          "failed": 0,
+          "errors": 0,
+          "passed": 5,
+          "skipped": 0
+        },
+        {
+          "total": 607,
+          "failed": 0,
+          "errors": 0,
+          "passed": 607,
+          "skipped": 0
+        },
+        {
+          "total": 52,
+          "failed": 0,
+          "errors": 0,
+          "passed": 52,
+          "skipped": 0
+        }
+      ],
+      "passed": 1349,
+      "skipped": 0,
+      "declared_nonexecutions": [],
+      "no_test_messages": []
+    },
+    {
+      "expanded_test_targets": [
+        "pipelineJS/test",
+        "responseJS/test",
+        "responseLawsJS/test",
+        "latentJS/test",
+        "arJS/test",
+        "hrfJS/test",
+        "scenarioTestkitJS/test",
+        "designJS/test",
+        "providerSpikeJS/test"
+      ],
+      "expected_behavioral_summaries": 9,
+      "success_markers": 9,
+      "known_empty_targets": {},
+      "batch": "core-js",
+      "summaries": [
+        {
+          "total": 38,
+          "failed": 0,
+          "errors": 0,
+          "passed": 38,
+          "skipped": 0
+        },
+        {
+          "total": 15,
+          "failed": 0,
+          "errors": 0,
+          "passed": 15,
+          "skipped": 0
+        },
+        {
+          "total": 2,
+          "failed": 0,
+          "errors": 0,
+          "passed": 2,
+          "skipped": 0
+        },
+        {
+          "total": 45,
+          "failed": 0,
+          "errors": 0,
+          "passed": 45,
+          "skipped": 0
+        },
+        {
+          "total": 170,
+          "failed": 0,
+          "errors": 0,
+          "passed": 170,
+          "skipped": 0
+        },
+        {
+          "total": 412,
+          "failed": 0,
+          "errors": 0,
+          "passed": 412,
+          "skipped": 0
+        },
+        {
+          "total": 5,
+          "failed": 0,
+          "errors": 0,
+          "passed": 5,
+          "skipped": 0
+        },
+        {
+          "total": 606,
+          "failed": 0,
+          "errors": 0,
+          "passed": 606,
+          "skipped": 0
+        },
+        {
+          "total": 50,
+          "failed": 0,
+          "errors": 0,
+          "passed": 50,
+          "skipped": 0
+        }
+      ],
+      "passed": 1343,
+      "skipped": 0,
+      "declared_nonexecutions": [],
+      "no_test_messages": []
+    },
+    {
+      "expanded_test_targets": [
+        "neuroim4s:spacesJVM/test",
+        "neuroim4s:spacesJS/test",
+        "neuroim4s:coreJVM/test",
+        "neuroim4s:coreJS/test",
+        "neuroim4s:ioJVM/test"
+      ],
+      "expected_behavioral_summaries": 5,
+      "success_markers": 5,
+      "known_empty_targets": {},
+      "batch": "neuroim",
+      "summaries": [
+        {
+          "total": 31,
+          "failed": 0,
+          "errors": 0,
+          "passed": 31,
+          "skipped": 0
+        },
+        {
+          "total": 31,
+          "failed": 0,
+          "errors": 0,
+          "passed": 31,
+          "skipped": 0
+        },
+        {
+          "total": 334,
+          "failed": 0,
+          "errors": 0,
+          "passed": 334,
+          "skipped": 0
+        },
+        {
+          "total": 333,
+          "failed": 0,
+          "errors": 0,
+          "passed": 333,
+          "skipped": 0
+        },
+        {
+          "total": 31,
+          "failed": 0,
+          "errors": 0,
+          "passed": 31,
+          "skipped": 0
+        }
+      ],
+      "passed": 760,
+      "skipped": 0,
+      "declared_nonexecutions": [],
+      "no_test_messages": []
+    },
+    {
+      "expanded_test_targets": [
+        "neuroim4s:transformJVM/test",
+        "neuroim4s:transformJS/test",
+        "neuroim4s:transformIoJVM/test"
+      ],
+      "expected_behavioral_summaries": 3,
+      "success_markers": 3,
+      "known_empty_targets": {},
+      "batch": "neuroim-transforms",
+      "summaries": [
+        {
+          "total": 137,
+          "failed": 0,
+          "errors": 0,
+          "passed": 137,
+          "skipped": 0
+        },
+        {
+          "total": 137,
+          "failed": 0,
+          "errors": 0,
+          "passed": 137,
+          "skipped": 0
+        },
+        {
+          "total": 28,
+          "failed": 0,
+          "errors": 0,
+          "passed": 28,
+          "skipped": 0
+        }
+      ],
+      "passed": 302,
+      "skipped": 0,
+      "declared_nonexecutions": [],
+      "no_test_messages": []
+    },
+    {
+      "expanded_test_targets": [
+        "neuroim4s:routingJVM/test",
+        "neuroim4s:routingJS/test",
+        "neuroim4s:routingIoJVM/test"
+      ],
+      "expected_behavioral_summaries": 3,
+      "success_markers": 3,
+      "known_empty_targets": {},
+      "batch": "neuroim-routing",
+      "summaries": [
+        {
+          "total": 14,
+          "failed": 0,
+          "errors": 0,
+          "passed": 14,
+          "skipped": 0
+        },
+        {
+          "total": 14,
+          "failed": 0,
+          "errors": 0,
+          "passed": 14,
+          "skipped": 0
+        },
+        {
+          "total": 4,
+          "failed": 0,
+          "errors": 0,
+          "passed": 4,
+          "skipped": 0
+        }
+      ],
+      "passed": 32,
+      "skipped": 0,
+      "declared_nonexecutions": [],
+      "no_test_messages": []
+    },
+    {
+      "expanded_test_targets": [
+        "neuroim4s:viewJVM/test",
+        "neuroim4s:viewJava2dJVM/test",
+        "neuroim4s:viewJavafxJVM/test"
+      ],
+      "expected_behavioral_summaries": 3,
+      "success_markers": 3,
+      "known_empty_targets": {},
+      "batch": "neuroim-view-jvm",
+      "summaries": [
+        {
+          "total": 47,
+          "failed": 0,
+          "errors": 0,
+          "passed": 47,
+          "skipped": 0
+        },
+        {
+          "total": 2,
+          "failed": 0,
+          "errors": 0,
+          "passed": 2,
+          "skipped": 0
+        },
+        {
+          "total": 2,
+          "failed": 0,
+          "errors": 0,
+          "passed": 2,
+          "skipped": 0
+        }
+      ],
+      "passed": 51,
+      "skipped": 0,
+      "declared_nonexecutions": [],
+      "no_test_messages": []
+    },
+    {
+      "expanded_test_targets": [
+        "neuroim4s:viewJS/test",
+        "neuroim4s:viewCanvasJS/test"
+      ],
+      "expected_behavioral_summaries": 2,
+      "success_markers": 2,
+      "known_empty_targets": {},
+      "batch": "neuroim-view-js",
+      "summaries": [
+        {
+          "total": 47,
+          "failed": 0,
+          "errors": 0,
+          "passed": 47,
+          "skipped": 0
+        },
+        {
+          "total": 8,
+          "failed": 0,
+          "errors": 0,
+          "passed": 8,
+          "skipped": 0
+        }
+      ],
+      "passed": 55,
+      "skipped": 0,
+      "declared_nonexecutions": [],
+      "no_test_messages": []
+    },
+    {
+      "expanded_test_targets": [
+        "neuroatlas4s:coreJVM/test",
+        "neuroatlas4s:coreJS/test",
+        "neuroatlas4s:ioJVM/test"
+      ],
+      "expected_behavioral_summaries": 3,
+      "success_markers": 3,
+      "known_empty_targets": {},
+      "batch": "neuroatlas-core",
+      "summaries": [
+        {
+          "total": 13,
+          "failed": 0,
+          "errors": 0,
+          "passed": 13,
+          "skipped": 0
+        },
+        {
+          "total": 13,
+          "failed": 0,
+          "errors": 0,
+          "passed": 13,
+          "skipped": 0
+        },
+        {
+          "total": 5,
+          "failed": 0,
+          "errors": 0,
+          "passed": 5,
+          "skipped": 0
+        }
+      ],
+      "passed": 31,
+      "skipped": 0,
+      "declared_nonexecutions": [],
+      "no_test_messages": []
+    },
+    {
+      "expanded_test_targets": [
+        "neuroatlas4s:volumeJVM/test",
+        "neuroatlas4s:volumeJS/test",
+        "neuroatlas4s:volumeIoJVM/test"
+      ],
+      "expected_behavioral_summaries": 3,
+      "success_markers": 3,
+      "known_empty_targets": {},
+      "batch": "neuroatlas-volume",
+      "summaries": [
+        {
+          "total": 58,
+          "failed": 0,
+          "errors": 0,
+          "passed": 58,
+          "skipped": 0
+        },
+        {
+          "total": 58,
+          "failed": 0,
+          "errors": 0,
+          "passed": 58,
+          "skipped": 0
+        },
+        {
+          "total": 21,
+          "failed": 0,
+          "errors": 0,
+          "passed": 21,
+          "skipped": 0
+        }
+      ],
+      "passed": 137,
+      "skipped": 0,
+      "declared_nonexecutions": [],
+      "no_test_messages": []
+    },
+    {
+      "expanded_test_targets": [
+        "neuroatlas4s:surfaceJVM/test",
+        "neuroatlas4s:surfaceJS/test",
+        "neuroatlas4s:surfaceIoJVM/test"
+      ],
+      "expected_behavioral_summaries": 3,
+      "success_markers": 3,
+      "known_empty_targets": {},
+      "batch": "neuroatlas-surface",
+      "summaries": [
+        {
+          "total": 9,
+          "failed": 0,
+          "errors": 0,
+          "passed": 9,
+          "skipped": 0
+        },
+        {
+          "total": 9,
+          "failed": 0,
+          "errors": 0,
+          "passed": 9,
+          "skipped": 0
+        },
+        {
+          "total": 3,
+          "failed": 0,
+          "errors": 0,
+          "passed": 3,
+          "skipped": 0
+        }
+      ],
+      "passed": 21,
+      "skipped": 0,
+      "declared_nonexecutions": [],
+      "no_test_messages": []
+    },
+    {
+      "expanded_test_targets": [
+        "neuroatlas4s:routingJVM/test",
+        "neuroatlas4s:routingJS/test",
+        "neuroatlas4s:routingIoJVM/test"
+      ],
+      "expected_behavioral_summaries": 3,
+      "success_markers": 3,
+      "known_empty_targets": {},
+      "batch": "neuroatlas-routing",
+      "summaries": [
+        {
+          "total": 34,
+          "failed": 0,
+          "errors": 0,
+          "passed": 34,
+          "skipped": 0
+        },
+        {
+          "total": 34,
+          "failed": 0,
+          "errors": 0,
+          "passed": 34,
+          "skipped": 0
+        },
+        {
+          "total": 17,
+          "failed": 0,
+          "errors": 0,
+          "passed": 17,
+          "skipped": 0
+        }
+      ],
+      "passed": 85,
+      "skipped": 0,
+      "declared_nonexecutions": [],
+      "no_test_messages": []
+    },
+    {
+      "expanded_test_targets": [
+        "mvpa4s:coreJVM/test",
+        "mvpa4s:coreJS/test",
+        "mvpa4s:testkitJVM/test",
+        "mvpa4s:testkitJS/test"
+      ],
+      "expected_behavioral_summaries": 4,
+      "success_markers": 4,
+      "known_empty_targets": {},
+      "batch": "mvpa4s-core",
+      "summaries": [
+        {
+          "total": 495,
+          "failed": 0,
+          "errors": 0,
+          "passed": 490,
+          "skipped": 5
+        },
+        {
+          "total": 495,
+          "failed": 0,
+          "errors": 0,
+          "passed": 490,
+          "skipped": 5
+        },
+        {
+          "total": 3,
+          "failed": 0,
+          "errors": 0,
+          "passed": 3,
+          "skipped": 0
+        },
+        {
+          "total": 3,
+          "failed": 0,
+          "errors": 0,
+          "passed": 3,
+          "skipped": 0
+        }
+      ],
+      "passed": 986,
+      "skipped": 10,
+      "declared_nonexecutions": [
+        "==> s mvpa4s.inference.RankV2ResourceProbeSuite.opt-in complete-adapter resource probe preserves each assigned method result skipped 0.005s",
+        "==> s mvpa4s.inference.RankPairedPilotSuite.opt-in paired exploratory cell retains every assigned method result skipped 0.0s",
+        "==> s mvpa4s.inference.RankDiagnosticReplaySuite.opt-in diagnostic exports actual residual and stepwise kernels without Monte Carlo skipped 0.001s",
+        "==> s mvpa4s.inference.RankConfirmationSuite.opt-in case uses the production rank procedure and reports actual completed B skipped 0.001s",
+        "==> s mvpa4s.inference.RankPortabilityTraceSuite.opt-in retained fixture traces nuisance QR, residual coordinates and every accepted draw skipped 0.0s",
+        "==> s opt-in diagnostic exports actual residual and stepwise kernels without Monte Carlo skipped",
+        "==> s opt-in retained fixture traces nuisance QR, residual coordinates and every accepted draw skipped",
+        "==> s opt-in paired exploratory cell retains every assigned method result skipped",
+        "==> s opt-in complete-adapter resource probe preserves each assigned method result skipped",
+        "==> s opt-in case uses the production rank procedure and reports actual completed B skipped"
+      ],
+      "no_test_messages": []
+    },
+    {
+      "expanded_test_targets": [
+        "mvpa4s:predictiveJVM/test",
+        "mvpa4s:predictiveJS/test",
+        "mvpa4s:consumerJVM/test",
+        "mvpa4s:consumerJS/test"
+      ],
+      "expected_behavioral_summaries": 2,
+      "success_markers": 4,
+      "known_empty_targets": {
+        "mvpa4s:consumerJVM/test": "Pinned examples/consumer has one main source and no test sources; compilation only, independently executed public behavior is in receipt40.",
+        "mvpa4s:consumerJS/test": "Same pinned pure consumer source, JS compilation/link only; no behavioral assertion."
+      },
+      "batch": "mvpa4s-predictive",
+      "summaries": [
+        {
+          "total": 103,
+          "failed": 0,
+          "errors": 0,
+          "passed": 103,
+          "skipped": 0
+        },
+        {
+          "total": 103,
+          "failed": 0,
+          "errors": 0,
+          "passed": 103,
+          "skipped": 0
+        }
+      ],
+      "passed": 206,
+      "skipped": 0,
+      "declared_nonexecutions": [],
+      "no_test_messages": []
+    },
+    {
+      "expanded_test_targets": [
+        "mvpa4s:locusJVM/test",
+        "mvpa4s:locusJS/test"
+      ],
+      "expected_behavioral_summaries": 2,
+      "success_markers": 2,
+      "known_empty_targets": {},
+      "batch": "mvpa4s-locus",
+      "summaries": [
+        {
+          "total": 20,
+          "failed": 0,
+          "errors": 0,
+          "passed": 20,
+          "skipped": 0
+        },
+        {
+          "total": 20,
+          "failed": 0,
+          "errors": 0,
+          "passed": 20,
+          "skipped": 0
+        }
+      ],
+      "passed": 40,
+      "skipped": 0,
+      "declared_nonexecutions": [],
+      "no_test_messages": []
+    }
+  ],
+  "passed": 6196,
+  "skipped": 14,
+  "ignored": 0,
+  "failed_batch": "mvpa4s-imaging",
+  "raw_log_sha256": "76e82675c4b209198544f851c0ece74047a2005455d2c1140f29753af15020d8",
+  "meta": {
+    "schema_version": 1,
+    "started_utc": "2026-10-22T06:27:36.094613+00:00",
+    "finished_utc": "2026-10-22T07:23:41.967942+00:00",
+    "duration_seconds": 3365.892502,
+    "command": [
+      "bash",
+      "tools/ci/full-repository-tests.sh"
+    ],
+    "cwd": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/acceptance-clone-25",
+    "log": "/tmp/scalafim-eco-u6-full-34.log",
+    "exit_code": 1,
+    "child_returncode": 1,
+    "reason": "exited",
+    "detail": null,
+    "timeout_seconds": 21600.0,
+    "log_bytes": 788684
+  },
+  "failed_batch_errors": [
+    "[error] Expected ID character",
+    "[error] Not a valid command: surfaceJVM (similar: coverageJVM)",
+    "[error] Expected project ID",
+    "[error] Expected configuration",
+    "[error] Expected ':'",
+    "[error] Expected key",
+    "[error] Not a valid key: surfaceJVM (similar: sources)",
+    "[error] surfaceJVM/test",
+    "[error]           ^"
+  ],
+  "qualification": "17 completed batches accepted as a prefix, failed18th batch has no test execution; no complete full-campaign pass."
+}

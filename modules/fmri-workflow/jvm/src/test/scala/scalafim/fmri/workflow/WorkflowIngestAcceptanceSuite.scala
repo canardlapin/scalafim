@@ -1,17 +1,17 @@
 package scalafim.fmri.workflow
 
 import gale.linalg.DMat
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 
 import munit.FunSuite
 import bids4s.*
 import bids4s.io.BidsProjectLoader
 import scalafim.dataset.*
 import scalafim.dataset.io.NiftiStagingCache
-import scalafim.image.{PrimitiveBuffers, SomeSampleSpace, SomeNeuroVolume}
-import scalafim.image.SomeScalarVolume
-import scalafim.image.io.Nifti
-import scalafim.image.world.{SpaceEvidence, TemplateName, WorldSpace}
+import neuroim4s.image.{SomeNeuroVolume}
+import neuroim4s.image.SomeScalarVolume
+import neuroim4s.image.io.Nifti
+import neuroim4s.spaces.{SpaceEvidence, TemplateName, WorldSpace}
 import image4s.nifti.{NiftiCoordinateSystem, NiftiWriteOptions}
 
 import java.nio.{ByteBuffer, ByteOrder}
@@ -95,7 +95,7 @@ class WorkflowIngestAcceptanceSuite extends FunSuite:
       root.resolve("derivatives/fmriprep/dataset_description.json"),
       """{"Name":"fMRIPrep","BIDSVersion":"1.10.0","DatasetType":"derivative"}"""
     )
-    val space = SampleSpaces.inWorld(SampleSpaces(Vector(2, 2, 1)), WorldSpace.Template(TemplateName.unsafe("MNI152NLin2009cAsym"))).toOption.get
+    val space = SampleSpaces.inWorld(SampleSpaces(Vector(2, 2, 1)), WorldSpace.Template(TemplateName("MNI152NLin2009cAsym").toOption.get)).toOption.get
 
     Vector("01", "02").foreach { run =>
       val prefix = s"sub-01_task-demo_run-$run"
@@ -139,7 +139,7 @@ class WorkflowIngestAcceptanceSuite extends FunSuite:
       Nifti
         .writeVolume(
           func.resolve(s"${derivativePrefix}_desc-brain_mask.nii"),
-          SomeScalarVolume.unsafeCopyFromCanonicalArray(PrimitiveBuffers.fromArray(maskValues), space, s"mask-$run"),
+          SomeScalarVolume.unsafeCopyFromCanonicalArray((maskValues).clone(), space, s"mask-$run"),
           NiftiWriteOptions.default.withCoordinateSystem(NiftiCoordinateSystem.Mni152)
         )
         .fold(error => fail(error.message), _ => ())

@@ -1,0 +1,39 @@
+{
+  "source_head": "8c1de275700d1bd4fbc06d07ced43f7423208b40",
+  "source_clean_after_gate": true,
+  "source_and_input_manifest_unchanged": true,
+  "input_manifest": "raw-chart-inputs.sha256.json",
+  "input_manifest_sha256": "b90e3bac21f4758d36657366da46e5c7b18c548c4d9acbfa233268fb3115eb59",
+  "target": "scalafimCompileAll",
+  "platforms": [
+    "JVM",
+    "Scala.js"
+  ],
+  "exit_code": 0,
+  "compiler_warnings": [],
+  "raw_log": "compile-all-delta-01.log",
+  "raw_log_sha256": "50ee622e734eb0f28577e32c2e06eb17532b2a34797083e5ceb0684a1e93c427",
+  "metadata": {
+    "schema_version": 1,
+    "started_utc": "2026-10-19T17:19:08.214806+00:00",
+    "finished_utc": "2026-10-19T17:28:11.118288+00:00",
+    "duration_seconds": 542.900744,
+    "command": [
+      "python3",
+      "tools/build/sbt-warm",
+      "scalafimCompileAll"
+    ],
+    "cwd": "/private/tmp/scalafim-u3-javafx-20261019",
+    "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/topology-cutover-20261019/compile-all-delta-01.log",
+    "exit_code": 0,
+    "child_returncode": 0,
+    "reason": "exited",
+    "detail": null,
+    "timeout_seconds": 1800.0,
+    "log_bytes": 20192
+  },
+  "limits": [
+    "Compilation only. Runtime tests are recorded separately.",
+    "Explicit unpublished mesh4s local override. No hosted CI or publication."
+  ]
+}

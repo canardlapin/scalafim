@@ -1,0 +1,18 @@
+{
+  "reviewer": "volume_view_astra_review",
+  "verdict": "APPROVE bounded caller qualification",
+  "probeSource": "27792846f99ee64ccd286698be77e93a55465c79",
+  "productionSource": "5f7bee9521d5b03fff9546488a12f6d00881b4d9",
+  "verified": [
+    "All8retained gate log/meta hashes",
+    "All11compilerJAR and17emitted-file hashes",
+    "New classes first, then exact148frozen entries",
+    "Frozen legacyfixture",
+    "All4PASSoutputs",
+    "27direct provider files in32boundaryledger"
+  ],
+  "clarificationApplied": "SpatialDesktopMigrationProbe directly exercises StoredNamed, not FactorialResultPresentation. Factorial has reviewed delegation to qualified DetachedSpatialMap/ResultGeometry conversion, no direct runtime claim.",
+  "ledgerSha256": "6aac7ab06e70be10b6eabbeaec54ef0359c88da2431a2c96ce334a8af70df368",
+  "qualificationSha256": "1a652368c94dc7a0324ad49801b6364021d11512b753d7d4041a5b3cd632760b",
+  "remaining": "Full Root22batch campaign and final exact evidence/source checkpoint; not I1 closure."
+}

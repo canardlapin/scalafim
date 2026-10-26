@@ -1,0 +1,13 @@
+{
+  "provider": "neuroatlas4s",
+  "before": "2b6a1a4c1a811d77316b5e2f6a1fdb9a06e5cb78",
+  "published": "fe1e8f29942e7f0bc3b570e63b8ec4b4b5d8cd98",
+  "neuroim4s": "21df6416e4e28e97cfbe39e20d7303349be7e4cf",
+  "tests": {
+    "volumeJVM": 24,
+    "volumeJS": 24,
+    "volumeIoJVM": 26
+  },
+  "commandCaveat": "atlas-layout-pin-01 passed both volume suites before invalid ioJVM target; corrected volumeIoJVM26passed in atlas-layout-io-02",
+  "nonForce": true
+}

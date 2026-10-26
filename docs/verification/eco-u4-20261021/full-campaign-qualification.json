@@ -1,0 +1,132 @@
+{
+  "schema": "scalafim.eco-u4-full-campaign.v1",
+  "root_source": "18c7b7725629a78cee5955df5c4448c4863dcb62",
+  "reviewed_source": "8998f93be048df27d0bb7e2126bd589a4a59ae30",
+  "provider_pin": "fe9ce3272fce97c4c3b400b373db2a2336c24a7d",
+  "bounded_batches_completed": 25,
+  "nonempty_result_tasks": 118,
+  "counts": {
+    "total": 11858,
+    "passed": 11840,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 18,
+    "ignored": 5
+  },
+  "batches_including_analysis_js_resumption": [
+    "phrf-comparison-jvm",
+    "phrf-comparison-js",
+    "core-jvm",
+    "core-js",
+    "neuroim",
+    "neuroim-transforms",
+    "neuroim-routing",
+    "neuroim-view-jvm",
+    "neuroim-view-js",
+    "neuroatlas-volume",
+    "mvpa4s-core",
+    "mvpa4s-predictive",
+    "mvpa4s-locus",
+    "image-surface-jvm",
+    "image-surface-js",
+    "data-jvm",
+    "data-js",
+    "estimates-jvm",
+    "estimates-js",
+    "analysis-jvm",
+    "analysis-js",
+    "analysis-js-tail",
+    "downstream-jvm",
+    "downstream-js",
+    "examples",
+    "examples-js"
+  ],
+  "complete": true,
+  "resume": "resume-campaign.py",
+  "adverse_evidence": [
+    "Campaign10 passed92nonempty task results then stopped during mvpaPipelineJS compilation with launcher NoClassDefFoundError jline.TerminalFactory. The boot jar remained intact with class present and zip verification; no caches deleted.",
+    "Resume11 fresh processes at identical fixed source completed26remaining nonempty results; no completed assertions were substituted with smoke tests.",
+    "18existing skips and5ignored law cases remain explicit, including scientific opt-ins and unmet admission caveats; JavaFX display suites excluded from headless campaign.",
+    "LWU observed admission93percent and81percent versus95percent target remain unmet scientific evidence, not erased by software tests."
+  ],
+  "jline_verified_sha256": "a0dbaa781954fa5ed015706d12d0044e018a5705da6791ec98a51fb365d66cb0",
+  "limits": "Local software qualification and previously bounded source review; no hostedCI/main merge, new scientific calibration, native visual or performance admission. Old adverse evidence retained.",
+  "logs": [
+    {
+      "path": "scalafim-eco-u4-full-campaign-10.log.gz",
+      "raw_sha256": "ba238a4f2980dd5c933dab8196504c42f421bbd7643bbe685c646677fe04dafb",
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-21T17:25:54.686128+00:00",
+        "finished_utc": "2026-10-21T21:05:27.884374+00:00",
+        "duration_seconds": 7676.72197,
+        "command": [
+          "env",
+          "SCALAFIM_SBT_CACHE_ROOT=/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/root-full-campaign-cache-10",
+          "COURSIER_CACHE=/Users/bbuchsbaum/Library/Caches/Coursier/v1",
+          "JAVA_HOME=/Users/bbuchsbaum/Library/Java/JavaVirtualMachines/openjdk-22/Contents/Home",
+          "JAVA_TOOL_OPTIONS=-Djava.io.tmpdir=/private/tmp/scalafim-eco-u4-ci-20261021",
+          "bash",
+          "tools/ci/full-repository-tests.sh"
+        ],
+        "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020",
+        "log": "/tmp/scalafim-eco-u4-full-campaign-10.log",
+        "exit_code": 1,
+        "child_returncode": 1,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 18000.0,
+        "log_bytes": 1638834
+      }
+    },
+    {
+      "path": "scalafim-eco-u4-full-resume-11.log.gz",
+      "raw_sha256": "4b77d290fe3d7f2c8062ee99ab3ac36dd53137e7afa7c635cd1e676c4a33bb50",
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-21T21:10:13.253898+00:00",
+        "finished_utc": "2026-10-21T21:23:46.200520+00:00",
+        "duration_seconds": 813.058566,
+        "command": [
+          "env",
+          "COURSIER_CACHE=/Users/bbuchsbaum/Library/Caches/Coursier/v1",
+          "JAVA_HOME=/Users/bbuchsbaum/Library/Java/JavaVirtualMachines/openjdk-22/Contents/Home",
+          "JAVA_TOOL_OPTIONS=-Djava.io.tmpdir=/private/tmp/scalafim-eco-u4-ci-20261021",
+          "python3",
+          "/tmp/scalafim-u4-resume-11.py"
+        ],
+        "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020",
+        "log": "/tmp/scalafim-eco-u4-full-resume-11.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 7200.0,
+        "log_bytes": 127520
+      }
+    },
+    {
+      "path": "scalafim-eco-u4-compile-all-09.log.gz",
+      "raw_sha256": "c7ae81a7f534d800cb97e6cbbe166fce83337c75ee575b7d69c0fd4020303c28",
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-21T17:15:44.636595+00:00",
+        "finished_utc": "2026-10-21T17:20:22.001046+00:00",
+        "duration_seconds": 277.361624,
+        "command": [
+          "python3",
+          "tools/build/sbt-warm",
+          "scalafimCompileAll"
+        ],
+        "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020",
+        "log": "/tmp/scalafim-eco-u4-compile-all-09.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 2400.0,
+        "log_bytes": 7790
+      }
+    }
+  ]
+}

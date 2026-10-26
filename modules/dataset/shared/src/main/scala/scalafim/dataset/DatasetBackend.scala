@@ -1,22 +1,22 @@
 package scalafim.dataset
 
 import scalafim.fmri.hrf.design.SamplingFrame
-import scalafim.image.Mask
+import neuroim4s.image.Mask
 
 trait DatasetBackend:
   def id: DatasetId
   def shape: DatasetShape
   def mask: Mask.MaskVol
   def voxelDomain: VoxelDomain =
-    VoxelDomain.fromMask(mask, shape).fold(error => throw new IllegalArgumentException(error.message), identity)
+    VoxelDomain.fromMask(mask, shape).fold(error => throw new IllegalArgumentException(error.message), value => value)
   def metadata: DatasetMetadata
   lazy val acquisitionDomain: DatasetAcquisitionDomain =
     DatasetAcquisitionDomain
       .semantic(id, shape, voxelDomain)
-      .fold(error => throw new IllegalArgumentException(error.message), identity)
+      .fold(error => throw new IllegalArgumentException(error.message), value => value)
   def readEither(selection: DataSelection = DataSelection.All): Either[DatasetError, FmriSeries]
   def read(selection: DataSelection = DataSelection.All): FmriSeries =
-    readEither(selection).fold(error => throw new IllegalArgumentException(error.message), identity)
+    readEither(selection).fold(error => throw new IllegalArgumentException(error.message), value => value)
 
 trait DatasetSeriesReader:
   def dataset: FmriDataset
@@ -29,7 +29,7 @@ trait DatasetSeriesReader:
       selection: DataSelection = DataSelection.All
   ): FmriSeries =
     seriesEither(selection)
-      .fold(error => throw new IllegalArgumentException(error.message), identity)
+      .fold(error => throw new IllegalArgumentException(error.message), value => value)
 
 class FmriDataset private[dataset] (
     val id: DatasetId,
@@ -43,7 +43,7 @@ class FmriDataset private[dataset] (
   lazy val acquisitionDomain: DatasetAcquisitionDomain =
     DatasetAcquisitionDomain
       .semantic(id, shape, voxelDomain)
-      .fold(error => throw new IllegalArgumentException(error.message), identity)
+      .fold(error => throw new IllegalArgumentException(error.message), value => value)
 
   def resolve(
       selection: DataSelection = DataSelection.All
@@ -60,7 +60,7 @@ class FmriDataset private[dataset] (
     yield partitions
 
   def runPartitions(selection: DataSelection = DataSelection.All): Vector[DatasetRunPartition] =
-    runPartitionsEither(selection).fold(error => throw new IllegalArgumentException(error.message), identity)
+    runPartitionsEither(selection).fold(error => throw new IllegalArgumentException(error.message), value => value)
 
 object FmriDataset:
   extension (dataset: FmriDataset)
@@ -77,7 +77,7 @@ object FmriDataset:
         selection: DataSelection = DataSelection.All
     ): FmriSeries =
       seriesEither(selection)
-        .fold(error => throw new IllegalArgumentException(error.message), identity)
+        .fold(error => throw new IllegalArgumentException(error.message), value => value)
 
   def describe(
       id: DatasetId,
@@ -192,7 +192,7 @@ object FmriDataset:
       events: DatasetEvents = DatasetEvents.Empty
   ): SynchronousFmriDataset =
     open(backend, samplingFrame, runIds, events)
-      .fold(error => throw new IllegalArgumentException(error.message), identity)
+      .fold(error => throw new IllegalArgumentException(error.message), value => value)
 
   def unsafe(
       backend: DatasetBackend,
@@ -202,7 +202,7 @@ object FmriDataset:
     DatasetTimeAxis
       .fromSamplingFrame(samplingFrame)
       .flatMap(timeAxis => open(backend, samplingFrame, timeAxis.runIds, events))
-      .fold(error => throw new IllegalArgumentException(error.message), identity)
+      .fold(error => throw new IllegalArgumentException(error.message), value => value)
 
   def unsafe(
       backend: DatasetBackend,

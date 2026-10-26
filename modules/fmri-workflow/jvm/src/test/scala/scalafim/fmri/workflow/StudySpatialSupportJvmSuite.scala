@@ -6,13 +6,22 @@ import java.util.zip.GZIPOutputStream
 import scala.jdk.CollectionConverters.*
 import scalafim.dataset.*
 import scalafim.dataset.io.{NiftiResponseBlockSource, NiftiStagingCache}
-import scalafim.image.{SampleSpaces, SomeSampleSpace, SomeScalarVolume, SomeScalarSeries}
-import scalafim.image.SampleSpaces.*
-import scalafim.image.world.{WorldSpace, SpaceEvidence}
-import scalafim.image.io.Nifti
+import image4s.SomeSampleSpace
+import neuroim4s.image.{SampleSpaces, SomeScalarVolume, SomeScalarSeries}
+import neuroim4s.image.SampleSpaces.*
+import neuroim4s.spaces.{WorldSpace, SpaceEvidence}
+import neuroim4s.image.io.Nifti
 import image4s.nifti.{NiftiWriteOptions, NiftiCoordinateSystem}
 
 class StudySpatialSupportJvmSuite extends munit.FunSuite:
+  // InterruptedException is deliberately outside NonFatal/MUnit.intercept.
+  private def expectCancellation(operation: => Any): Unit =
+    var cancelled = false
+    try { val _ = operation }
+    catch case _: InterruptedException => cancelled = true
+    assert(cancelled, "interruption must propagate instead of becoming a storage result")
+    assert(Thread.currentThread().isInterrupted, "the caller's interrupt flag must remain set")
+
   // Parent voxel (40,60,40) of the ds000001 MNI2009c 2 mm grid.
   private val world = WorldSpace.template("MNI152NLin2009cAsym").toOption.get
   private val evidence = SpaceEvidence(bidsSpace = Some("MNI152NLin2009cAsym"))
@@ -74,9 +83,9 @@ class StudySpatialSupportJvmSuite extends munit.FunSuite:
         Vector(292 -> -16.5, 308 -> -12.5, 324 -> 1.5).foreach { (offset, expected) =>
           assertEqualsDouble(bytes.getFloat(offset).toDouble, expected, 0.0)
         }
-        val placed = Nifti.readHeader(path).left.map(_.message).flatMap(_.spaceIn(evidence).left.map(_.message))
+        val placed = image4s.nifti.Nifti.readHeader(path).left.map(_.message).flatMap(header => Nifti.spaceIn(header, evidence).left.map(_.message))
           .fold(fail(_), identity)
-        val headerShape = DatasetShape.unsafe(placed.spatialSpace, 1)
+        val headerShape = DatasetShape.unsafe(placed.typed.spatialOnly, 1)
         assert(image4s.geometry.Grid.exactCongruence(headerShape.grid, DatasetShape.unsafe(space, 1).grid).isRight)
       }
       val study = catalog(unit("02", Vector(c, compress(d))), unit("01", Vector(a, b)))
@@ -122,7 +131,7 @@ class StudySpatialSupportJvmSuite extends munit.FunSuite:
       val wrong = write(root, "shifted.nii", Array.fill(6)(1.0), shifted)
       val multi = root.resolve("multiple.nii")
       Nifti.writeSeries(multi, SomeScalarSeries.unsafeCopyFromCanonicalArray(
-        Array.fill(12)(1.0), space.addDim(ProviderAxes.time(2)), "multiple"), options).fold(error => fail(error.message), identity)
+        Array.fill(12)(1.0), space.typed.appendNonSpatial(ProviderAxes.time(2)).fold(error => throw new IllegalArgumentException(error.message), identity), "multiple"), options).fold(error => fail(error.message), identity)
       Vector(wrong, multi).foreach { path =>
         val error = StudySpatialSupportJvm.compile(catalog(unit("01", Vector(path))), limits, _ => Right(evidence)).left.toOption.get
         assert(error.message.contains("mask header"))
@@ -150,3 +159,39 @@ class StudySpatialSupportJvmSuite extends munit.FunSuite:
       assert(preserved, "cancellation must preserve the caller's interrupt flag")
     }
   }
+
+  test("an interrupt during opening overrides a returned storage failure"):
+    withRoot { root =>
+      var evidenceCalls = 0
+      try
+        expectCancellation {
+          StudySpatialSupportJvm.compile(catalog(unit("01", Vector(root.resolve("missing.nii")))), limits, _ =>
+            evidenceCalls += 1
+            Thread.currentThread().interrupt()
+            Left(DatasetError.StorageFailure("cancelled while obtaining evidence")))
+        }
+        assert(Thread.currentThread().isInterrupted)
+        assertEquals(evidenceCalls, 1)
+      finally { val _ = Thread.interrupted() }
+    }
+
+  test("completed read results preserve interruption and prevent the next operation"):
+    for result <- Vector(Left(DatasetError.StorageFailure("closed by interrupt")), Right(())) do
+      var operations = 0
+      try
+        expectCancellation {
+          StudySpatialSupportJvm.withCancellationCheck {
+            operations += 1
+            Thread.currentThread().interrupt()
+            result
+          }
+        }
+        assert(Thread.currentThread().isInterrupted)
+        expectCancellation {
+          StudySpatialSupportJvm.withCancellationCheck {
+            operations += 1
+            Right(())
+          }
+        }
+        assertEquals(operations, 1)
+      finally { val _ = Thread.interrupted() }

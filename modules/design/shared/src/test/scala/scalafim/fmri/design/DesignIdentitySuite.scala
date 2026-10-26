@@ -12,11 +12,9 @@ class DesignIdentitySuite extends munit.FunSuite:
       "fir" -> design(Hrfs.fir(3, Seconds(6.0)), Vector(8, 8))
     ).foreach { case (name, schema) =>
       assertEquals(schema.columnIds.map(_.value), columnIdGoldens(name))
-      exactFingerprintGoldens.get(name).foreach(expected => assertEquals(schema.fingerprint.value, expected))
-      if name == "fir" then
-        val previousAudit = schema.audit.copy(policyReceipts = schema.audit.policyReceipts.filterNot(_.name == "convolution"))
-        assertEquals(DesignFingerprint.from(schema.matrix, schema.rows, schema.columns, previousAudit).value,
-          "design-schema/v2:8f2ee67682098523")
+      exactFingerprintGoldens.get(name).foreach(expected =>
+        assertEquals(DesignFingerprint.legacyV2Value(schema.matrix, schema.rows, schema.columns, schema.audit), expected))
+      assert(schema.fingerprint.value.startsWith("design-schema/v3:"))
     }
   }
 
@@ -34,6 +32,42 @@ class DesignIdentitySuite extends munit.FunSuite:
     val audit = DesignAudit(rankPreview = Some(RankPreview.Available(preview)))
     assert(audit.canonical.contains("rank=PivotedQr:1:1:1:ScaleAware:4457293557087583675:pivots=x:independent=x:aliased=:diagonal=4611686018427387904:condition=4607182418800017408"))
   }
+
+  test("ordinary convolved legacy receipts exclude only the new source, recipe and support evidence"):
+    val original = design(Hrfs.fir(3, Seconds(6.0)), Vector(8, 8))
+    val legacy = "design-schema/v2:8f2ee67682098523"
+    assert(original.audit.responseSupport.isEmpty)
+    assertEquals(original.audit.policyReceipts.map(_.name), Vector("hrf"))
+    assert(original.audit.convolutionReceipts.nonEmpty)
+    def withAudit(audit: DesignAudit): DesignSchema =
+      DesignSchema.validated(original.matrix, original.rows, original.columns, audit).toOption.get
+    val source = SourceEventRow(TermId.unsafe("task"), 0, 2, 0, Seconds(1.0), Seconds(0.0))
+    val changedSources = withAudit(original.audit.copy(sourceEvents = Vector(source)))
+    val recipe = original.audit.convolutionReceipts.head
+    val changedRecipe = withAudit(original.audit.copy(convolutionReceipts =
+      recipe.copy(recipe = recipe.recipe + ";different-captured-recipe") +: original.audit.convolutionReceipts.tail))
+    val request = ResponseSupportRequest(original.rows.selectedRows, EventSupportPolicy.RejectUnobservedAllowPartial)
+    val support = EventSupportReceipt(Some("task"), request, Vector.empty)
+    val changedSupport = withAudit(original.audit.copy(responseSupport = Vector(support)))
+    for current <- Vector(original, changedSources, changedRecipe, changedSupport) do
+      assertEquals(DesignFingerprintCompatibility.compareSavedValue(current, legacy),
+        Right(SavedDesignFingerprintMatch.LegacyV2DigestMatch))
+    assertEquals(Vector(original, changedSources, changedRecipe, changedSupport).map(_.fingerprint).distinct.size, 4)
+    val combined = withAudit(changedSources.audit.copy(convolutionReceipts = changedRecipe.audit.convolutionReceipts,
+      responseSupport = Vector(support)))
+    val encoding = combined.audit.canonical
+    assert(encoding.indexOf(";source-events=") < encoding.indexOf(";convolution="))
+    assert(encoding.indexOf(";convolution=") < encoding.indexOf(";response-support="))
+    val changed = original.matrix.data.clone()
+    changed(0) = java.lang.Double.longBitsToDouble(1L)
+    val matrix = scalafim.fmri.hrf.linalg.Mat.unsafe(original.matrix.rows, original.matrix.cols, changed)
+    val changedMatrix = DesignSchema.validated(matrix, original.rows, original.columns, original.audit).toOption.get
+    val changedLayout = DesignSchema.validated(original.matrix,
+      original.rows.copy(acquisitionTimes = original.rows.acquisitionTimes.updated(0, Seconds(-1.0))),
+      original.columns, original.audit).toOption.get
+    val changedHistoricalAudit = withAudit(original.audit.copy(policyReceipts = Vector(PolicyReceipt("old-policy", "changed"))))
+    for value <- Vector(changedMatrix, changedLayout, changedHistoricalAudit) do
+      assertEquals(DesignFingerprintCompatibility.compareSavedValue(value, legacy), Left(SavedDesignFingerprintError.Mismatch))
 
   test("legacy column identities are incompatible and a one-ULP change retains distinct content identity") {
     val schema = design(Hrfs.fir(3, Seconds(6.0)), Vector(8, 8))
@@ -81,11 +115,8 @@ class DesignIdentitySuite extends munit.FunSuite:
     )
     val fixedAudit = compiled.audit.copy(rankPreview = Some(RankPreview.Available(rank)))
     val snapshot = DesignFingerprint.from(matrix, compiled.rows, compiled.columns, fixedAudit)
-    assertEquals(snapshot.value, "design-schema/v2:67677aa049219866")
-    // The recovered recipe is the only identity change; preserve the old golden too.
-    val previousAudit = fixedAudit.copy(policyReceipts = fixedAudit.policyReceipts.filterNot(_.name == "convolution"))
-    assertEquals(DesignFingerprint.from(matrix, compiled.rows, compiled.columns, previousAudit).value,
-      "design-schema/v2:b27079652d98235d")
+    assertEquals(DesignFingerprint.legacyV2Value(matrix, compiled.rows, compiled.columns, fixedAudit), "design-schema/v2:b27079652d98235d")
+    assert(snapshot.value.startsWith("design-schema/v3:"))
   }
 
   /** SPMG columns are sums of samples of exp/pow terms. java.lang.Math may return a different result within
@@ -124,7 +155,7 @@ class DesignIdentitySuite extends munit.FunSuite:
     * is pinned from fixed bits in "realistic SPMG structural identity is distinct from its numerical content".
     */
   private val exactFingerprintGoldens = Map(
-    "fir" -> "design-schema/v2:ed9b845071fa9cb5"
+    "fir" -> "design-schema/v2:8f2ee67682098523"
   )
 
   // Literal wire-format outputs; independently FNV-checked.

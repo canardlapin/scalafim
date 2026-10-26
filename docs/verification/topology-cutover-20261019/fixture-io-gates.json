@@ -1,0 +1,33 @@
+{
+  "source_head": "77257a7e0e1a4b8983c22537fd05300cc815f627",
+  "parent": "8c1de275700d1bd4fbc06d07ced43f7423208b40",
+  "changed_inputs": [
+    "examples/surface-jvm/src/main/resources/surface/tetra_lh_midthickness.surf.gii"
+  ],
+  "scope": "Only one triangle corner order changes: 0,1,3 -> 0,3,1. The four coordinates and both face rows remain; shared edge traverses in opposite directions. Existing IO/parcel assertions unchanged. No Scala source change. JVM-only IO example has no Scala.js target.",
+  "target": "surfaceExamplesJVM/test",
+  "passed": 3,
+  "exit_code": 0,
+  "source_clean_after_gate": true,
+  "raw_log": "surface-io-example-fixture.log",
+  "raw_log_sha256": "7b761d087a00087cb4bd6c87abd83a2569d1c87aaddf928f6c7b91f26cd125ab",
+  "metadata": {
+    "schema_version": 1,
+    "started_utc": "2026-10-19T17:30:41.193434+00:00",
+    "finished_utc": "2026-10-19T17:32:02.972592+00:00",
+    "duration_seconds": 81.778503,
+    "command": [
+      "python3",
+      "tools/build/sbt-warm",
+      "surfaceExamplesJVM/test"
+    ],
+    "cwd": "/private/tmp/scalafim-u3-javafx-20261019",
+    "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/topology-cutover-20261019/surface-io-example-fixture.log",
+    "exit_code": 0,
+    "child_returncode": 0,
+    "reason": "exited",
+    "detail": null,
+    "timeout_seconds": 1200.0,
+    "log_bytes": 10229
+  }
+}

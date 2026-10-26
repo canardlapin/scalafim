@@ -1,6 +1,6 @@
 package scalafim.examples.atlas
 
-import scalafim.atlas.*
+import neuroatlas4s.*
 
 final case class AtlasDescriptorRow(
   id: String,

@@ -1,10 +1,10 @@
 package scalafim.fmri.motion.benchmark
 
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.SampleSpaces.*
 
 import scalafim.fmri.motion.*
 import scalafim.fmri.motion.io.MotionReportWriter
-import scalafim.image.*
+import neuroim4s.image.*
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path}
@@ -102,7 +102,7 @@ object MotionBenchmark:
   private def timeAxis(extent: Int): image4s.Axis =
     image4s.Axis
       .ordinal("time", image4s.AxisKind.Time, extent)
-      .fold(error => throw new IllegalArgumentException(error.message), identity)
+      .fold(error => throw new IllegalArgumentException(error.message), value => value)
 
   val RawColumns: Vector[String] =
     Vector(
@@ -309,7 +309,7 @@ object MotionBenchmark:
     val ny = dims(1)
     val nz = dims(2)
     val nSpatial = dims.product
-    val data = PrimitiveBuffers.tabulate[Double](nSpatial * scenario.nVolumes) { ordinal =>
+    val data = Array.tabulate[Double](nSpatial * scenario.nVolumes) { ordinal =>
       val t = ordinal % scenario.nVolumes
       val lin = ordinal / scenario.nVolumes
       val k = lin % nz
@@ -323,7 +323,9 @@ object MotionBenchmark:
       val noise = scenario.noiseScale * math.sin(12.9898 * (lin + 1).toDouble + 78.233 * (t + 1).toDouble)
       nuisance * base + noise
     }
-    val space = SampleSpaces(dims, spacing = Some(Vector(2.0, 2.0, 2.0))).addDim(timeAxis(scenario.nVolumes))
+    val space = SampleSpaces(dims, spacing = Some(Vector(2.0, 2.0, 2.0))).typed
+      .appendNonSpatial(timeAxis(scenario.nVolumes))
+      .fold(error => throw new IllegalArgumentException(error.message), value => value)
     SomeNeuroSeries.unsafeCopyFromCanonicalArray[Double, image4s.Continuous](
       data,
       space,
@@ -391,12 +393,12 @@ object MotionBenchmark:
     else value
 
   private def tsnr(run: SomeScalarSeries[Double]): Double =
-    val nSpatial = run.space.spatialDims.product
+    val nSpatial = run.space.grid.shape.product
     val nt = run.nVolumes
     val values = Vector.newBuilder[Double]
     var lin = 0
     while lin < nSpatial do
-      val voxel = run.space.indexToVoxel3D(lin)
+      val voxel = Indexing.indexToGrid(SpatialDims.unsafeFromVector(run.grid.shape), lin)
       var sum = 0.0
       var t = 0
       while t < nt do

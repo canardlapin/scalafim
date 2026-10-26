@@ -2,7 +2,7 @@ package scalafim.fmri.fit
 
 import gale.linalg.{DMat, Matrix}
 import scalafim.dataset.{DataSelection, DatasetId, FmriDataset, InMemoryDatasetBackend, IndexSelection}
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 import scalafim.fmri.ar.TimeSegments
 import scalafim.fmri.design.baseline.{BaselineBasis, BaselineModel, Intercept}
 import scalafim.fmri.design.event.EventModel

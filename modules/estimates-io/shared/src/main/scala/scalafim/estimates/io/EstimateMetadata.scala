@@ -2,8 +2,8 @@ package scalafim.estimates.io
 
 import scalafim.estimates.*
 import scalafim.archive.ContentDigest
-import scalafim.image.SampleSpaces
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.SampleSpaces
+import neuroim4s.image.SampleSpaces.*
 import image4s.geometry.{Affine, D3}
 import upickle.default.*
 import scala.util.control.NonFatal
@@ -117,7 +117,7 @@ object EstimateMetadata:
   private given codecEstimateDomain: ReadWriter[EstimateDomain] = readwriter[ujson.Value].bimap(
     domain => ujson.Obj(
       "Dimensions" -> writeJs(domain.dimensions),
-      "VoxelToWorldRASMillimetres" -> writeJs(domain.space.affineD3.toOption.get.rowMajor),
+      "VoxelToWorldRASMillimetres" -> writeJs(domain.space.requireD3.map(_.grid.indexToFrame).toOption.get.rowMajor),
       "WorldFrame" -> domain.worldFrame,
       "Support" -> writeJs(domain.support)
     ),

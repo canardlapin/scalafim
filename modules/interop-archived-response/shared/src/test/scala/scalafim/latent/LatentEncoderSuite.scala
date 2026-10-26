@@ -1,11 +1,10 @@
 package scalafim.latent
 
-import scalafim.image.SampleSpaces
-import scalafim.image.SampleSpaces.spatialDims
+import neuroim4s.image.SampleSpaces
 
 import scalafim.archive.lna.{SharedBasisArtifact, SharedBasisId, SharedBasisMask}
 import scalafim.archive.lna.GaleArchiveTestData
-import scalafim.image.SomeSampleSpace
+import image4s.SomeSampleSpace
 import gale.linalg.DMat
 
 class LatentEncoderSuite extends munit.FunSuite:
@@ -314,7 +313,7 @@ class LatentEncoderSuite extends munit.FunSuite:
       LatentEncodingSpec
         .radialBasis(
           radialBasis = radial,
-          maskDims = space.spatialDims,
+          maskDims = space.grid.shape,
           basisId = basisId,
           center = false,
           metadata = Map("subject" -> "sub-hrbf"),
@@ -326,7 +325,7 @@ class LatentEncoderSuite extends munit.FunSuite:
         .encode(
           data = data,
           radialBasis = radial,
-          maskDims = space.spatialDims,
+          maskDims = space.grid.shape,
           basisId = basisId,
           center = false,
           metadata = Map("subject" -> "sub-hrbf"),

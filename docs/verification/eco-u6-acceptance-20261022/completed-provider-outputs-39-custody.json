@@ -1,0 +1,68 @@
+{
+  "time": 1792649147.623612,
+  "items": [
+    {
+      "worktree": "/Users/bbuchsbaum/code/scala/neuroatlas4s-eco-surface-20261022",
+      "targets": [
+        "target",
+        "project/target",
+        "modules/neuroatlas4s-routing-io/jvm/target",
+        "modules/neuroatlas4s-routing/js/target",
+        "modules/neuroatlas4s-routing/jvm/target",
+        "modules/neuroatlas4s-surface-io/jvm/target",
+        "modules/neuroatlas4s-io/jvm/target",
+        "modules/neuroatlas4s-volume-io/jvm/target",
+        "modules/neuroatlas4s-volume/js/target",
+        "modules/neuroatlas4s-volume/jvm/target",
+        "modules/neuroatlas4s-surface/js/target",
+        "modules/neuroatlas4s-surface/jvm/target",
+        "modules/neuroatlas4s-core/js/target",
+        "modules/neuroatlas4s-core/jvm/target"
+      ],
+      "regular_files": 3274,
+      "archive": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-provider-outputs-39/neuroatlas4s-eco-surface-20261022.tar.gz",
+      "sha256": "adb71c7e2b6ecde1d7a860dd9d5e2b44720cc7645a1d7795584c35bddbfd5f43",
+      "all_regular_files_verified": true
+    },
+    {
+      "worktree": "/Users/bbuchsbaum/code/scala/neurosurf4s-eco-routing-20261021",
+      "targets": [
+        "target",
+        "project/target",
+        "modules/neurosurf4s-io/js/target",
+        "modules/neurosurf4s-io/jvm/target",
+        "modules/neurosurf4s-spatial-io/jvm/target",
+        "modules/neurosurf4s-volume/js/target",
+        "modules/neurosurf4s-volume/jvm/target",
+        "modules/neurosurf4s-core/js/target",
+        "modules/neurosurf4s-core/jvm/target",
+        "modules/neurosurf4s-volume-io/jvm/target",
+        "modules/neurosurf4s-routing/js/target",
+        "modules/neurosurf4s-routing/jvm/target",
+        "modules/neurosurf4s-spatial/js/target",
+        "modules/neurosurf4s-spatial/jvm/target",
+        "modules/neurosurf4s-routing-io/jvm/target"
+      ],
+      "regular_files": 5734,
+      "archive": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-provider-outputs-39/neurosurf4s-eco-routing-20261021.tar.gz",
+      "sha256": "85b12e555bd53c7f313bbae392380af9ac1e6b4fa5e9ac683ab6a545232898ad",
+      "all_regular_files_verified": true
+    },
+    {
+      "worktree": "/Users/bbuchsbaum/code/scala/plsneuro-eco-surface-atlas-20261022",
+      "targets": [
+        "target",
+        "project/target",
+        "modules/core/target",
+        "modules/desktop/target",
+        "modules/adapters/target",
+        "modules/glm-review-javafx/target",
+        "modules/glm-review/target"
+      ],
+      "regular_files": 5293,
+      "archive": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-provider-outputs-39/plsneuro-eco-surface-atlas-20261022.tar.gz",
+      "sha256": "742d1006a39f68fe6fe1ea57274daa5a5ae86a76d1574f82f83a459a86875dee",
+      "all_regular_files_verified": true
+    }
+  ]
+}

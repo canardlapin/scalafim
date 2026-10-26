@@ -1,0 +1,60 @@
+{
+  "schema": "scalafim.eco-external-consumer-integration.v1",
+  "source_commit": "f0c66f37a0802a2902a10b73a78ecd6039608d0b",
+  "evidence_commit": "d01f3cf1a065ad6979febec1a498023bc10f8e9b",
+  "repository": "https://github.com/canardlapin/plsneuro",
+  "branch": "eco/surface-atlas-20261022",
+  "qualification_path": "/Users/bbuchsbaum/code/scala/plsneuro-eco-surface-atlas-20261022/docs/verification/eco-surface-atlas-20261022/qualification.json",
+  "qualification_sha256": "4e9136c1e74271356c8f222dfd22ae052846f881c2ffa8904dc4282474152469",
+  "root_pin": "6a587c7f121b2766005558a5c27013c79ed825e0",
+  "headless_cases_passed": 113,
+  "selected_cases_passed": 11,
+  "tooling_tests_passed": 68,
+  "independent_review": {
+    "reviewer": "volume_view_astra_review",
+    "verdict": "APPROVE",
+    "candidate": "f0c66f37a0802a2902a10b73a78ecd6039608d0b",
+    "scope": "Bounded eco integration closure and scoped publication only",
+    "verified": {
+      "headless_cases": 113,
+      "selected_cases": 11,
+      "case_log_hashes": 124,
+      "captured_source_inputs": 714,
+      "frozen_runtime_inputs": 164,
+      "frozen_runtime_files": 34420
+    },
+    "limits_retained": true
+  },
+  "archives": [
+    {
+      "path": "/Volumes/My Passport for Mac/codex-work/plsneuro-eco-a1-20261022/qualification/f0c66f37-qualified-runtime-24.tar.gz",
+      "bytes": 183422407,
+      "sha256": "519dfec34f4ad2596500d7fd3c6da619f0fb930820d39849e90db89c291eb055",
+      "regular_files": 37923,
+      "referenced_by": [
+        "docs/verification/eco-surface-atlas-20261022/qualification.json",
+        "docs/verification/eco-surface-atlas-20261022/README.md"
+      ],
+      "scope": "Exact qualified frozen runtime, copied source snapshot, headless113 and selected11 original manifest cases; visual review pending."
+    },
+    {
+      "path": "/Volumes/My Passport for Mac/codex-work/plsneuro-eco-a1-20261022/qualification/retained-adverse-evidence-24.tar.gz",
+      "bytes": 176748218,
+      "sha256": "21264b3bbd782ed6eb0c96f9900ef33ce3c9215abd55044c86f786336011b79f",
+      "regular_files": 35169,
+      "referenced_by": [
+        "docs/verification/eco-surface-atlas-20261022/qualification.json",
+        "docs/verification/eco-surface-atlas-20261022/README.md"
+      ],
+      "scope": "Retained failed preflight, compile and old-runtime diagnostics; no failure waiver or qualification from these runs."
+    }
+  ],
+  "limits": [
+    "Scoped eco consumer branch; no merge or main adoption.",
+    "Selected consumer cases are not the complete native, brain-view or surface-runtime lanes.",
+    "macOS ARM64 JDK22, JavaFX24.0.1 with the recorded compatibility JAR, legacy ES2 path. Affine unqualified requests remain refused.",
+    "Headless visual-review status remains pending; no new visual or scientific/performance admission.",
+    "Prior I1 named latency failure, U4 calibration gaps and platform-dependent provider-affine-v1 IDs remain recorded in their original receipts.",
+    "Gate22 driver preflight counted the expanded full surface-runtime lane (14 combined cases), executed zero cases, and was corrected to the explicit planned11 cases in gate23."
+  ]
+}

@@ -1,8 +1,10 @@
 package scalafim.spatial
 
-import scalafim.image.SpatialPoint
-import scalafim.image.world.TemplateName
-import scalafim.spatial.NeurofunctorLawTriplets.*
+import neurosurf4s.routing.*
+
+import neuroim4s.image.SpatialPoint
+import neuroim4s.spaces.TemplateName
+import neurosurf4s.routing.NeurofunctorLawTriplets.*
 
 /** Replays every neurofunctor law triplet (STP P7.06) through ScalaFIM's spatial API.
   *
@@ -219,7 +221,7 @@ class NeurofunctorLawParitySuite extends munit.FunSuite:
         assertNotEquals(restricted.rows, int(t.out("n_rows")))
         assertEquals(restricted.qc.coverage.targetRows, roi)
         assertMatrix(s"${t.id} forward", linValue(restricted.forward(x)), t.out("forward"), tol)
-        assertMatrix(s"${t.id} full rows", linValue(full.forward(x)).selectRows(roi), t.out("full_forward"), tol)
+        assertMatrix(s"${t.id} full rows", linValue(full.forward(x)).gatherRows(roi), t.out("full_forward"), tol)
         assertEqualsDouble(restricted.qc.coverage.fraction, scalar(t.out("coverage")), tol)
         val check = value(SpatialQc.roiRestrictionLaw(full, restricted, roi, x, value(QcTolerance(tol))))
         assert(check.passed, clue = check)
@@ -263,7 +265,7 @@ class NeurofunctorLawParitySuite extends munit.FunSuite:
         val target = g.domain(t.arg("target")).id
         val probes = points(t.in("probes"))
         val count = int(t.out("routes"))
-        val routes = (1 to count).toVector.map { i =>
+        val routes = 1.to(count).toVector.map { i =>
           (ids(t.out(s"r${i}_path")), scalar(t.out(s"r${i}_cost")), points(t.out(s"r${i}_pulled")),
             scalar(t.out(s"r${i}_max_vs_cheapest")), scalar(t.out(s"r${i}_rms_vs_cheapest")))
         }

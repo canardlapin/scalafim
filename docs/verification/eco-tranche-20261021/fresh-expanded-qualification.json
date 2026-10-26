@@ -1,0 +1,85 @@
+{
+  "sourceCommit": "5db208c81b5494337d918cbc5cb6d579ae8c7c50",
+  "freshCheckout": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/plsneuro-integration-qualified-02",
+  "sourceCleanAfter": true,
+  "privateProviders": {
+    "image4s": {
+      "checkout": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/qualified-expanded-providers/image4s",
+      "revision": "aef5e223169f0831c942694c4b109ab20d152217",
+      "sourceCleanAfter": true
+    },
+    "bids4s": {
+      "checkout": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/qualified-expanded-providers/bids4s",
+      "revision": "a33678390614a91fadbdef13f22970e78c26e091",
+      "sourceCleanAfter": true
+    },
+    "scalafim": {
+      "checkout": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/qualified-expanded-providers/scalafim",
+      "revision": "b898b69aa94eb063880caff8bd27e6ea4177b9fe",
+      "sourceCleanAfter": true
+    }
+  },
+  "privateGlobal": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/fresh-expanded-global",
+  "execution": {
+    "schema_version": 1,
+    "started_utc": "2026-10-21T04:52:14.500717+00:00",
+    "finished_utc": "2026-10-21T04:55:20.569309+00:00",
+    "duration_seconds": 186.067689,
+    "command": [
+      "env",
+      "TMPDIR=/Volumes/My Passport for Mac/e01tmp",
+      "sbt",
+      "-batch",
+      "-J-Xmx4g",
+      "-J-Djava.io.tmpdir=/Volumes/My Passport for Mac/e01tmp",
+      "-Dsbt.supershell=false",
+      "-Dsbt.log.noformat=true",
+      "-Dsbt.global.base=/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/fresh-expanded-global",
+      "-Dimaging.providers=/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/qualified-expanded-providers",
+      "Test/runMain plsneuro.adapters.ResultGeometryConsumerProbe",
+      "Test/runMain plsneuro.desktop.StandaloneVolumeProbe",
+      "Test/runMain plsneuro.desktop.ImagingConsumerProbe",
+      "Test/runMain plsneuro.desktop.ImagingConsumerProbe after-stage",
+      "Test/runMain plsneuro.desktop.ImagingConsumerProbe cleanup"
+    ],
+    "cwd": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/plsneuro-integration-qualified-02/tools/imaging-consumer",
+    "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/pls-expanded-fresh-5db208c-01.log",
+    "exit_code": 0,
+    "child_returncode": 0,
+    "reason": "exited",
+    "detail": null,
+    "timeout_seconds": 1200.0,
+    "log_bytes": 36053
+  },
+  "logSha256": "ee3ecb11b9ad4ca9469763b6f5b10e4aa5775573f685e4f122ccafbedea33c53",
+  "executedAssertions": [
+    "ResultGeometryConsumerProbe PASS",
+    "StandaloneVolumeProbe PASS",
+    "ImagingConsumerProbe PASS",
+    "failure-path PASS: after-stage",
+    "failure-path PASS: cleanup"
+  ],
+  "runtimeOrigins": [
+    "neuroim4s/view/ViewerModel.class -> jar:file:/Volumes/My%20Passport%20for%20Mac/codex-work/scalafim-eco-01a153cc-20261021/plsneuro-integration-qualified-02/tools/imaging-consumer/target/bg-jobs/sbt_28299c00/target/6db1b469/2e2b2356/neuroim4s-view_3-0.1.0-SNAPSHOT.jar!/neuroim4s/view/ViewerModel.class",
+    "image4s/SomeSampleSpace.class -> jar:file:/Volumes/My%20Passport%20for%20Mac/codex-work/scalafim-eco-01a153cc-20261021/plsneuro-integration-qualified-02/tools/imaging-consumer/target/bg-jobs/sbt_28299c00/target/843e74cd/a81b7aff/image4s-core_3-0.1.0-SNAPSHOT.jar!/image4s/SomeSampleSpace.class",
+    "intaglio/RenderPlan.class -> jar:file:/Volumes/My%20Passport%20for%20Mac/codex-work/scalafim-eco-01a153cc-20261021/plsneuro-integration-qualified-02/tools/imaging-consumer/target/bg-jobs/sbt_28299c00/target/9fb250a2/9b4d128a/intaglio-core_3-0.0.0+292-d553c327-SNAPSHOT.jar!/intaglio/RenderPlan.class",
+    "gale/linalg/Matrix.class -> jar:file:/Volumes/My%20Passport%20for%20Mac/codex-work/scalafim-eco-01a153cc-20261021/plsneuro-integration-qualified-02/tools/imaging-consumer/target/bg-jobs/sbt_28299c00/target/5731b638/a00b5528/gale-core_3-0.1.0+153-779ed3d8-SNAPSHOT.jar!/gale/linalg/Matrix.class",
+    "locus4s/FiniteDomain.class -> jar:file:/Volumes/My%20Passport%20for%20Mac/codex-work/scalafim-eco-01a153cc-20261021/plsneuro-integration-qualified-02/tools/imaging-consumer/target/bg-jobs/sbt_28299c00/target/b659a793/40ae19b6/locus4s-core_3-0.1.0+19-e32b0aeb-SNAPSHOT.jar!/locus4s/FiniteDomain.class",
+    "neuroim4s/view/ViewerModel.class -> jar:file:/Volumes/My%20Passport%20for%20Mac/codex-work/scalafim-eco-01a153cc-20261021/plsneuro-integration-qualified-02/tools/imaging-consumer/target/bg-jobs/sbt_28299c00/target/6db1b469/2e2b2356/neuroim4s-view_3-0.1.0-SNAPSHOT.jar!/neuroim4s/view/ViewerModel.class",
+    "image4s/SomeSampleSpace.class -> jar:file:/Volumes/My%20Passport%20for%20Mac/codex-work/scalafim-eco-01a153cc-20261021/plsneuro-integration-qualified-02/tools/imaging-consumer/target/bg-jobs/sbt_28299c00/target/843e74cd/a81b7aff/image4s-core_3-0.1.0-SNAPSHOT.jar!/image4s/SomeSampleSpace.class",
+    "intaglio/RenderPlan.class -> jar:file:/Volumes/My%20Passport%20for%20Mac/codex-work/scalafim-eco-01a153cc-20261021/plsneuro-integration-qualified-02/tools/imaging-consumer/target/bg-jobs/sbt_28299c00/target/9fb250a2/9b4d128a/intaglio-core_3-0.0.0+292-d553c327-SNAPSHOT.jar!/intaglio/RenderPlan.class",
+    "gale/linalg/Matrix.class -> jar:file:/Volumes/My%20Passport%20for%20Mac/codex-work/scalafim-eco-01a153cc-20261021/plsneuro-integration-qualified-02/tools/imaging-consumer/target/bg-jobs/sbt_28299c00/target/5731b638/a00b5528/gale-core_3-0.1.0+153-779ed3d8-SNAPSHOT.jar!/gale/linalg/Matrix.class",
+    "locus4s/FiniteDomain.class -> jar:file:/Volumes/My%20Passport%20for%20Mac/codex-work/scalafim-eco-01a153cc-20261021/plsneuro-integration-qualified-02/tools/imaging-consumer/target/bg-jobs/sbt_28299c00/target/b659a793/40ae19b6/locus4s-core_3-0.1.0+19-e32b0aeb-SNAPSHOT.jar!/locus4s/FiniteDomain.class",
+    "neuroim4s/view/ViewerModel.class -> jar:file:/Volumes/My%20Passport%20for%20Mac/codex-work/scalafim-eco-01a153cc-20261021/plsneuro-integration-qualified-02/tools/imaging-consumer/target/bg-jobs/sbt_28299c00/target/6db1b469/2e2b2356/neuroim4s-view_3-0.1.0-SNAPSHOT.jar!/neuroim4s/view/ViewerModel.class",
+    "image4s/SomeSampleSpace.class -> jar:file:/Volumes/My%20Passport%20for%20Mac/codex-work/scalafim-eco-01a153cc-20261021/plsneuro-integration-qualified-02/tools/imaging-consumer/target/bg-jobs/sbt_28299c00/target/843e74cd/a81b7aff/image4s-core_3-0.1.0-SNAPSHOT.jar!/image4s/SomeSampleSpace.class",
+    "intaglio/RenderPlan.class -> jar:file:/Volumes/My%20Passport%20for%20Mac/codex-work/scalafim-eco-01a153cc-20261021/plsneuro-integration-qualified-02/tools/imaging-consumer/target/bg-jobs/sbt_28299c00/target/9fb250a2/9b4d128a/intaglio-core_3-0.0.0+292-d553c327-SNAPSHOT.jar!/intaglio/RenderPlan.class",
+    "gale/linalg/Matrix.class -> jar:file:/Volumes/My%20Passport%20for%20Mac/codex-work/scalafim-eco-01a153cc-20261021/plsneuro-integration-qualified-02/tools/imaging-consumer/target/bg-jobs/sbt_28299c00/target/5731b638/a00b5528/gale-core_3-0.1.0+153-779ed3d8-SNAPSHOT.jar!/gale/linalg/Matrix.class",
+    "locus4s/FiniteDomain.class -> jar:file:/Volumes/My%20Passport%20for%20Mac/codex-work/scalafim-eco-01a153cc-20261021/plsneuro-integration-qualified-02/tools/imaging-consumer/target/bg-jobs/sbt_28299c00/target/b659a793/40ae19b6/locus4s-core_3-0.1.0+19-e32b0aeb-SNAPSHOT.jar!/locus4s/FiniteDomain.class"
+  ],
+  "scope": "Committed complete geometry, standalone VolumePane and ResultVolumeView component; normal native and both cleanup failure paths.",
+  "limits": [
+    "This source predates the expanded linked SpatialResponsePane closure and its new foreign-world regression.",
+    "This is not full application, scientific first-level, cold-open or performance acceptance.",
+    "Whole application compile03 progressed beyond recovered QC and retained broader first-level/surface API failures plus atlas caller migration work; no full-main success."
+  ]
+}

@@ -1,0 +1,910 @@
+{
+  "base": "a746d9cefb183baee718afbc19838c1d0d673339",
+  "historical_implementation_commits": [
+    "94a6ed2575ce2655dfd09ef232378fadb6cf0466",
+    "4d8be77a9249249fed7e6e26ef64136ea93ea195",
+    "6c767d6a3cc78e3eddde21f7d2c0042451960b08"
+  ],
+  "moves": [
+    {
+      "from": "modules/model/shared/src/main/scala/scalafim/fmri/model/ArBiasCorrection.scala",
+      "to": "modules/fit/shared/src/main/scala/scalafim/fmri/model/ArBiasCorrection.scala",
+      "slice": "model-fit",
+      "sha256_before": "01e7552f9dd0f4503bb973a6c632048b6299b52aad482574b1afa3d8faa39f65",
+      "sha256_after": "01e7552f9dd0f4503bb973a6c632048b6299b52aad482574b1afa3d8faa39f65",
+      "git_blob_before": "fd59b25ecb67399f8ade29b81b48c3b164b5c5c1"
+    },
+    {
+      "from": "modules/model/shared/src/main/scala/scalafim/fmri/model/CoefficientScope.scala",
+      "to": "modules/fit/shared/src/main/scala/scalafim/fmri/model/CoefficientScope.scala",
+      "slice": "model-fit",
+      "sha256_before": "1424696afb553fc8c40b022b709e766a6f67b5d2331da4855e4ca1e2ed4e347d",
+      "sha256_after": "1424696afb553fc8c40b022b709e766a6f67b5d2331da4855e4ca1e2ed4e347d",
+      "git_blob_before": "69e19aff52a66a3fc4af7310820db947810112e7"
+    },
+    {
+      "from": "modules/model/shared/src/main/scala/scalafim/fmri/model/ConfoundDesign.scala",
+      "to": "modules/fit/shared/src/main/scala/scalafim/fmri/model/ConfoundDesign.scala",
+      "slice": "model-fit",
+      "sha256_before": "fa2ab8f55a73393e776447d931b7ca0fee604144160444cc7db21f2613ed6702",
+      "sha256_after": "fa2ab8f55a73393e776447d931b7ca0fee604144160444cc7db21f2613ed6702",
+      "git_blob_before": "32c41316df8c070a2b75a90c721502f9bb254377"
+    },
+    {
+      "from": "modules/model/shared/src/main/scala/scalafim/fmri/model/ConfoundSpecJsonCodec.scala",
+      "to": "modules/fit/shared/src/main/scala/scalafim/fmri/model/ConfoundSpecJsonCodec.scala",
+      "slice": "model-fit",
+      "sha256_before": "404896cd1b19bd16fd41fcfcb9da062db8081519a98785f20e8847ffc0c0d1f0",
+      "sha256_after": "404896cd1b19bd16fd41fcfcb9da062db8081519a98785f20e8847ffc0c0d1f0",
+      "git_blob_before": "ea1fdb3d5cfb07bf8dfcfa5730362659b0588abb"
+    },
+    {
+      "from": "modules/model/shared/src/main/scala/scalafim/fmri/model/DesignBlock.scala",
+      "to": "modules/fit/shared/src/main/scala/scalafim/fmri/model/DesignBlock.scala",
+      "slice": "model-fit",
+      "sha256_before": "d217b1b9213d85d6cefc6a0997a66c5dea4934953613f10c9179e5b05d4b9cc6",
+      "sha256_after": "d217b1b9213d85d6cefc6a0997a66c5dea4934953613f10c9179e5b05d4b9cc6",
+      "git_blob_before": "08fb1422d09acedca0eb01900ce62eea00724e6f"
+    },
+    {
+      "from": "modules/model/shared/src/main/scala/scalafim/fmri/model/FitConfig.scala",
+      "to": "modules/fit/shared/src/main/scala/scalafim/fmri/model/FitConfig.scala",
+      "slice": "model-fit",
+      "sha256_before": "fee167c7ceb92591172bddf2059b05bb9b4bcbea2fd08a590b12e87ec87c65a9",
+      "sha256_after": "fee167c7ceb92591172bddf2059b05bb9b4bcbea2fd08a590b12e87ec87c65a9",
+      "git_blob_before": "2e52f9c5415905df3a5482662ef99d277eda7e8e"
+    },
+    {
+      "from": "modules/model/shared/src/main/scala/scalafim/fmri/model/FitPlan.scala",
+      "to": "modules/fit/shared/src/main/scala/scalafim/fmri/model/FitPlan.scala",
+      "slice": "model-fit",
+      "sha256_before": "dd612739757d2a3cbd81a1f1f2da5e434b1393a5156ba74d61d80285de54f0c6",
+      "sha256_after": "dd612739757d2a3cbd81a1f1f2da5e434b1393a5156ba74d61d80285de54f0c6",
+      "git_blob_before": "d81b9d62e50d28bca92e822752cd95b87c01b66f"
+    },
+    {
+      "from": "modules/model/shared/src/main/scala/scalafim/fmri/model/FmriModel.scala",
+      "to": "modules/fit/shared/src/main/scala/scalafim/fmri/model/FmriModel.scala",
+      "slice": "model-fit",
+      "sha256_before": "ec4e3ad612123b62140d661cf258d39e101438a6fcb4b4ccd100f8d94c2f26fb",
+      "sha256_after": "ec4e3ad612123b62140d661cf258d39e101438a6fcb4b4ccd100f8d94c2f26fb",
+      "git_blob_before": "39f956cf411dbba65bf0985054a7fcf3c4e28638"
+    },
+    {
+      "from": "modules/model/shared/src/main/scala/scalafim/fmri/model/FmriModelBuilder.scala",
+      "to": "modules/fit/shared/src/main/scala/scalafim/fmri/model/FmriModelBuilder.scala",
+      "slice": "model-fit",
+      "sha256_before": "f9f54a7558442ee19ff809dc148d3431533cadbb7eb49f9db824396df7e3bbd9",
+      "sha256_after": "f9f54a7558442ee19ff809dc148d3431533cadbb7eb49f9db824396df7e3bbd9",
+      "git_blob_before": "92d1c6d09375cb9cf8fde97aae51089812668663"
+    },
+    {
+      "from": "modules/model/shared/src/main/scala/scalafim/fmri/model/ModelBuildSpecJsonCodec.scala",
+      "to": "modules/fit/shared/src/main/scala/scalafim/fmri/model/ModelBuildSpecJsonCodec.scala",
+      "slice": "model-fit",
+      "sha256_before": "4dbe4e59ca1f6057849a60206e5c668b866a830c13b4918f2226b5528c5c378f",
+      "sha256_after": "4dbe4e59ca1f6057849a60206e5c668b866a830c13b4918f2226b5528c5c378f",
+      "git_blob_before": "7aa1db2cbe7b6917cb5750484105d229ee2150ad"
+    },
+    {
+      "from": "modules/model/shared/src/main/scala/scalafim/fmri/model/ModelDocument.scala",
+      "to": "modules/fit/shared/src/main/scala/scalafim/fmri/model/ModelDocument.scala",
+      "slice": "model-fit",
+      "sha256_before": "56895a2a9c79cc82766ede9645632fbae2993b9953495e3115302b21716566dd",
+      "sha256_after": "56895a2a9c79cc82766ede9645632fbae2993b9953495e3115302b21716566dd",
+      "git_blob_before": "74159d355930862cce8061599671dbd6ece83fd4"
+    },
+    {
+      "from": "modules/model/shared/src/main/scala/scalafim/fmri/model/ModelDocumentText.scala",
+      "to": "modules/fit/shared/src/main/scala/scalafim/fmri/model/ModelDocumentText.scala",
+      "slice": "model-fit",
+      "sha256_before": "5d66d4996f48e7d0883870db4bdfc79afbd06d3daf3c2e892d9888d8dcabe406",
+      "sha256_after": "5d66d4996f48e7d0883870db4bdfc79afbd06d3daf3c2e892d9888d8dcabe406",
+      "git_blob_before": "f0e7e2cb1c62c0139517b2c1c48cd38e32423289"
+    },
+    {
+      "from": "modules/model/shared/src/main/scala/scalafim/fmri/model/ModelError.scala",
+      "to": "modules/fit/shared/src/main/scala/scalafim/fmri/model/ModelError.scala",
+      "slice": "model-fit",
+      "sha256_before": "a535095b50596526c311a9e2b75d0a2a463ed2c65bdb3e5db8995710283c35e9",
+      "sha256_after": "a535095b50596526c311a9e2b75d0a2a463ed2c65bdb3e5db8995710283c35e9",
+      "git_blob_before": "409bc9caf2f2392f66bae514551724e606067dc6"
+    },
+    {
+      "from": "modules/model/shared/src/main/scala/scalafim/fmri/model/ModelTypes.scala",
+      "to": "modules/fit/shared/src/main/scala/scalafim/fmri/model/ModelTypes.scala",
+      "slice": "model-fit",
+      "sha256_before": "c8a71eb8a9f61e2fb4e1c61e8389e6d2d0e9abd515b99e7a00a26dc60c110234",
+      "sha256_after": "c8a71eb8a9f61e2fb4e1c61e8389e6d2d0e9abd515b99e7a00a26dc60c110234",
+      "git_blob_before": "773033993d88f2b5eddf49825c17eef8e045be1d"
+    },
+    {
+      "from": "modules/model/shared/src/main/scala/scalafim/fmri/model/ProfileHrf.scala",
+      "to": "modules/fit/shared/src/main/scala/scalafim/fmri/model/ProfileHrf.scala",
+      "slice": "model-fit",
+      "sha256_before": "7377417cac81252d45bcd06bbab3b12d98c6ce593aad348de405eef7c3a52dfa",
+      "sha256_after": "7377417cac81252d45bcd06bbab3b12d98c6ce593aad348de405eef7c3a52dfa",
+      "git_blob_before": "300163a9d7a8c553cf18c01a81ab560f86060121"
+    },
+    {
+      "from": "modules/model/shared/src/main/scala/scalafim/fmri/model/ProfileHrfPlan.scala",
+      "to": "modules/fit/shared/src/main/scala/scalafim/fmri/model/ProfileHrfPlan.scala",
+      "slice": "model-fit",
+      "sha256_before": "30c90cd631ca9e3c3cc79ac6c7167b9b4f6e27ccb9038b0caa00d12628aefdaa",
+      "sha256_after": "30c90cd631ca9e3c3cc79ac6c7167b9b4f6e27ccb9038b0caa00d12628aefdaa",
+      "git_blob_before": "1030e4a7befe402cf66ec102b9e82692bfacccb4"
+    },
+    {
+      "from": "modules/model/shared/src/test/scala/scalafim/fmri/model/ArBiasCorrectionSuite.scala",
+      "to": "modules/fit/shared/src/test/scala/scalafim/fmri/model/ArBiasCorrectionSuite.scala",
+      "slice": "model-fit",
+      "sha256_before": "378a49070cdce0a126185d6c086f63e5369ab78e572862013ac5d46100848964",
+      "sha256_after": "378a49070cdce0a126185d6c086f63e5369ab78e572862013ac5d46100848964",
+      "git_blob_before": "1fc5d7ab80e794e560065682240921a3477bd212"
+    },
+    {
+      "from": "modules/model/shared/src/test/scala/scalafim/fmri/model/ArInitializationSuite.scala",
+      "to": "modules/fit/shared/src/test/scala/scalafim/fmri/model/ArInitializationSuite.scala",
+      "slice": "model-fit",
+      "sha256_before": "4070e490363155e57a3b262857208d242e159c93a198fdb6e0bfa97509010cdc",
+      "sha256_after": "4070e490363155e57a3b262857208d242e159c93a198fdb6e0bfa97509010cdc",
+      "git_blob_before": "6cedbc64dbb3c89d6635e75be5ab3c2bc5deb5ba"
+    },
+    {
+      "from": "modules/model/shared/src/test/scala/scalafim/fmri/model/ConfoundDesignSuite.scala",
+      "to": "modules/fit/shared/src/test/scala/scalafim/fmri/model/ConfoundDesignSuite.scala",
+      "slice": "model-fit",
+      "sha256_before": "f8ad6d91d1ef416a3fd1ff5a3fedeae08c97b1c8b4ee271591e9592290dec4ac",
+      "sha256_after": "f8ad6d91d1ef416a3fd1ff5a3fedeae08c97b1c8b4ee271591e9592290dec4ac",
+      "git_blob_before": "5a2a44b86e4187d6fc1329e054c4cc63f481ca80"
+    },
+    {
+      "from": "modules/model/shared/src/test/scala/scalafim/fmri/model/ConfoundSpecJsonCodecSuite.scala",
+      "to": "modules/fit/shared/src/test/scala/scalafim/fmri/model/ConfoundSpecJsonCodecSuite.scala",
+      "slice": "model-fit",
+      "sha256_before": "37dd7c92b54becf6b41c87479e93a70a1c8fdfb8cf5edf99b9ae7a1a4dfbfe0d",
+      "sha256_after": "37dd7c92b54becf6b41c87479e93a70a1c8fdfb8cf5edf99b9ae7a1a4dfbfe0d",
+      "git_blob_before": "c35cce9acf87082ad52cace01e19bbf7fafae0ec"
+    },
+    {
+      "from": "modules/model/shared/src/test/scala/scalafim/fmri/model/ModelBuildSpecHrfKindSuite.scala",
+      "to": "modules/fit/shared/src/test/scala/scalafim/fmri/model/ModelBuildSpecHrfKindSuite.scala",
+      "slice": "model-fit",
+      "sha256_before": "43cdf2251667b7ef6630cb42cd1ac7f02d280a44df27d5bf1f985a0946cb7240",
+      "sha256_after": "43cdf2251667b7ef6630cb42cd1ac7f02d280a44df27d5bf1f985a0946cb7240",
+      "git_blob_before": "a7c5855989d7617a2107f71c66926d129c5e4dea"
+    },
+    {
+      "from": "modules/model/shared/src/test/scala/scalafim/fmri/model/ModelBuildSpecJsonCodecSuite.scala",
+      "to": "modules/fit/shared/src/test/scala/scalafim/fmri/model/ModelBuildSpecJsonCodecSuite.scala",
+      "slice": "model-fit",
+      "sha256_before": "91b9b93e7710096c8eb7f7efef68cecf8defa27a66256cd65d1ebd7bd7d059bd",
+      "sha256_after": "91b9b93e7710096c8eb7f7efef68cecf8defa27a66256cd65d1ebd7bd7d059bd",
+      "git_blob_before": "230d18a5ae97125daf3f5f98afbf062982c94fe0"
+    },
+    {
+      "from": "modules/model/shared/src/test/scala/scalafim/fmri/model/ModelBuilderSuite.scala",
+      "to": "modules/fit/shared/src/test/scala/scalafim/fmri/model/ModelBuilderSuite.scala",
+      "slice": "model-fit",
+      "sha256_before": "7c8f99f9f97ceee9569385f4072c4822f47e6c8626bfca2f01e5f257489b6071",
+      "sha256_after": "7c8f99f9f97ceee9569385f4072c4822f47e6c8626bfca2f01e5f257489b6071",
+      "git_blob_before": "2128308fc93bfd28db74496f01469cec56e7dbc3"
+    },
+    {
+      "from": "modules/model/shared/src/test/scala/scalafim/fmri/model/ModelDocumentJsonCodecSuite.scala",
+      "to": "modules/fit/shared/src/test/scala/scalafim/fmri/model/ModelDocumentJsonCodecSuite.scala",
+      "slice": "model-fit",
+      "sha256_before": "4cd5540cf05a0a879041feaed71fd0fcf19440c9c75db436f3f4e5c54e3a5126",
+      "sha256_after": "4cd5540cf05a0a879041feaed71fd0fcf19440c9c75db436f3f4e5c54e3a5126",
+      "git_blob_before": "9c3384d7e88b4209158ba3592dab330a0f9d9e2b"
+    },
+    {
+      "from": "modules/model/shared/src/test/scala/scalafim/fmri/model/ModelDocumentTextSuite.scala",
+      "to": "modules/fit/shared/src/test/scala/scalafim/fmri/model/ModelDocumentTextSuite.scala",
+      "slice": "model-fit",
+      "sha256_before": "529c5815087d4766cf0cfbc0387d6aaecfa9d529b9908189d38d649eaed601ad",
+      "sha256_after": "529c5815087d4766cf0cfbc0387d6aaecfa9d529b9908189d38d649eaed601ad",
+      "git_blob_before": "f875edf8b4411e290c249cc2b4d0b7846dbaf337"
+    },
+    {
+      "from": "modules/model/shared/src/test/scala/scalafim/fmri/model/ModelIdentityMigrationSuite.scala",
+      "to": "modules/fit/shared/src/test/scala/scalafim/fmri/model/ModelIdentityMigrationSuite.scala",
+      "slice": "model-fit",
+      "sha256_before": "8fd77123dc61191089f95d019f45a5f835456a1132c8f5741348db4023bcaee3",
+      "sha256_after": "8fd77123dc61191089f95d019f45a5f835456a1132c8f5741348db4023bcaee3",
+      "git_blob_before": "114b83404921eb739313b7f0fb68a03f4d4b1ba8"
+    },
+    {
+      "from": "modules/model/shared/src/test/scala/scalafim/fmri/model/ModelSuite.scala",
+      "to": "modules/fit/shared/src/test/scala/scalafim/fmri/model/ModelSuite.scala",
+      "slice": "model-fit",
+      "sha256_before": "456dca1b4f002a1a58a2621edc2763100817124a210dd14f60369acda52a7c7f",
+      "sha256_after": "456dca1b4f002a1a58a2621edc2763100817124a210dd14f60369acda52a7c7f",
+      "git_blob_before": "1958751866bcba760c51327319f066075624448d"
+    },
+    {
+      "from": "modules/model/shared/src/test/scala/scalafim/fmri/model/ProfileHrfPlanSuite.scala",
+      "to": "modules/fit/shared/src/test/scala/scalafim/fmri/model/ProfileHrfPlanSuite.scala",
+      "slice": "model-fit",
+      "sha256_before": "f3a8c4de5d07b00629918882adeb61ff0586ce59034881d4bce65785d368b521",
+      "sha256_after": "f3a8c4de5d07b00629918882adeb61ff0586ce59034881d4bce65785d368b521",
+      "git_blob_before": "905d072d5de889cafd67487c557c537db08fc009"
+    },
+    {
+      "from": "modules/model/shared/src/test/scala/scalafim/fmri/model/RebuildIdentityCorpusSuite.scala",
+      "to": "modules/fit/shared/src/test/scala/scalafim/fmri/model/RebuildIdentityCorpusSuite.scala",
+      "slice": "model-fit",
+      "sha256_before": "f741e6e7840c702a1b2669127ec664e28e0f3d55730bc85b2f0da7a826e5d400",
+      "sha256_after": "f741e6e7840c702a1b2669127ec664e28e0f3d55730bc85b2f0da7a826e5d400",
+      "git_blob_before": "7406c5eb221306ce7852f322b5d89918ef10c3e7"
+    },
+    {
+      "from": "modules/design/jvm/src/test/scala/scalafim/fmri/design/DesignGalleryRender.scala",
+      "to": "modules/design-view/jvm/src/test/scala/scalafim/fmri/design/DesignGalleryRender.scala",
+      "slice": "design-view",
+      "sha256_before": "5318a927352e7b96eb0500dbd916e7c0e19df85af98cb20a3bee2aa7e5d7afd3",
+      "sha256_after": "5318a927352e7b96eb0500dbd916e7c0e19df85af98cb20a3bee2aa7e5d7afd3",
+      "git_blob_before": "f012f3f427fce7fe027c0af8bf4294db6eb62b32"
+    },
+    {
+      "from": "modules/design/jvm/src/test/scala/scalafim/fmri/design/DesignMatrixRasterExportSuite.scala",
+      "to": "modules/design-view/jvm/src/test/scala/scalafim/fmri/design/DesignMatrixRasterExportSuite.scala",
+      "slice": "design-view",
+      "sha256_before": "4477adac75808be893cdfdd10b127bd1e464653c1789f5461a3bfe529664cc32",
+      "sha256_after": "4477adac75808be893cdfdd10b127bd1e464653c1789f5461a3bfe529664cc32",
+      "git_blob_before": "56eb9641e47e18ef68db31d6bc3d6ee394aee9d0"
+    },
+    {
+      "from": "modules/design/shared/src/main/scala/scalafim/fmri/design/DesignGraphics.scala",
+      "to": "modules/design-view/shared/src/main/scala/scalafim/fmri/design/DesignGraphics.scala",
+      "slice": "design-view",
+      "sha256_before": "0029e919b356bd7bfb067c4a32531f25e9887070d9a25ea59dfb7480bccf628f",
+      "sha256_after": "0029e919b356bd7bfb067c4a32531f25e9887070d9a25ea59dfb7480bccf628f",
+      "git_blob_before": "45887286278cd0e3cbfbcbf62150a01735255089"
+    },
+    {
+      "from": "modules/design/shared/src/main/scala/scalafim/fmri/design/DesignMatrixRaster.scala",
+      "to": "modules/design-view/shared/src/main/scala/scalafim/fmri/design/DesignMatrixRaster.scala",
+      "slice": "design-view",
+      "sha256_before": "537e9d5dd15f466f62e31071589f16295e4aba6a9a8491c78883d67a48fc6839",
+      "sha256_after": "537e9d5dd15f466f62e31071589f16295e4aba6a9a8491c78883d67a48fc6839",
+      "git_blob_before": "b12f81f352f5fbfd1edadd7d93509680b62300c2"
+    },
+    {
+      "from": "modules/design/shared/src/main/scala/scalafim/fmri/design/DesignReviewGraphics.scala",
+      "to": "modules/design-view/shared/src/main/scala/scalafim/fmri/design/DesignReviewGraphics.scala",
+      "slice": "design-view",
+      "sha256_before": "a9977e8d6dddf4beb587fdf608bba82a40129575d2109aaaffe601df31dd9c4c",
+      "sha256_after": "a9977e8d6dddf4beb587fdf608bba82a40129575d2109aaaffe601df31dd9c4c",
+      "git_blob_before": "325d542063f75e2496598554dca4b272f36226e7"
+    },
+    {
+      "from": "modules/design/shared/src/main/scala/scalafim/fmri/design/ResponseBasisGraphics.scala",
+      "to": "modules/design-view/shared/src/main/scala/scalafim/fmri/design/ResponseBasisGraphics.scala",
+      "slice": "design-view",
+      "sha256_before": "0e770aa624bbe3526d0517d590e0aa2745b3af4c5c04386ef26c1889bfb673e3",
+      "sha256_after": "0e770aa624bbe3526d0517d590e0aa2745b3af4c5c04386ef26c1889bfb673e3",
+      "git_blob_before": "47e4809f2ae68aff063f79200b763ac0cff3857a"
+    },
+    {
+      "from": "modules/design/shared/src/test/scala/scalafim/fmri/design/DesignGraphicsSuite.scala",
+      "to": "modules/design-view/shared/src/test/scala/scalafim/fmri/design/DesignGraphicsSuite.scala",
+      "slice": "design-view",
+      "sha256_before": "d184117b970387c3a347cb16c9d21cc5176eb4fa5f6831e87149332ed22dbf75",
+      "sha256_after": "d184117b970387c3a347cb16c9d21cc5176eb4fa5f6831e87149332ed22dbf75",
+      "git_blob_before": "5278aa11ba290930d0e86ed9629f8c7e97c3248b"
+    },
+    {
+      "from": "modules/design/shared/src/test/scala/scalafim/fmri/design/DesignMatrixRasterSuite.scala",
+      "to": "modules/design-view/shared/src/test/scala/scalafim/fmri/design/DesignMatrixRasterSuite.scala",
+      "slice": "design-view",
+      "sha256_before": "a81728c233abbd27e82bc437cfae4e5ed8d407bf3afabc2585048dbc62c7d1ca",
+      "sha256_after": "a81728c233abbd27e82bc437cfae4e5ed8d407bf3afabc2585048dbc62c7d1ca",
+      "git_blob_before": "9419fe7f6f4ad9a7baa0287ed15e62d80487b616"
+    },
+    {
+      "from": "modules/design/shared/src/test/scala/scalafim/fmri/design/DesignReviewSuite.scala",
+      "to": "modules/design-view/shared/src/test/scala/scalafim/fmri/design/DesignReviewSuite.scala",
+      "slice": "design-view",
+      "sha256_before": "2c38461e8492c9459f872ec2663bebd53948bf077a7e82e5e7041b2b7a08c8ff",
+      "sha256_after": "2c38461e8492c9459f872ec2663bebd53948bf077a7e82e5e7041b2b7a08c8ff",
+      "git_blob_before": "b4c69a70b861b7163f86e18b85db23d112987778"
+    },
+    {
+      "from": "modules/design/shared/src/test/scala/scalafim/fmri/design/ResponseBasisReviewSuite.scala",
+      "to": "modules/design-view/shared/src/test/scala/scalafim/fmri/design/ResponseBasisReviewSuite.scala",
+      "slice": "design-view",
+      "sha256_before": "69ca80a35a71be1c4940696d8547ac9ce1177b34a26be01d980f94ac4160cd48",
+      "sha256_after": "69ca80a35a71be1c4940696d8547ac9ce1177b34a26be01d980f94ac4160cd48",
+      "git_blob_before": "53b6cdd9b29db73b196b9175ee724864e88ce4be"
+    },
+    {
+      "from": "modules/provider-spike/js/src/test/scala/scalafim/spike/scenarios/SurfaceRealFixturePlatform.scala",
+      "to": "modules/provider-contract/js/src/test/scala/scalafim/spike/scenarios/SurfaceRealFixturePlatform.scala",
+      "slice": "provider-contract",
+      "sha256_before": "597e73abc9aadeafad54d604920592536c20c7044b959d54a60428726ddb2e1c",
+      "sha256_after": "ef50142268a9baa7320604399d693dd4ce5a922f74c46e681c9ad7f47280879d",
+      "git_blob_before": "78ec46dd2c73c8ebd67905bc6731334c8cfb0daf",
+      "exception": "Only fixture root locator literal provider-spike -> provider-contract; fixture bytes and assertions unchanged."
+    },
+    {
+      "from": "modules/provider-spike/jvm/src/test/scala/scalafim/spike/scenarios/Demo1NativeContainerSuite.scala",
+      "to": "modules/provider-contract/jvm/src/test/scala/scalafim/spike/scenarios/Demo1NativeContainerSuite.scala",
+      "slice": "provider-contract",
+      "sha256_before": "975a26b03c5b4840d7f3cbe8110fd83b3fd22616b41bd3f16172da371cda169e",
+      "sha256_after": "975a26b03c5b4840d7f3cbe8110fd83b3fd22616b41bd3f16172da371cda169e",
+      "git_blob_before": "dabaf5556acde160fc3253d0c2ead854f5c2e0c5"
+    },
+    {
+      "from": "modules/provider-spike/jvm/src/test/scala/scalafim/spike/scenarios/Demo1OriginalContainerQualification.scala",
+      "to": "modules/provider-contract/jvm/src/test/scala/scalafim/spike/scenarios/Demo1OriginalContainerQualification.scala",
+      "slice": "provider-contract",
+      "sha256_before": "ebe1177093ced57ff2237081abc6b2895c691e2b9bd503f37c302cc6f2890620",
+      "sha256_after": "ebe1177093ced57ff2237081abc6b2895c691e2b9bd503f37c302cc6f2890620",
+      "git_blob_before": "672974fa304506f8820ce8f22c31b4a4ca9b8bb6"
+    },
+    {
+      "from": "modules/provider-spike/jvm/src/test/scala/scalafim/spike/scenarios/SurfaceRealFixturePlatform.scala",
+      "to": "modules/provider-contract/jvm/src/test/scala/scalafim/spike/scenarios/SurfaceRealFixturePlatform.scala",
+      "slice": "provider-contract",
+      "sha256_before": "4433f2b32eca9553473e7395431d0f86997bc35ff7caa0c8fb521bd6c6670af3",
+      "sha256_after": "4433f2b32eca9553473e7395431d0f86997bc35ff7caa0c8fb521bd6c6670af3",
+      "git_blob_before": "c445871b4da4dbbfd3534c238af6cea3f3703bb3"
+    },
+    {
+      "from": "modules/provider-spike/shared/src/main/scala/providercontract/ProviderCapabilityCompileContract.scala",
+      "to": "modules/provider-contract/shared/src/main/scala/providercontract/ProviderCapabilityCompileContract.scala",
+      "slice": "provider-contract",
+      "sha256_before": "6947782d5f15ee1df9edadd910473b23df52ba2cbccf0ff27a9980d8ab55e34c",
+      "sha256_after": "6947782d5f15ee1df9edadd910473b23df52ba2cbccf0ff27a9980d8ab55e34c",
+      "git_blob_before": "d6c3e320762b1e6e1f49a6515921b8c2d6d66e92"
+    },
+    {
+      "from": "modules/provider-spike/shared/src/test/resources/scalafim/surface/oracle/real_chain/FreeSurfer-LICENSE.txt",
+      "to": "modules/provider-contract/shared/src/test/resources/scalafim/surface/oracle/real_chain/FreeSurfer-LICENSE.txt",
+      "slice": "provider-contract",
+      "sha256_before": "632d404ea17b9101d9ac87cf8f09e651d18eb20d2cc0ba8dbee77e85b8516307",
+      "sha256_after": "632d404ea17b9101d9ac87cf8f09e651d18eb20d2cc0ba8dbee77e85b8516307",
+      "git_blob_before": "2a8c7f829f06b00a506347058a7b7e22f6c7938f"
+    },
+    {
+      "from": "modules/provider-spike/shared/src/test/resources/scalafim/surface/oracle/real_chain/HCP-LICENSE.md",
+      "to": "modules/provider-contract/shared/src/test/resources/scalafim/surface/oracle/real_chain/HCP-LICENSE.md",
+      "slice": "provider-contract",
+      "sha256_before": "2c686e38603c7e1525e2a98a6de9d15ae6766e4ff850a2e759fbb2de7c6c6445",
+      "sha256_after": "2c686e38603c7e1525e2a98a6de9d15ae6766e4ff850a2e759fbb2de7c6c6445",
+      "git_blob_before": "5338fe9a873e9e97a4e4973949c3da0a733c13cf"
+    },
+    {
+      "from": "modules/provider-spike/shared/src/test/resources/scalafim/surface/oracle/real_chain/NOTICE.md",
+      "to": "modules/provider-contract/shared/src/test/resources/scalafim/surface/oracle/real_chain/NOTICE.md",
+      "slice": "provider-contract",
+      "sha256_before": "cbdffbd3c920e3ea1bb6e4f6ee279f33d7ae309d44e7bb5059a07cfc201bb056",
+      "sha256_after": "cbdffbd3c920e3ea1bb6e4f6ee279f33d7ae309d44e7bb5059a07cfc201bb056",
+      "git_blob_before": "1baa3b1463870dfcfce2bf69647533519d1490d2"
+    },
+    {
+      "from": "modules/provider-spike/shared/src/test/resources/scalafim/surface/oracle/real_chain/analytic-bound.tsv",
+      "to": "modules/provider-contract/shared/src/test/resources/scalafim/surface/oracle/real_chain/analytic-bound.tsv",
+      "slice": "provider-contract",
+      "sha256_before": "02f846916adc3f566990a90d05ebd99c4aac8e4c89a877b553b53efa32a9a97b",
+      "sha256_after": "02f846916adc3f566990a90d05ebd99c4aac8e4c89a877b553b53efa32a9a97b",
+      "git_blob_before": "80b0d20b8ef03606cbfedbaf3ebae56d7754e1fe"
+    },
+    {
+      "from": "modules/provider-spike/shared/src/test/resources/scalafim/surface/oracle/real_chain/commands.json",
+      "to": "modules/provider-contract/shared/src/test/resources/scalafim/surface/oracle/real_chain/commands.json",
+      "slice": "provider-contract",
+      "sha256_before": "93aee3a07cc5cdefd0c7dbe19a7e6bb150f9931cfc1d58d0c4333bea61b4d531",
+      "sha256_after": "93aee3a07cc5cdefd0c7dbe19a7e6bb150f9931cfc1d58d0c4333bea61b4d531",
+      "git_blob_before": "2d5f87b96b271ccba19ac4703e604e91857a865c"
+    },
+    {
+      "from": "modules/provider-spike/shared/src/test/resources/scalafim/surface/oracle/real_chain/contract.json",
+      "to": "modules/provider-contract/shared/src/test/resources/scalafim/surface/oracle/real_chain/contract.json",
+      "slice": "provider-contract",
+      "sha256_before": "71f03e8e09e286a6f711c62bd9f5e63d1b78d9a5871cfb1ce2fe41776b209ad0",
+      "sha256_after": "71f03e8e09e286a6f711c62bd9f5e63d1b78d9a5871cfb1ce2fe41776b209ad0",
+      "git_blob_before": "1dd47f458d7e0729e48538b8c930027897b186b0"
+    },
+    {
+      "from": "modules/provider-spike/shared/src/test/resources/scalafim/surface/oracle/real_chain/dataset_description.json",
+      "to": "modules/provider-contract/shared/src/test/resources/scalafim/surface/oracle/real_chain/dataset_description.json",
+      "slice": "provider-contract",
+      "sha256_before": "b21ca3e4fdc7f9f78508b024f97635aa4a0a833e3e52970074b46da189d246a5",
+      "sha256_after": "b21ca3e4fdc7f9f78508b024f97635aa4a0a833e3e52970074b46da189d246a5",
+      "git_blob_before": "b3cb91d27928eb719e1b48e3c6a15cbc3ee9b741"
+    },
+    {
+      "from": "modules/provider-spike/shared/src/test/resources/scalafim/surface/oracle/real_chain/direct-closest.tsv",
+      "to": "modules/provider-contract/shared/src/test/resources/scalafim/surface/oracle/real_chain/direct-closest.tsv",
+      "slice": "provider-contract",
+      "sha256_before": "eae2f2d7b197bc3fc65aeb9f903072b8ceea3fbdc0796349484e3c53af2a09ea",
+      "sha256_after": "eae2f2d7b197bc3fc65aeb9f903072b8ceea3fbdc0796349484e3c53af2a09ea",
+      "git_blob_before": "e06b08ba876ecdb064c3fce442a80b69c19071f2"
+    },
+    {
+      "from": "modules/provider-spike/shared/src/test/resources/scalafim/surface/oracle/real_chain/direct-math.tsv",
+      "to": "modules/provider-contract/shared/src/test/resources/scalafim/surface/oracle/real_chain/direct-math.tsv",
+      "slice": "provider-contract",
+      "sha256_before": "d6eb86bd1ac2d1e06fef5b9c74e8b1467999d334f67460845ca97ea84fd73e26",
+      "sha256_after": "d6eb86bd1ac2d1e06fef5b9c74e8b1467999d334f67460845ca97ea84fd73e26",
+      "git_blob_before": "bf604f0223ce4eee718ea5e0221c8c867409b42e"
+    },
+    {
+      "from": "modules/provider-spike/shared/src/test/resources/scalafim/surface/oracle/real_chain/direct-native.tsv",
+      "to": "modules/provider-contract/shared/src/test/resources/scalafim/surface/oracle/real_chain/direct-native.tsv",
+      "slice": "provider-contract",
+      "sha256_before": "947b39aac5d00ee124dc7e17a9a2f11302c9b1839a3af465c3560b9624debe3b",
+      "sha256_after": "947b39aac5d00ee124dc7e17a9a2f11302c9b1839a3af465c3560b9624debe3b",
+      "git_blob_before": "9265b38479d17aeaa548da70056c31e81a9da6f5"
+    },
+    {
+      "from": "modules/provider-spike/shared/src/test/resources/scalafim/surface/oracle/real_chain/fsaverage-faces.tsv",
+      "to": "modules/provider-contract/shared/src/test/resources/scalafim/surface/oracle/real_chain/fsaverage-faces.tsv",
+      "slice": "provider-contract",
+      "sha256_before": "b411a553884038dfddb0cd39f54004c29e8bbf6de5b8a454f3fa0de8af4bcdcd",
+      "sha256_after": "b411a553884038dfddb0cd39f54004c29e8bbf6de5b8a454f3fa0de8af4bcdcd",
+      "git_blob_before": "5c1a34f79994e10759227b6531efabb697a9c124"
+    },
+    {
+      "from": "modules/provider-spike/shared/src/test/resources/scalafim/surface/oracle/real_chain/fsaverage-math.tsv",
+      "to": "modules/provider-contract/shared/src/test/resources/scalafim/surface/oracle/real_chain/fsaverage-math.tsv",
+      "slice": "provider-contract",
+      "sha256_before": "77c5d8382438725017d04438e1384a89c24928e57268ecaf53b0e6ff3759999d",
+      "sha256_after": "77c5d8382438725017d04438e1384a89c24928e57268ecaf53b0e6ff3759999d",
+      "git_blob_before": "3dce4aed90bb5ea973de7b3cae62d40ca66aabfe"
+    },
+    {
+      "from": "modules/provider-spike/shared/src/test/resources/scalafim/surface/oracle/real_chain/fsaverage-to-target.tsv",
+      "to": "modules/provider-contract/shared/src/test/resources/scalafim/surface/oracle/real_chain/fsaverage-to-target.tsv",
+      "slice": "provider-contract",
+      "sha256_before": "a1bbeb9d5589bf124b48f8014cef6d036d79ed479d2bedced957f090bbd8f18f",
+      "sha256_after": "a1bbeb9d5589bf124b48f8014cef6d036d79ed479d2bedced957f090bbd8f18f",
+      "git_blob_before": "7cf9d915398b6dba015a3a45527f2b3001784b9f"
+    },
+    {
+      "from": "modules/provider-spike/shared/src/test/resources/scalafim/surface/oracle/real_chain/fsaverage-vertices.tsv",
+      "to": "modules/provider-contract/shared/src/test/resources/scalafim/surface/oracle/real_chain/fsaverage-vertices.tsv",
+      "slice": "provider-contract",
+      "sha256_before": "e1cafb4ed56e5ecea81e712822257d6eba1378ca9087e31d37a1520f07fe1764",
+      "sha256_after": "e1cafb4ed56e5ecea81e712822257d6eba1378ca9087e31d37a1520f07fe1764",
+      "git_blob_before": "e91ce73014481d6eaac20fda9ec2d3d7c58c241f"
+    },
+    {
+      "from": "modules/provider-spike/shared/src/test/resources/scalafim/surface/oracle/real_chain/geometry.tsv",
+      "to": "modules/provider-contract/shared/src/test/resources/scalafim/surface/oracle/real_chain/geometry.tsv",
+      "slice": "provider-contract",
+      "sha256_before": "a048afa0573f41171e7a416a5be119dba49fbbb331631d0a04e886ad34e71d42",
+      "sha256_after": "a048afa0573f41171e7a416a5be119dba49fbbb331631d0a04e886ad34e71d42",
+      "git_blob_before": "e684223a34a17ea70caf8190486ad4dc99c89b8b"
+    },
+    {
+      "from": "modules/provider-spike/shared/src/test/resources/scalafim/surface/oracle/real_chain/input-derived-bounds.json",
+      "to": "modules/provider-contract/shared/src/test/resources/scalafim/surface/oracle/real_chain/input-derived-bounds.json",
+      "slice": "provider-contract",
+      "sha256_before": "49ed50485302e465c95d6a9464ce5b7e08fdf2ef660ebbda6b12d57df2247838",
+      "sha256_after": "49ed50485302e465c95d6a9464ce5b7e08fdf2ef660ebbda6b12d57df2247838",
+      "git_blob_before": "cec90866721ce4536cdf0110f98e3a7dec263d65"
+    },
+    {
+      "from": "modules/provider-spike/shared/src/test/resources/scalafim/surface/oracle/real_chain/manifest.json",
+      "to": "modules/provider-contract/shared/src/test/resources/scalafim/surface/oracle/real_chain/manifest.json",
+      "slice": "provider-contract",
+      "sha256_before": "29cc85dcf590c474204833a6ae04dc43179e58a2c3e29c82cd8a87aa6b73fa47",
+      "sha256_after": "29cc85dcf590c474204833a6ae04dc43179e58a2c3e29c82cd8a87aa6b73fa47",
+      "git_blob_before": "d51d9d31cfc016a6db853587d14d6dab5348cb78"
+    },
+    {
+      "from": "modules/provider-spike/shared/src/test/resources/scalafim/surface/oracle/real_chain/native-bounds.tsv",
+      "to": "modules/provider-contract/shared/src/test/resources/scalafim/surface/oracle/real_chain/native-bounds.tsv",
+      "slice": "provider-contract",
+      "sha256_before": "e2c0c34e3feb561e8316ae717130277841fc2dc74fb2db63a96e6bb448182915",
+      "sha256_after": "e2c0c34e3feb561e8316ae717130277841fc2dc74fb2db63a96e6bb448182915",
+      "git_blob_before": "8c2112c9794675945c883e2cb4041f0d6d4e0481"
+    },
+    {
+      "from": "modules/provider-spike/shared/src/test/resources/scalafim/surface/oracle/real_chain/pial.tsv",
+      "to": "modules/provider-contract/shared/src/test/resources/scalafim/surface/oracle/real_chain/pial.tsv",
+      "slice": "provider-contract",
+      "sha256_before": "48627861a1926c8fd7889db95b2201580f7a0bfff3bd685e7912fe0a1159d4e5",
+      "sha256_after": "48627861a1926c8fd7889db95b2201580f7a0bfff3bd685e7912fe0a1159d4e5",
+      "git_blob_before": "1d07670e87271a8b7da16f33706af3eb0b2ca100"
+    },
+    {
+      "from": "modules/provider-spike/shared/src/test/resources/scalafim/surface/oracle/real_chain/report.json",
+      "to": "modules/provider-contract/shared/src/test/resources/scalafim/surface/oracle/real_chain/report.json",
+      "slice": "provider-contract",
+      "sha256_before": "7ef4d569b5bcf860b1d71b158cb4f03dafd33b36775d936d92516edc109a06dc",
+      "sha256_after": "7ef4d569b5bcf860b1d71b158cb4f03dafd33b36775d936d92516edc109a06dc",
+      "git_blob_before": "3c284646424834f26065dd2595bfd4d241372c6c"
+    },
+    {
+      "from": "modules/provider-spike/shared/src/test/resources/scalafim/surface/oracle/real_chain/ribbon-math.tsv",
+      "to": "modules/provider-contract/shared/src/test/resources/scalafim/surface/oracle/real_chain/ribbon-math.tsv",
+      "slice": "provider-contract",
+      "sha256_before": "fc88b61fbb472204e7b8776713f96950a6e7155eb19e51dcb47fab31241a89c3",
+      "sha256_after": "fc88b61fbb472204e7b8776713f96950a6e7155eb19e51dcb47fab31241a89c3",
+      "git_blob_before": "4b26c708d35a4df77f6c452afb209dfbe3dc7748"
+    },
+    {
+      "from": "modules/provider-spike/shared/src/test/resources/scalafim/surface/oracle/real_chain/ribbon-native.tsv",
+      "to": "modules/provider-contract/shared/src/test/resources/scalafim/surface/oracle/real_chain/ribbon-native.tsv",
+      "slice": "provider-contract",
+      "sha256_before": "8512997c1c3d91f483cab19d19bf409b7a31363e177095f35345f245b144fa29",
+      "sha256_after": "8512997c1c3d91f483cab19d19bf409b7a31363e177095f35345f245b144fa29",
+      "git_blob_before": "5f4ee3f00f110d6bc5e904dadcd413e6eabc8f28"
+    },
+    {
+      "from": "modules/provider-spike/shared/src/test/resources/scalafim/surface/oracle/real_chain/staged-closest.tsv",
+      "to": "modules/provider-contract/shared/src/test/resources/scalafim/surface/oracle/real_chain/staged-closest.tsv",
+      "slice": "provider-contract",
+      "sha256_before": "b8d5096b5831c3ca724885b96b4f7708031c3c66f0bb0e1016be95e50fb56f97",
+      "sha256_after": "b8d5096b5831c3ca724885b96b4f7708031c3c66f0bb0e1016be95e50fb56f97",
+      "git_blob_before": "5d61a8bd47156990e6085462751d3af2944cb68a"
+    },
+    {
+      "from": "modules/provider-spike/shared/src/test/resources/scalafim/surface/oracle/real_chain/staged-math.tsv",
+      "to": "modules/provider-contract/shared/src/test/resources/scalafim/surface/oracle/real_chain/staged-math.tsv",
+      "slice": "provider-contract",
+      "sha256_before": "302da55f28118d7525c4190af0b3fc9643f988f6be3da6c89d9cb87d4558299d",
+      "sha256_after": "302da55f28118d7525c4190af0b3fc9643f988f6be3da6c89d9cb87d4558299d",
+      "git_blob_before": "79cdc59b7e4f646138caf2121ec606be7ad7d3a2"
+    },
+    {
+      "from": "modules/provider-spike/shared/src/test/resources/scalafim/surface/oracle/real_chain/staged-native.tsv",
+      "to": "modules/provider-contract/shared/src/test/resources/scalafim/surface/oracle/real_chain/staged-native.tsv",
+      "slice": "provider-contract",
+      "sha256_before": "acc4f2debd2937db67e583ac225c13a7f5da762055bcdc97b1285b6c79f46b25",
+      "sha256_after": "acc4f2debd2937db67e583ac225c13a7f5da762055bcdc97b1285b6c79f46b25",
+      "git_blob_before": "d48f55088b23f2c59bc813a9a627ec25ab1ccdb1"
+    },
+    {
+      "from": "modules/provider-spike/shared/src/test/resources/scalafim/surface/oracle/real_chain/subject-faces.tsv",
+      "to": "modules/provider-contract/shared/src/test/resources/scalafim/surface/oracle/real_chain/subject-faces.tsv",
+      "slice": "provider-contract",
+      "sha256_before": "762c357cba52054d9616adf4cc3099f9bf85244d3b54130670b867cd9751567d",
+      "sha256_after": "762c357cba52054d9616adf4cc3099f9bf85244d3b54130670b867cd9751567d",
+      "git_blob_before": "0ff656a23c67242cee3afd2cc9f53646f62a1b57"
+    },
+    {
+      "from": "modules/provider-spike/shared/src/test/resources/scalafim/surface/oracle/real_chain/subject-provenance.json",
+      "to": "modules/provider-contract/shared/src/test/resources/scalafim/surface/oracle/real_chain/subject-provenance.json",
+      "slice": "provider-contract",
+      "sha256_before": "32207c869994c988343b109c100257ecbd127f8a9a8ed258f01376170a9f886f",
+      "sha256_after": "32207c869994c988343b109c100257ecbd127f8a9a8ed258f01376170a9f886f",
+      "git_blob_before": "b04c4c114403a9e3a46dc7735659a1dbca999fe1"
+    },
+    {
+      "from": "modules/provider-spike/shared/src/test/resources/scalafim/surface/oracle/real_chain/subject-to-fsaverage.tsv",
+      "to": "modules/provider-contract/shared/src/test/resources/scalafim/surface/oracle/real_chain/subject-to-fsaverage.tsv",
+      "slice": "provider-contract",
+      "sha256_before": "f27b906578ee06f61172d7743d3aa18c91fb71b2db76c313d355725c4fe5909f",
+      "sha256_after": "f27b906578ee06f61172d7743d3aa18c91fb71b2db76c313d355725c4fe5909f",
+      "git_blob_before": "5e8bd5cc3faec0c5ad184b4f1822ecea55b96362"
+    },
+    {
+      "from": "modules/provider-spike/shared/src/test/resources/scalafim/surface/oracle/real_chain/subject-to-target.tsv",
+      "to": "modules/provider-contract/shared/src/test/resources/scalafim/surface/oracle/real_chain/subject-to-target.tsv",
+      "slice": "provider-contract",
+      "sha256_before": "3b233936e5bde7a1f73551211b63f097deabec85e63d06dae2927f29f404ba1a",
+      "sha256_after": "3b233936e5bde7a1f73551211b63f097deabec85e63d06dae2927f29f404ba1a",
+      "git_blob_before": "b529ff8e3f0ee3fe05127a58cb4d1ce6e52adc6c"
+    },
+    {
+      "from": "modules/provider-spike/shared/src/test/resources/scalafim/surface/oracle/real_chain/subject-vertices.tsv",
+      "to": "modules/provider-contract/shared/src/test/resources/scalafim/surface/oracle/real_chain/subject-vertices.tsv",
+      "slice": "provider-contract",
+      "sha256_before": "7d29cbee5f197661e23af1a794dcc94176722426e4a9f9673b793093f66a6f54",
+      "sha256_after": "7d29cbee5f197661e23af1a794dcc94176722426e4a9f9673b793093f66a6f54",
+      "git_blob_before": "2150509271888dba0cf80f39884f056f08e693c2"
+    },
+    {
+      "from": "modules/provider-spike/shared/src/test/resources/scalafim/surface/oracle/real_chain/target-faces.tsv",
+      "to": "modules/provider-contract/shared/src/test/resources/scalafim/surface/oracle/real_chain/target-faces.tsv",
+      "slice": "provider-contract",
+      "sha256_before": "f8d2ec24e5a73545ed8e8becabde4cda866de15da2bc4b7c69700d94e3e9a9f6",
+      "sha256_after": "f8d2ec24e5a73545ed8e8becabde4cda866de15da2bc4b7c69700d94e3e9a9f6",
+      "git_blob_before": "2f212d399e807dc685c209a47a4b7cfb3170c8ee"
+    },
+    {
+      "from": "modules/provider-spike/shared/src/test/resources/scalafim/surface/oracle/real_chain/target-vertices.tsv",
+      "to": "modules/provider-contract/shared/src/test/resources/scalafim/surface/oracle/real_chain/target-vertices.tsv",
+      "slice": "provider-contract",
+      "sha256_before": "72f32f5cc63e2ebc53b3d1f896f20cf0f15c9dddbfe3b3117de564c04d3483f7",
+      "sha256_after": "72f32f5cc63e2ebc53b3d1f896f20cf0f15c9dddbfe3b3117de564c04d3483f7",
+      "git_blob_before": "44981b119932abff936892a5d2fb3be6e1d31bac"
+    },
+    {
+      "from": "modules/provider-spike/shared/src/test/resources/scalafim/surface/oracle/real_chain/template-provenance.json",
+      "to": "modules/provider-contract/shared/src/test/resources/scalafim/surface/oracle/real_chain/template-provenance.json",
+      "slice": "provider-contract",
+      "sha256_before": "fcd3d13ad2939569f781fd4fd6c7e6c701b3f1e7862b7ab221ee98141043a79a",
+      "sha256_after": "fcd3d13ad2939569f781fd4fd6c7e6c701b3f1e7862b7ab221ee98141043a79a",
+      "git_blob_before": "f50e271acafc1ecf1f8204c89bd1bcf52d2b9a44"
+    },
+    {
+      "from": "modules/provider-spike/shared/src/test/resources/scalafim/surface/oracle/real_chain/volume.raw.gz",
+      "to": "modules/provider-contract/shared/src/test/resources/scalafim/surface/oracle/real_chain/volume.raw.gz",
+      "slice": "provider-contract",
+      "sha256_before": "156482d0ce615eb34f846aeca88532fdcfcf1c80f6f7cf417bbb8f9a23d90798",
+      "sha256_after": "156482d0ce615eb34f846aeca88532fdcfcf1c80f6f7cf417bbb8f9a23d90798",
+      "git_blob_before": "696114d300469753a00d52ef1827c1acb0ec5d9e"
+    },
+    {
+      "from": "modules/provider-spike/shared/src/test/resources/scalafim/surface/oracle/real_chain/white-scanner-header.tsv",
+      "to": "modules/provider-contract/shared/src/test/resources/scalafim/surface/oracle/real_chain/white-scanner-header.tsv",
+      "slice": "provider-contract",
+      "sha256_before": "09a9c78a3d8515b25f1c724c17eab4beba50736a34f6a037585b51b226c492a6",
+      "sha256_after": "09a9c78a3d8515b25f1c724c17eab4beba50736a34f6a037585b51b226c492a6",
+      "git_blob_before": "222b993ec071974d43a2429abb87cf2372e1db7a"
+    },
+    {
+      "from": "modules/provider-spike/shared/src/test/resources/scalafim/surface/oracle/real_chain/white-scanner-math.tsv",
+      "to": "modules/provider-contract/shared/src/test/resources/scalafim/surface/oracle/real_chain/white-scanner-math.tsv",
+      "slice": "provider-contract",
+      "sha256_before": "11f6458685ce4f0b5de9694ddab9c6544ddd41fd35c22d3d1798886880dd877e",
+      "sha256_after": "11f6458685ce4f0b5de9694ddab9c6544ddd41fd35c22d3d1798886880dd877e",
+      "git_blob_before": "b21c3086897739e0f12938dd621108b9661bddd4"
+    },
+    {
+      "from": "modules/provider-spike/shared/src/test/resources/scalafim/surface/oracle/real_chain/white.tsv",
+      "to": "modules/provider-contract/shared/src/test/resources/scalafim/surface/oracle/real_chain/white.tsv",
+      "slice": "provider-contract",
+      "sha256_before": "14bc0e6512cbbb60ed7666d1bbc0362d84c2b2a473280f59ec1a4b2e71f3cb9f",
+      "sha256_after": "14bc0e6512cbbb60ed7666d1bbc0362d84c2b2a473280f59ec1a4b2e71f3cb9f",
+      "git_blob_before": "37e9ac3a620e84b60186d777f251bb964c58dbce"
+    },
+    {
+      "from": "modules/provider-spike/shared/src/test/scala/providercontract/admission/ProviderAdmissionSuite.scala",
+      "to": "modules/provider-contract/shared/src/test/scala/providercontract/admission/ProviderAdmissionSuite.scala",
+      "slice": "provider-contract",
+      "sha256_before": "af6ab98a66fc618647808f317916b1e4fadf252ee03cee0d07fe50ec2529abb0",
+      "sha256_after": "af6ab98a66fc618647808f317916b1e4fadf252ee03cee0d07fe50ec2529abb0",
+      "git_blob_before": "523c18691ba53694c304f2c0995321ef93d404a2"
+    },
+    {
+      "from": "modules/provider-spike/shared/src/test/scala/providercontract/locus/DomainFixtures.scala",
+      "to": "modules/provider-contract/shared/src/test/scala/providercontract/locus/DomainFixtures.scala",
+      "slice": "provider-contract",
+      "sha256_before": "b04a92ac1782b56bac9ba51e211330b68afde352d6e35d57754edb4e20366e90",
+      "sha256_after": "b04a92ac1782b56bac9ba51e211330b68afde352d6e35d57754edb4e20366e90",
+      "git_blob_before": "258356e45dd0587aee2a0c064dc586ba2397dbe2"
+    },
+    {
+      "from": "modules/provider-spike/shared/src/test/scala/providercontract/locus/DomainIdentityProbeSuite.scala",
+      "to": "modules/provider-contract/shared/src/test/scala/providercontract/locus/DomainIdentityProbeSuite.scala",
+      "slice": "provider-contract",
+      "sha256_before": "87e1660f62e8f8606619cca362f82ee0ff8f5b3d8cc788977638feda16369903",
+      "sha256_after": "87e1660f62e8f8606619cca362f82ee0ff8f5b3d8cc788977638feda16369903",
+      "git_blob_before": "b087148a361722d9700874d53aa4b194d9c7e896"
+    },
+    {
+      "from": "modules/provider-spike/shared/src/test/scala/providercontract/locus/IndexedFieldSuite.scala",
+      "to": "modules/provider-contract/shared/src/test/scala/providercontract/locus/IndexedFieldSuite.scala",
+      "slice": "provider-contract",
+      "sha256_before": "d3abb36ac45adff0aa76a933c2fa6578de3a02259795a9d9b1b997832847a8cf",
+      "sha256_after": "d3abb36ac45adff0aa76a933c2fa6578de3a02259795a9d9b1b997832847a8cf",
+      "git_blob_before": "1358672842971b2820be85764221ad663fc6c956"
+    },
+    {
+      "from": "modules/provider-spike/shared/src/test/scala/providercontract/locus/ParcellationSuite.scala",
+      "to": "modules/provider-contract/shared/src/test/scala/providercontract/locus/ParcellationSuite.scala",
+      "slice": "provider-contract",
+      "sha256_before": "2a79a052d8fe96bd492ef00a1175cd7e0fa4a46ef1611811a426e9e4f6ecf4ce",
+      "sha256_after": "2a79a052d8fe96bd492ef00a1175cd7e0fa4a46ef1611811a426e9e4f6ecf4ce",
+      "git_blob_before": "d1e259002d448c2a120b1dbd212255b0adfe80cd"
+    },
+    {
+      "from": "modules/provider-spike/shared/src/test/scala/providercontract/locus/ProviderAggregationSuite.scala",
+      "to": "modules/provider-contract/shared/src/test/scala/providercontract/locus/ProviderAggregationSuite.scala",
+      "slice": "provider-contract",
+      "sha256_before": "c2aa334c04dfeec62f4dd0892bf269911f59a0e87da4ac2a917561b56b3dfa50",
+      "sha256_after": "c2aa334c04dfeec62f4dd0892bf269911f59a0e87da4ac2a917561b56b3dfa50",
+      "git_blob_before": "aa8f479238a7a982000889d927eedbf4bd36210e"
+    },
+    {
+      "from": "modules/provider-spike/shared/src/test/scala/providercontract/locus/SearchlightSuite.scala",
+      "to": "modules/provider-contract/shared/src/test/scala/providercontract/locus/SearchlightSuite.scala",
+      "slice": "provider-contract",
+      "sha256_before": "ef5a19420457fa61c6360179f85a4976c352af8c12334e5117034b65a75b005e",
+      "sha256_after": "ef5a19420457fa61c6360179f85a4976c352af8c12334e5117034b65a75b005e",
+      "git_blob_before": "c795977df8f9c1c67e5922ba24c6cacc8eb775cb"
+    },
+    {
+      "from": "modules/provider-spike/shared/src/test/scala/scalafim/spike/scenarios/ChainScenarioSupport.scala",
+      "to": "modules/provider-contract/shared/src/test/scala/scalafim/spike/scenarios/ChainScenarioSupport.scala",
+      "slice": "provider-contract",
+      "sha256_before": "0d688348b80ea45eab3a017a8c62754f4cf514e816de2b742a5fd1aaecb135ad",
+      "sha256_after": "0d688348b80ea45eab3a017a8c62754f4cf514e816de2b742a5fd1aaecb135ad",
+      "git_blob_before": "0a137d13313b69eba914d9f0d8b2063afb2cdc1d"
+    },
+    {
+      "from": "modules/provider-spike/shared/src/test/scala/scalafim/spike/scenarios/Demo1NativeScenarioSuite.scala",
+      "to": "modules/provider-contract/shared/src/test/scala/scalafim/spike/scenarios/Demo1NativeScenarioSuite.scala",
+      "slice": "provider-contract",
+      "sha256_before": "7b68ac0997d0a2d08cc935e32d167ad60d0046529cd8e7199fa49315d0e14510",
+      "sha256_after": "7b68ac0997d0a2d08cc935e32d167ad60d0046529cd8e7199fa49315d0e14510",
+      "git_blob_before": "c39cea63ff07509b2667272f5562e8a8eb9dedc8"
+    },
+    {
+      "from": "modules/provider-spike/shared/src/test/scala/scalafim/spike/scenarios/FanSplitFixture.scala",
+      "to": "modules/provider-contract/shared/src/test/scala/scalafim/spike/scenarios/FanSplitFixture.scala",
+      "slice": "provider-contract",
+      "sha256_before": "7029ae0d813712b0ff29ab366ecf82c9d2573404228c0d84c6f048e2fe5d944c",
+      "sha256_after": "7029ae0d813712b0ff29ab366ecf82c9d2573404228c0d84c6f048e2fe5d944c",
+      "git_blob_before": "470b433d95d0b1843e3086a90722608031c373eb"
+    },
+    {
+      "from": "modules/provider-spike/shared/src/test/scala/scalafim/spike/scenarios/FmriprepChainScenarioSuite.scala",
+      "to": "modules/provider-contract/shared/src/test/scala/scalafim/spike/scenarios/FmriprepChainScenarioSuite.scala",
+      "slice": "provider-contract",
+      "sha256_before": "c999acb32a94e946e034c3c23d0e4567f4a43c91e58affa006370de3663946ce",
+      "sha256_after": "c999acb32a94e946e034c3c23d0e4567f4a43c91e58affa006370de3663946ce",
+      "git_blob_before": "d8767d37e371f547d7570f19f720ac0c4a66f8e0"
+    },
+    {
+      "from": "modules/provider-spike/shared/src/test/scala/scalafim/spike/scenarios/FslChainScenarioSuite.scala",
+      "to": "modules/provider-contract/shared/src/test/scala/scalafim/spike/scenarios/FslChainScenarioSuite.scala",
+      "slice": "provider-contract",
+      "sha256_before": "ff653d49a4b2bf3ee923f8aec01a4c94abd6572de241a58bf1c1f4378fba7aa3",
+      "sha256_after": "ff653d49a4b2bf3ee923f8aec01a4c94abd6572de241a58bf1c1f4378fba7aa3",
+      "git_blob_before": "99f3cdf7626382869168767f252c0c7463bc8c1e"
+    },
+    {
+      "from": "modules/provider-spike/shared/src/test/scala/scalafim/spike/scenarios/FslRealChainScenarioSuite.scala",
+      "to": "modules/provider-contract/shared/src/test/scala/scalafim/spike/scenarios/FslRealChainScenarioSuite.scala",
+      "slice": "provider-contract",
+      "sha256_before": "5553aca7eb8e5f6689853778945e6f319d20dfe26cc260aa7e2975be0db8e1bd",
+      "sha256_after": "5553aca7eb8e5f6689853778945e6f319d20dfe26cc260aa7e2975be0db8e1bd",
+      "git_blob_before": "134acabb175407a99598a30a9168075ec08bda0c"
+    },
+    {
+      "from": "modules/provider-spike/shared/src/test/scala/scalafim/spike/scenarios/SurfaceChainScenarioSuite.scala",
+      "to": "modules/provider-contract/shared/src/test/scala/scalafim/spike/scenarios/SurfaceChainScenarioSuite.scala",
+      "slice": "provider-contract",
+      "sha256_before": "174e86b330ab8599807f50fbb089fabb071b43388889087cc99a3946dbf7a361",
+      "sha256_after": "174e86b330ab8599807f50fbb089fabb071b43388889087cc99a3946dbf7a361",
+      "git_blob_before": "d9b7e71a5cc9f487d15bcf9d434d69cf1821b435"
+    },
+    {
+      "from": "modules/provider-spike/shared/src/test/scala/scalafim/spike/scenarios/SurfaceRealChainScenarioSuite.scala",
+      "to": "modules/provider-contract/shared/src/test/scala/scalafim/spike/scenarios/SurfaceRealChainScenarioSuite.scala",
+      "slice": "provider-contract",
+      "sha256_before": "986cf7b86791ca8fba09461e651dad5526a10cdd79829dced18dc40cb109d25c",
+      "sha256_after": "986cf7b86791ca8fba09461e651dad5526a10cdd79829dced18dc40cb109d25c",
+      "git_blob_before": "e70da466ceaee7fb7ccc547923158a401281c9ab"
+    },
+    {
+      "from": "modules/provider-spike/shared/src/test/scala/scalafim/spike/scenarios/fixtures/SphereMeshes.scala",
+      "to": "modules/provider-contract/shared/src/test/scala/scalafim/spike/scenarios/fixtures/SphereMeshes.scala",
+      "slice": "provider-contract",
+      "sha256_before": "fa53b136ebb4ee87f149272d36a43a7ecc886eedf3a8492b3b72db69854b515d",
+      "sha256_after": "fa53b136ebb4ee87f149272d36a43a7ecc886eedf3a8492b3b72db69854b515d",
+      "git_blob_before": "cddbffd70025dfbebe7155652fb6f2b315532f87"
+    },
+    {
+      "from": "examples/workflows-js/src/test/scala/scalafim/examples/workflows/eco/SurfaceAdmissionPlatform.scala",
+      "to": "examples/workflows/js/src/test/scala/scalafim/examples/workflows/eco/SurfaceAdmissionPlatform.scala",
+      "slice": "workflow-examples",
+      "sha256_before": "1b3cdf07c88a2ca145043a59a09209cb4276d5a59ff0d87be077922b959b32d9",
+      "sha256_after": "1b3cdf07c88a2ca145043a59a09209cb4276d5a59ff0d87be077922b959b32d9",
+      "git_blob_before": "8bf7f875d9372363c533498e08e2608d2a46aef9"
+    },
+    {
+      "from": "examples/workflows-jvm/README.md",
+      "to": "examples/workflows/README.md",
+      "slice": "workflow-examples",
+      "sha256_before": "e79222e84d8261426c50aacad69432de3324f9f2aa0e5886f8d2fecf89c8675f",
+      "sha256_after": "90d61d82bb34ccfac85ec0ca965bc5697e818152988d4f73f158bee3c5b2248d",
+      "git_blob_before": "efc520e9ff427ebb528f323137b3ea59ce497377",
+      "exception": "Documentation describes shared/JVM/JS workflow layout and retained target names."
+    },
+    {
+      "from": "examples/workflows-jvm/src/main/scala/scalafim/examples/workflows/AtlasMvpaWorkflow.scala",
+      "to": "examples/workflows/shared/src/main/scala/scalafim/examples/workflows/AtlasMvpaWorkflow.scala",
+      "slice": "workflow-examples",
+      "sha256_before": "19313f3607249eb447fffecdf280180ef2be8515d27921c339d77531aa72785a",
+      "sha256_after": "19313f3607249eb447fffecdf280180ef2be8515d27921c339d77531aa72785a",
+      "git_blob_before": "230e1724d2d958c53982232ff6aa41518f33520f"
+    },
+    {
+      "from": "examples/workflows-jvm/src/main/scala/scalafim/examples/workflows/ProfileHrfConditionWorkflow.scala",
+      "to": "examples/workflows/jvm/src/main/scala/scalafim/examples/workflows/ProfileHrfConditionWorkflow.scala",
+      "slice": "workflow-examples",
+      "sha256_before": "a9260617f555750d12f03736d6610e88dfb05ab9ab71295a53692e6df834c9ff",
+      "sha256_after": "a9260617f555750d12f03736d6610e88dfb05ab9ab71295a53692e6df834c9ff",
+      "git_blob_before": "b6ea844ad33c790cba9bcc73593d2bc5ada28616"
+    },
+    {
+      "from": "examples/workflows-jvm/src/test/scala/scalafim/examples/workflows/AtlasMvpaWorkflowSuite.scala",
+      "to": "examples/workflows/shared/src/test/scala/scalafim/examples/workflows/AtlasMvpaWorkflowSuite.scala",
+      "slice": "workflow-examples",
+      "sha256_before": "7a1e21d4872a2f08db0a13c88000162ace4808f7fbd02620773683d3b5ff5a56",
+      "sha256_after": "7a1e21d4872a2f08db0a13c88000162ace4808f7fbd02620773683d3b5ff5a56",
+      "git_blob_before": "40aee81fc2d80564f2dcd759741e16a09e404540"
+    },
+    {
+      "from": "examples/workflows-jvm/src/test/scala/scalafim/examples/workflows/ProfileHrfConditionWorkflowSuite.scala",
+      "to": "examples/workflows/jvm/src/test/scala/scalafim/examples/workflows/ProfileHrfConditionWorkflowSuite.scala",
+      "slice": "workflow-examples",
+      "sha256_before": "d6c3ebc7bd3e0249a8033ac465ff1c5f6791a88e2f3daa5858439447e31b5cdf",
+      "sha256_after": "d6c3ebc7bd3e0249a8033ac465ff1c5f6791a88e2f3daa5858439447e31b5cdf",
+      "git_blob_before": "d53cbf93de317cd678d371791fa424486cf155e3"
+    },
+    {
+      "from": "examples/workflows-jvm/src/test/scala/scalafim/examples/workflows/eco/EcosystemAtlasRoutingScenarioSuite.scala",
+      "to": "examples/workflows/shared/src/test/scala/scalafim/examples/workflows/eco/EcosystemAtlasRoutingScenarioSuite.scala",
+      "slice": "workflow-examples",
+      "sha256_before": "3b83b20e1fd101d85a9f85a0e9d7ad1fd801326bf5f81aebb52cdca91d1bf904",
+      "sha256_after": "3b83b20e1fd101d85a9f85a0e9d7ad1fd801326bf5f81aebb52cdca91d1bf904",
+      "git_blob_before": "f8190fc587a8ae570d0fb9a2199fb380c315ff2a"
+    },
+    {
+      "from": "examples/workflows-jvm/src/test/scala/scalafim/examples/workflows/eco/EcosystemFreeSurferReadbackScenarioSuite.scala",
+      "to": "examples/workflows/jvm/src/test/scala/scalafim/examples/workflows/eco/EcosystemFreeSurferReadbackScenarioSuite.scala",
+      "slice": "workflow-examples",
+      "sha256_before": "190d5a6b86ea03e75b73943a1639ef155148ec5aad0348293d60b682f5549e7e",
+      "sha256_after": "190d5a6b86ea03e75b73943a1639ef155148ec5aad0348293d60b682f5549e7e",
+      "git_blob_before": "159d46752182765a56fcdb19db10be8613bdd6f1"
+    },
+    {
+      "from": "examples/workflows-jvm/src/test/scala/scalafim/examples/workflows/eco/EcosystemLinkedProjectionScenarioSuite.scala",
+      "to": "examples/workflows/shared/src/test/scala/scalafim/examples/workflows/eco/EcosystemLinkedProjectionScenarioSuite.scala",
+      "slice": "workflow-examples",
+      "sha256_before": "90bd84b8240ff03749a3419a709135adf92ed0a4be53c7b017fa578e1dd1678a",
+      "sha256_after": "90bd84b8240ff03749a3419a709135adf92ed0a4be53c7b017fa578e1dd1678a",
+      "git_blob_before": "ec56ce0b2d36fa31f7ba2d1a78f4e66e35c481e8"
+    },
+    {
+      "from": "examples/workflows-jvm/src/test/scala/scalafim/examples/workflows/eco/EcosystemMeasurementScatterScenarioSuite.scala",
+      "to": "examples/workflows/shared/src/test/scala/scalafim/examples/workflows/eco/EcosystemMeasurementScatterScenarioSuite.scala",
+      "slice": "workflow-examples",
+      "sha256_before": "d7a9632e3098cf391e7b0506baa228c70e3ec65c9fd3001c5c856c82c5e82ea9",
+      "sha256_after": "d7a9632e3098cf391e7b0506baa228c70e3ec65c9fd3001c5c856c82c5e82ea9",
+      "git_blob_before": "ecd97c00a393107c746db7b7a2ea43fb4e2bf1f4"
+    },
+    {
+      "from": "examples/workflows-jvm/src/test/scala/scalafim/examples/workflows/eco/EcosystemSurfaceReadbackScenarioSuite.scala",
+      "to": "examples/workflows/shared/src/test/scala/scalafim/examples/workflows/eco/EcosystemSurfaceReadbackScenarioSuite.scala",
+      "slice": "workflow-examples",
+      "sha256_before": "1b3e92fc60b90018c4e42f875940e0c6a9774a465a54960b840b6c0f79d73d49",
+      "sha256_after": "1b3e92fc60b90018c4e42f875940e0c6a9774a465a54960b840b6c0f79d73d49",
+      "git_blob_before": "210116dd6a51f9406ac84d8eb9affebfa8bdf92b"
+    },
+    {
+      "from": "examples/workflows-jvm/src/test/scala/scalafim/examples/workflows/eco/SurfaceAdmissionPlatform.scala",
+      "to": "examples/workflows/jvm/src/test/scala/scalafim/examples/workflows/eco/SurfaceAdmissionPlatform.scala",
+      "slice": "workflow-examples",
+      "sha256_before": "87e7cb5ad6c240126dd56056483ad1578d48467a2f4bf6d9d6f5a76cfeaca600",
+      "sha256_after": "87e7cb5ad6c240126dd56056483ad1578d48467a2f4bf6d9d6f5a76cfeaca600",
+      "git_blob_before": "a3d9dc81ea6cd5081e9d16b75d9852f1d4593b14"
+    },
+    {
+      "from": "modules/design/shared/src/test/scala/scalafim/fmri/design/DesignReviewGraphicsSuite.scala",
+      "to": "modules/design-view/shared/src/test/scala/scalafim/fmri/design/DesignReviewGraphicsSuite.scala",
+      "slice": "design-view-current-main-tests",
+      "sha256_before": "a96e3857a99c72fe635159b63b17898366867d304ccbbc7d44be4f9c760210e6",
+      "sha256_after": "a96e3857a99c72fe635159b63b17898366867d304ccbbc7d44be4f9c760210e6",
+      "git_blob_before": "3c0d78b17bd5d56a822b53ff82770abd25e7b016"
+    },
+    {
+      "from": "modules/design/shared/src/test/scala/scalafim/fmri/design/ResponseBasisGraphicsSuite.scala",
+      "to": "modules/design-view/shared/src/test/scala/scalafim/fmri/design/ResponseBasisGraphicsSuite.scala",
+      "slice": "design-view-current-main-tests",
+      "sha256_before": "6453063a8fb93abb541154c9348314ae57fe32f81579576a772697976ecce817",
+      "sha256_after": "6453063a8fb93abb541154c9348314ae57fe32f81579576a772697976ecce817",
+      "git_blob_before": "7ce8456d44586d6ee936c2ede3587ccc29635979"
+    },
+    {
+      "from": "modules/model/README.md",
+      "to": "modules/fit/model-api.md",
+      "slice": "model-fit-documentation",
+      "sha256_before": "eed5eae7c4ba0812c1390b6cb08bc207310e45eef8efa481bc80e3d91773f690",
+      "sha256_after": "eaa4e5b9aea784c7bc8d717623ac634357b0e948ada85cb2dfc63261aeb9bb19",
+      "git_blob_before": "87f506d3f08f6d5579e65c0a3c722c35dccc1f2a",
+      "exception": "Documentation title updated to the owning fit module; package API unchanged."
+    }
+  ],
+  "qualification": "pending; historical gate results are not reused"
+}

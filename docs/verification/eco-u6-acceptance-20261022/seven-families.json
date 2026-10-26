@@ -1,0 +1,148 @@
+{
+  "status": "Pass",
+  "root_runtime_source": "92154d81c39b6a384be195dde0e933ed0dff29ca",
+  "published_candidate": "92154d81c39b6a384be195dde0e933ed0dff29ca",
+  "families": [
+    {
+      "id": 1,
+      "name": "Functional dataset -> design -> fit -> contrast -> group",
+      "status": "Pass",
+      "suite": "FirstLevelToGroupKnownEffectScenarioSuite",
+      "case": "known effects survive public first-level fit, bridge, and fixed-effects group inference",
+      "targets": [
+        "fmriWorkflowJVM/test",
+        "fmriWorkflowJS/test"
+      ],
+      "result_type": "group.scenarios.ScenarioResult with clean ciPass",
+      "oracle": "five-subject literal effects/SE/variance, subject order and contrast provenance, inverse-variance analytic estimate/SE/z/p; unknown geometry explicit",
+      "receipt": "campaign-receipt-57.json"
+    },
+    {
+      "id": 2,
+      "name": "Dataset/readouts -> identified MVPA -> prediction and RSA",
+      "status": "Pass",
+      "branches": [
+        {
+          "suite": "DatasetObservationEvidenceSuite",
+          "case": "dataset to identified prediction preserves literal values and training-only probabilities as one scenario",
+          "result": "u4-dataset-identified-prediction",
+          "targets": [
+            "mvpaDatasetJVM/test",
+            "mvpaDatasetJS/test"
+          ]
+        },
+        {
+          "suite": "BetaFreeRsaAcceptanceSuite",
+          "case": "native scoped trial relations match independent beta-free signed distances and RSA",
+          "result": "u4-fit-readout-identified-rsa",
+          "targets": [
+            "mvpaFitJVM/test",
+            "mvpaFitJS/test"
+          ]
+        }
+      ],
+      "oracle": "literal selected observations, training-only probabilities, signed beta-free distance/RSA, owner/order refusals and resource release",
+      "receipt": "campaign-receipt-57.json"
+    },
+    {
+      "id": 3,
+      "name": "Atlas/locus neighborhood -> measurements -> scatter",
+      "status": "Pass",
+      "suite": "EcosystemMeasurementScatterScenarioSuite",
+      "result": "ecosystem-measurement-scatter",
+      "platforms": [
+        "JVM",
+        "JS"
+      ],
+      "receipt": "campaign-receipt-57.json",
+      "oracle": "actual atlas and centered locus outcomes/supports scatter to permuted ambient order; atlas background remains unvisited",
+      "bounds": "synthetic locus supports; does not qualify geometry-generated real-cortex searchlights",
+      "initial_owning_receipt": "scalafim-eco-u6-focused-31.log.gz"
+    },
+    {
+      "id": 4,
+      "name": "GIFTI/FreeSurfer -> surface scalar -> scene readback",
+      "status": "Pass",
+      "suites": [
+        "EcosystemSurfaceReadbackScenarioSuite",
+        "EcosystemFreeSurferReadbackScenarioSuite"
+      ],
+      "results": [
+        "gifti-freesurfer-scalar",
+        "freesurfer-geometry-jvm"
+      ],
+      "platforms": {
+        "GIFTI_geometry_and_FreeSurfer_scalar": [
+          "JVM",
+          "JS"
+        ],
+        "FreeSurfer_geometry": [
+          "JVM"
+        ]
+      },
+      "receipt": "campaign-receipt-57.json",
+      "oracle": "literal ordered triangle/scalars, declared-unapplied GIFTI transform, scene wire/resource identity, restored raster/pick and topology/digest/capability refusals",
+      "bounds": "synthetic geometry; FS geometry reader is JVM-only public capability",
+      "initial_owning_receipt": "scalafim-eco-u6-focused-31.log.gz"
+    },
+    {
+      "id": 5,
+      "name": "Shared world -> volume projection -> scalar raster -> linked pick/cursor",
+      "status": "Pass",
+      "suite": "EcosystemLinkedProjectionScenarioSuite",
+      "result": "ecosystem-linked-volume-projection",
+      "platforms": [
+        "JVM",
+        "JS"
+      ],
+      "receipt": "campaign-receipt-57.json",
+      "oracle": "midpoint samples100/102/131, independent off-tie barycentrics193/387,97/387,97/387 -> RGB127/64/64; actualvertex0 pick -> voxel0/0/0 -> samevertex; world/topology refusals",
+      "bounds": "fixture-declared sharedworld, software raster, no native/WebGL/performance claim",
+      "initial_owning_receipt": "scalafim-eco-u6-focused-31.log.gz"
+    },
+    {
+      "id": 6,
+      "name": "Standalone NIfTI volume/series -> ITK transform -> Java2D slice/pick",
+      "status": "Pass",
+      "consumer": "consumer.NeuroimCompositionConsumer",
+      "platforms": [
+        "JVM"
+      ],
+      "receipt": "standalone-receipt-45.json",
+      "oracle": "actual NIfTI4D secondtimepoint1311, actual ITKfile, checked target/source frames and pullback, actualpick111->311, pixel0xff9f9f9f, foreign-frame/out-of-range/classpath refusals",
+      "bounds": "synthetic standalone JVM Java2D specimen; no Root testkit/dependency"
+    },
+    {
+      "id": 7,
+      "name": "Atlas catalog -> realization -> query/reduce -> admitted route",
+      "status": "Pass",
+      "suite": "EcosystemAtlasRoutingScenarioSuite",
+      "result": "ecosystem-atlas-routing",
+      "platforms": [
+        "JVM",
+        "JS"
+      ],
+      "receipt": "campaign-receipt-57.json",
+      "oracle": "catalog determines ref/frame, actual MNI305(10,-20,35) -> MNI152(10.6941,-18.4064,36.1385), noncontiguous parcelorder50/10 reduces9/5 excludingbackground, provenance/alignment and planned-route/foreign-grid refusals",
+      "bounds": "synthetic volume realization, real admitted FreeSurfer affine; no unavailable route replaced by identity",
+      "initial_owning_receipt": "scalafim-eco-u6-focused-31.log.gz"
+    }
+  ],
+  "historical_display_qualification": "historical-display-review.md; exact old native/browser source/runtime identities retained; not visual execution of final73a pin",
+  "global_gate": "Complete three-segment37-batch campaign; exact140nonzero behavioral summaries/144success markers,5JVM+4JS new results and six existing functional/MVPA court executions. Standalone app separately passed.",
+  "qualified_source": "92154d81c39b6a384be195dde0e933ed0dff29ca",
+  "campaign_segments": [
+    {
+      "source": "31a42a69004c6282e01ad939c370f249fdf5e604",
+      "batches": 17
+    },
+    {
+      "source": "616860a2e14eb42b800462cd3d2f4fe4203f641a",
+      "batches": 8
+    },
+    {
+      "source": "92154d81c39b6a384be195dde0e933ed0dff29ca",
+      "batches": 12
+    }
+  ]
+}

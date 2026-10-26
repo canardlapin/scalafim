@@ -1,6 +1,6 @@
 package scalafim.interop.archive
 
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 
 import cats.arrow.FunctionK
 import cats.data.EitherT
@@ -42,11 +42,10 @@ import scalafim.dataset.{
 import scalafim.fmri.hrf.design.SamplingFrame
 import gale.linalg.DMat
 import scalafim.archive.lna.GaleArchiveTestData
-import scalafim.image.SomeSampleSpace
+import image4s.SomeSampleSpace
 import scalafim.response.{
   CalibrationState,
   DomainId,
-  DomainReference,
   InMemoryResponseSource,
   NonFinitePolicy,
   ResponseSchema,
@@ -56,10 +55,13 @@ import scalafim.response.{
   SampleDomain,
   SampleDomainKind,
   SignalSchema,
-  SourceId,
   TimeAxis,
   TimeDomain,
   UnitId
+}
+import locus4s.provenance.{
+  DomainReference,
+  SourceId
 }
 
 import scala.concurrent.Future
@@ -196,7 +198,7 @@ class ArchivedResponseRuntimeSuite extends munit.FunSuite:
         family = trackingFamily(key, source, events)
         registry = ArchivedResponseRegistry
           .build(family)
-          .fold(error => throw new IllegalArgumentException(error.message), identity)
+          .fold(error => throw new IllegalArgumentException(error.message), value => value)
         subject = runtime(driver, registry)
         success <- subject
           .openResponse(ArchiveLocation.unsafe("memory://success"))
@@ -263,7 +265,7 @@ class ArchivedResponseRuntimeSuite extends munit.FunSuite:
             ))
         registry = ArchivedResponseRegistry
           .build(family)
-          .fold(error => throw new IllegalArgumentException(error.message), identity)
+          .fold(error => throw new IllegalArgumentException(error.message), value => value)
         subject = runtime(driver, registry)
         result <- subject
           .openResponse(ArchiveLocation.unsafe("memory://failure"))
@@ -295,7 +297,7 @@ class ArchivedResponseRuntimeSuite extends munit.FunSuite:
         family = trackingFamily(key, source, events)
         registry = ArchivedResponseRegistry
           .build(family)
-          .fold(error => throw new IllegalArgumentException(error.message), identity)
+          .fold(error => throw new IllegalArgumentException(error.message), value => value)
         subject = runtime(driver, registry)
         success <- subject
           .openDataset(

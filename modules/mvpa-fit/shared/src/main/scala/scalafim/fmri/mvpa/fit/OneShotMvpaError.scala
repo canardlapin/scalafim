@@ -4,7 +4,7 @@ import multivar.core.MultivarError
 
 import scalafim.dataset.RunId
 import scalafim.fmri.fit.{FitError, TrainingRunScope}
-import scalafim.fmri.mvpa.{FeatureIndex, MvpaError}
+import mvpa4s.{FeatureIndex, MvpaError}
 import gale.linalg.LinAlgError
 
 enum OneShotMvpaError:

@@ -3,11 +3,13 @@ package scalafim.dataset
 import cats.data.EitherT
 import cats.effect.kernel.Sync
 import cats.syntax.all.*
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.NeuroAffineSyntax.*
 import scalafim.response.*
+import locus4s.provenance.*
 
 enum ResponseAdapterError:
   case Kernel(error: ResponseFailure)
+  case InvalidProvenance(error: ProvenanceError)
   case SamplingFrameCardinality(blocks: Int, origins: Int, intervals: Int)
   case TimeCountMismatch(schemaCount: Int, sourceCount: Int)
   case SampleCountMismatch(schemaCount: Int, sourceCount: Int)
@@ -16,6 +18,8 @@ enum ResponseAdapterError:
   def message: String =
     this match
       case Kernel(error) =>
+        error.message
+      case InvalidProvenance(error) =>
         error.message
       case SamplingFrameCardinality(blocks, origins, intervals) =>
         s"sampling frame has $blocks blocks, $origins origins, and $intervals intervals"
@@ -166,9 +170,9 @@ object DatasetResponseSchema:
 
   private def exactSpaceReference(shape: DatasetShape): String =
     val space = shape.space
-    val dimensions = space.dims.mkString("x")
-    val spacing = space.spacing.map(rawHex).mkString(",")
-    val origin = space.origin.map(rawHex).mkString(",")
+    val dimensions = space.logicalShape.mkString("x")
+    val spacing = space.grid.indexToFrame.neuroVoxelSizes.map(rawHex).mkString(",")
+    val origin = Vector.tabulate(3)(axis => space.grid.indexToFrame.matrix(axis, 3)).map(rawHex).mkString(",")
     val transform = space.grid.indexToFrame.rowMajor.map(rawHex)
     s"$dimensions:$spacing:$origin:${transform.mkString(",")}"
 
@@ -431,7 +435,7 @@ object DatasetResponseSource:
             Vector(adapterNode)
           )
           .left
-          .map(ResponseAdapterError.Kernel.apply)
+          .map(ResponseAdapterError.InvalidProvenance.apply)
       yield
         new DatasetResponseSource(
           sourceId,

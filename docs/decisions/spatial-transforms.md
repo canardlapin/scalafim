@@ -10,6 +10,24 @@ asking not to be consulted before each step. Each one takes the
 recommendation from the plan. Any of them can be reopened by a note on the
 epic; reopening one blocks the packets that depend on it.
 
+## Ecosystem admission amendment (2026-10-22)
+
+The historical STP scope decisions in sections 1, 4 and 7 below are superseded
+by the delivered [ecosystem ownership ledger](../verification/eco-u6-cleanup-20261022/ownership.md).
+Spatial4s is now the shared nominal dimension/frame/point/vector/affine owner;
+image4s owns sampled grids and image storage over it. Neuroim4s-spaces owns
+anatomical world declarations. Mesh4s owns generic topology and intrinsic
+kernels; neurosurf4s owns surface anatomy and optional volume/render integration.
+Toolkit interpretation/container IO belongs to neuroim4s transform/transform-io;
+anatomical mixed routing to neurosurf4s routing; atlas policy to neuroatlas4s.
+Root retains functional sample/observation execution over those contracts.
+There are no local image, transform, atlas or surface implementation modules.
+
+This changes ownership and package placement, not historical oracle results,
+format support, inverse qualification or native-tool caveats. The remaining
+sections retain the original decisions and evidence for their source revisions;
+use [current composition guidance](../standalone-composition.md) for new code.
+
 ## 1. Frame kernel authority
 
 **Decision.** image4s-geometry stays the sole authority for `Dim`, `Frame`,
@@ -43,7 +61,7 @@ geometric map between named spaces, however it was obtained. Keeping the
 words apart avoids a false reading, such as treating a transform read from an
 FSL `.mat` as a registration result carrying convergence evidence.
 
-`scalafim.spatial.SpaceRef` and `scalafim.image.world.WorldSpace` are
+`scalafim.spatial.SpaceRef` and `neuroim4s.spaces.WorldSpace` are
 deliberately different:
 
 - A `SpaceRef` names a *sampled domain*: a grid, a mesh or a latent basis.
@@ -122,8 +140,10 @@ never with a guess:
 
 ## 7. Placement (restates plan D0)
 
-- Frame identity, conventions and orientation live in `image`, under
-  `scalafim.image.world`.
+- World-space identity lives in neuroim4s-spaces (`neuroim4s.spaces`) over
+  spatial4s frames, and the generic two-frame `WorldLink` in reframe4s-core
+  (accepted at the 2026-10-18 coordinate-provider cutover). Toolkit coordinate
+  conventions and orientation stay in `image`, under `scalafim.image.world`.
 - Formats, `WorldTransform` and conversion live in the new `transform`
   module.
 - Graph ingestion stays in `spatial`.

@@ -1,7 +1,9 @@
 package scalafim.spatial
 
-import scalafim.image.{Indexing, SpatialAxis, VoxelCoord}
-import scalafim.image.SampleSpaces.*
+import neurosurf4s.routing.*
+
+import neuroim4s.image.{Indexing, SpatialAxis, SpatialDims, VoxelCoord}
+import neuroim4s.image.SampleSpaces.*
 
 enum DemandError:
   case EmptySelection(label: String)
@@ -54,16 +56,6 @@ object VoxelBox:
        maxExclusive.z <= minInclusive.z then
       Left(DemandError.InvalidVoxelRegion(minInclusive, maxExclusive))
     else Right(new VoxelBox(minInclusive, maxExclusive))
-
-@deprecated("Use VoxelBox; this value is a geometric box, not an extensional region.", "0.2.0")
-type VoxelRegion = VoxelBox
-
-object VoxelRegion:
-  def build(
-      minInclusive: VoxelCoord,
-      maxExclusive: VoxelCoord
-  ): Either[DemandError, VoxelBox] =
-    VoxelBox.build(minInclusive, maxExclusive)
 
 enum SpatialDemand:
   case Full
@@ -127,10 +119,6 @@ object FieldDemand:
 
   def box(box: VoxelBox): FieldDemand =
     FieldDemand(spatial = SpatialDemand.Box(box))
-
-  @deprecated("Use box; VoxelBox is geometric rather than extensional.", "0.2.0")
-  def region(region: VoxelBox): FieldDemand =
-    box(region)
 
   def time(block: TimeBlock): FieldDemand =
     FieldDemand(observations = ObservationDemand.Block(block))
@@ -406,9 +394,11 @@ private def requireKind(
 private def volumeDimensions(
   selection: String,
   domain: Domain
-): Either[DemandError, scalafim.image.SpatialDims] =
+): Either[DemandError, neuroim4s.image.SpatialDims] =
   domain.geometry match
-    case SamplingGeometry.Volume(space, _) => Right(space.spatialShape)
+    case SamplingGeometry.Volume(volumeGrid) =>
+      val space = volumeGrid.space
+      Right(SpatialDims.unsafeFromVector(space.grid.shape))
     case _ => Left(DemandError.DomainKindMismatch(selection, DomainKind.Volume, domain.kind))
 
 private def selectionLabel(selection: SpatialDemand): String =

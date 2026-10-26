@@ -2,7 +2,7 @@ package scalafim.estimates.io
 
 import java.nio.file.Path
 import scalafim.estimates.*
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 
 /** Separate-JVM heap and relocation probe. The writer emits a 128 MiB Float64
   * product under -Xmx64m; the reader deliberately has no fitter on its classpath.

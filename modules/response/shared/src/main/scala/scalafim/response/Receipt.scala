@@ -1,5 +1,7 @@
 package scalafim.response
 
+import locus4s.provenance.*
+
 opaque type PayloadId = String
 
 object PayloadId:

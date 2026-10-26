@@ -6,7 +6,6 @@ import scalafim.response.{
   CalibrationState,
   DecodeConsistency,
   DomainId,
-  DomainReference,
   NonFinitePolicy,
   OrderedIndices,
   ReconstructionContract,
@@ -23,6 +22,7 @@ import scalafim.response.{
   TimeDomain,
   UnitId
 }
+import locus4s.provenance.DomainReference
 import scalafim.response.laws.ResponseLawChecks
 
 class TemporalDctRepresentationSuite extends munit.FunSuite:

@@ -5,7 +5,7 @@ import scalafim.dataset.io.MatrixFileDatasetBackend
 import scalafim.fmri.design.baseline.Intercept
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.model.{FmriModelBuilder, ModelBuildSpec}
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files

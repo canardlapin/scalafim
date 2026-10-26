@@ -2,8 +2,8 @@ package scalafim.estimates
 
 import image4s.SomeSampleSpace
 import image4s.geometry.{CoordinateConvention, LengthUnit}
-import scalafim.image.SampleSpaces
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.SampleSpaces
+import neuroim4s.image.SampleSpaces.*
 
 /** Exact provider geometry, with wire samples always zero-based and x fastest.
   * Support is separate from each product's validity. No orientation is imposed.
@@ -13,7 +13,7 @@ final class EstimateDomain private (
     val support: Vector[Int],
     val worldFrame: String
 ):
-  val dimensions: Vector[Int] = space.spatialDims
+  val dimensions: Vector[Int] = space.grid.shape
   val sampleCount: Int = dimensions.foldLeft(1)(_ * _)
   private val supported = support.toSet
   def contains(sample: Int): Boolean = supported.contains(sample)

@@ -2,13 +2,7 @@ import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport.*
 import sbtcrossproject.CrossPlugin.autoImport.*
 import scalajscrossproject.ScalaJSCrossPlugin.autoImport.*
 
-lazy val imageAlgebraBoundaryCheck = taskKey[Unit](
-  "Reject removed ScalaFIM axis, space, matrix, affine, congruence, and transform algebras"
-)
 
-lazy val transformBoundaryCheck = taskKey[Unit](
-  "Keep shared transform codecs platform-neutral and toolkit conventions inside the convention kernel"
-)
 
 ThisBuild / organization := "scalafim"
 ThisBuild / scalaVersion := "3.7.4"
@@ -17,7 +11,7 @@ ThisBuild / version      := "0.1.0-SNAPSHOT"
 // Ravel is the single dense-array substrate shared by response and image
 // semantics. The local override coordinates cross-repository development;
 // ordinary builds remain pinned to an immutable source revision.
-lazy val ravelRevision = "9c5669399ab8e2a11402e71973dd5f1e2f2c13f4"
+lazy val ravelRevision = "195d71027423d5bda1c53ef1baa17e07670fe290"
 lazy val ravelBuild =
   sys.props
     .get("scalafim.ravel.build")
@@ -31,7 +25,7 @@ lazy val ravelCoreJS  = ProjectRef(ravelBuild, "coreJS")
 // with tools/prepare-pinned-dependencies.sh. `scalafim.gale.build` is the explicit
 // sibling-checkout override for coordinated upstream development (numerical
 // capabilities such as banded factors are written in Gale, then pinned here).
-lazy val galeRevision = "6f7a1f9509a07c2b3f5b956332d39a1bc5b64c3c"
+lazy val galeRevision = "779ed3d8169cdd9f4eb9ab10b1ca9defadc27715"
 lazy val galeBuild =
   sys.props
     .get("scalafim.gale.build")
@@ -60,7 +54,7 @@ lazy val resample4sDesignsJS  = ProjectRef(resample4sBuild, "designsJS")
 
 // Alder owns fit lifecycles, stage-aware cross-fitting, and fitted artifacts.
 // Keep its coordinated provider overrides explicit and process-local.
-lazy val alderRevision = "e555bad92307af1c2cbc104aef398cb9d9de88f0"
+lazy val alderRevision = "7618c715002b3912f856c4d44468ae173fce4dec"
 lazy val alderBuild = {
   sys.props
     .get("scalafim.resample4s.build")
@@ -80,19 +74,11 @@ lazy val alderKernelJVM = ProjectRef(alderBuild, "kernelJVM")
 lazy val alderKernelJS  = ProjectRef(alderBuild, "kernelJS")
 lazy val alderDataJVM   = ProjectRef(alderBuild, "dataJVM")
 lazy val alderDataJS    = ProjectRef(alderBuild, "dataJS")
-lazy val alderModelsLinearJVM = ProjectRef(alderBuild, "modelsLinearJVM")
-lazy val alderModelsLinearJS  = ProjectRef(alderBuild, "modelsLinearJS")
-lazy val alderRidgeGaleJVM    = ProjectRef(alderBuild, "ridgeGaleJVM")
-lazy val alderRidgeGaleJS     = ProjectRef(alderBuild, "ridgeGaleJS")
-lazy val alderTuneJVM        = ProjectRef(alderBuild, "tuneJVM")
-lazy val alderTuneJS         = ProjectRef(alderBuild, "tuneJS")
-lazy val alderMetricsJVM     = ProjectRef(alderBuild, "metricsJVM")
-lazy val alderMetricsJS      = ProjectRef(alderBuild, "metricsJS")
 
 // locus4s is independently owned. Ordinary builds clone the exact reviewed
 // revision; the property is an explicit sibling-checkout override for
 // coordinated development.
-lazy val locus4sRevision = "a67bc87c33b5da8a5dc2cad49919c015b59f3050"
+lazy val locus4sRevision = "e32b0aeba5c4d19c457b2329272b95b26c061943"
 lazy val locus4sBuild =
   sys.props
     .get("scalafim.locus4s.build")
@@ -102,14 +88,47 @@ lazy val locus4sCoreJVM = ProjectRef(locus4sBuild, "locus4s-coreJVM")
 lazy val locus4sCoreJS  = ProjectRef(locus4sBuild, "locus4s-coreJS")
 lazy val locus4sDataJVM = ProjectRef(locus4sBuild, "locus4s-dataJVM")
 lazy val locus4sDataJS  = ProjectRef(locus4sBuild, "locus4s-dataJS")
+lazy val locus4sProvenanceJVM = ProjectRef(locus4sBuild, "locus4s-provenanceJVM")
+lazy val locus4sProvenanceJS  = ProjectRef(locus4sBuild, "locus4s-provenanceJS")
+
+// mvpa4s owns identified MVPA evidence and analyses. Ordinary builds clone the
+// exact reviewed revision. Coordinated overrides are forwarded so mvpa4s
+// resolves the same provider builds as ScalaFIM.
+lazy val mvpa4sRevision = "c4485de7d4db46dc2702e8e51388b5ab7a2bb5f0"
+lazy val mvpa4sBuild = {
+  Seq("alder", "gale", "locus4s", "multivar", "resample4s", "neuroatlas4s", "neurosurf4s",
+    "neuroim4s", "mesh4s", "image4s", "spatial4s", "reframe4s", "graph4s", "zarr4s", "ravel", "intaglio").foreach { provider =>
+    sys.props
+      .get(s"scalafim.$provider.build")
+      .foreach(System.setProperty(s"mvpa4s.$provider.build", _))
+  }
+  sys.props
+    .get("scalafim.mvpa4s.build")
+    .map(path => file(path).getCanonicalFile.toURI)
+    .getOrElse(uri(s"https://github.com/canardlapin/mvpa4s.git#$mvpa4sRevision"))
+}
+lazy val mvpa4sCoreJVM    = ProjectRef(mvpa4sBuild, "coreJVM")
+lazy val mvpa4sCoreJS     = ProjectRef(mvpa4sBuild, "coreJS")
+lazy val mvpa4sTestkitJVM = ProjectRef(mvpa4sBuild, "testkitJVM")
+lazy val mvpa4sTestkitJS  = ProjectRef(mvpa4sBuild, "testkitJS")
+lazy val mvpa4sLocusJVM = ProjectRef(mvpa4sBuild, "locusJVM")
+lazy val mvpa4sLocusJS = ProjectRef(mvpa4sBuild, "locusJS")
+lazy val mvpa4sPredictiveJVM = ProjectRef(mvpa4sBuild, "predictiveJVM")
+lazy val mvpa4sPredictiveJS  = ProjectRef(mvpa4sBuild, "predictiveJS")
+lazy val mvpa4sSurfaceJVM = ProjectRef(mvpa4sBuild, "surfaceJVM")
+lazy val mvpa4sSurfaceJS = ProjectRef(mvpa4sBuild, "surfaceJS")
+lazy val mvpa4sAtlasJVM = ProjectRef(mvpa4sBuild, "atlasJVM")
+lazy val mvpa4sAtlasJS = ProjectRef(mvpa4sBuild, "atlasJS")
 
 // image4s is independently owned. Ordinary builds use its immutable source
 // revision; coordinated development can select a sibling checkout explicitly.
-lazy val image4sRevision = "20c9515495e43dff9d17bc1283a8ca1d56355c4a"
+lazy val image4sRevision = "855a3a61029f78e975b43cd1736de1c94180c004"
 lazy val image4sBuild = {
-  sys.props
-    .get("scalafim.locus4s.build")
-    .foreach(System.setProperty("image4s.locus4s.build", _))
+  Seq("locus4s", "spatial4s", "intaglio").foreach { provider =>
+    sys.props
+      .get(s"scalafim.$provider.build")
+      .foreach(System.setProperty(s"image4s.$provider.build", _))
+  }
   sys.props
     .get("scalafim.image4s.build")
     .map(path => file(path).getCanonicalFile.toURI)
@@ -128,13 +147,15 @@ lazy val image4sNiftiJVM  = ProjectRef(image4sBuild, "image4s-niftiJVM")
 // reframe4s owns generic spatial maps and resampling execution. ScalaFIM
 // retains neuroimaging policy and delegates affine kernels to this exact
 // reviewed source revision. A ScalaFIM image4s checkout override is forwarded
-// so reframe4s resolves the same image4s build. reframe4s accepts only a local
-// path, so the default pinned-URI build still loads reframe4s's own image4s pin.
-lazy val reframe4sRevision = "9662317912185c51e82dd04b2c87006ed2af82f2"
+// so reframe4s resolves the same image4s build; reframe4s pins the same image4s
+// as ScalaFIM and the same spatial4s as image4s.
+lazy val reframe4sRevision = "622ab31f97bbe30a9bc6436464f3124643856f47"
 lazy val reframe4sBuild = {
-  sys.props
-    .get("scalafim.image4s.build")
-    .foreach(System.setProperty("reframe4s.image4s.build", _))
+  Seq("image4s", "spatial4s").foreach { provider =>
+    sys.props
+      .get(s"scalafim.$provider.build")
+      .foreach(System.setProperty(s"reframe4s.$provider.build", _))
+  }
   sys.props
     .get("scalafim.reframe4s.build")
     .map(path => file(path).getCanonicalFile.toURI)
@@ -147,10 +168,115 @@ lazy val reframe4sFieldJS     = ProjectRef(reframe4sBuild, "reframe4s-fieldJS")
 lazy val reframe4sResampleJVM = ProjectRef(reframe4sBuild, "reframe4s-resampleJVM")
 lazy val reframe4sResampleJS  = ProjectRef(reframe4sBuild, "reframe4s-resampleJS")
 
+// neuroim4s-spaces owns the anatomical world identities (template, subject
+// scanner-RAS and tkRAS, declared and unresolved worlds) and their frames. It
+// pins the same spatial4s revision as image4s and reframe4s.
+lazy val neuroim4sRevision = "a086020f00d996c0a758fe13f59b4ae58760eb40"
+lazy val neuroim4sBuild = {
+  Seq("spatial4s", "image4s", "gale", "ravel", "locus4s", "reframe4s", "graph4s", "intaglio").foreach { provider =>
+    sys.props
+      .get(s"scalafim.$provider.build")
+      .foreach(System.setProperty(s"neuroim4s.$provider.build", _))
+  }
+  sys.props
+    .get("scalafim.neuroim4s.build")
+    .map(path => file(path).getCanonicalFile.toURI)
+    .getOrElse(uri(s"https://github.com/canardlapin/neuroim4s.git#$neuroim4sRevision"))
+}
+lazy val neuroim4sSpacesJVM = ProjectRef(neuroim4sBuild, "spacesJVM")
+lazy val neuroim4sSpacesJS  = ProjectRef(neuroim4sBuild, "spacesJS")
+lazy val neuroim4sCoreJVM = ProjectRef(neuroim4sBuild, "coreJVM")
+lazy val neuroim4sCoreJS  = ProjectRef(neuroim4sBuild, "coreJS")
+lazy val neuroim4sIoJVM = ProjectRef(neuroim4sBuild, "ioJVM")
+lazy val neuroim4sTransformJVM = ProjectRef(neuroim4sBuild, "transformJVM")
+lazy val neuroim4sTransformJS = ProjectRef(neuroim4sBuild, "transformJS")
+lazy val neuroim4sTransformIoJVM = ProjectRef(neuroim4sBuild, "transformIoJVM")
+lazy val neuroim4sRoutingIoJVM = ProjectRef(neuroim4sBuild, "routingIoJVM")
+lazy val neuroim4sRoutingJVM = ProjectRef(neuroim4sBuild, "routingJVM")
+lazy val neuroim4sRoutingJS = ProjectRef(neuroim4sBuild, "routingJS")
+// Optional volume display belongs to neuroim4s; there are no local bridge artifacts.
+lazy val neuroim4sViewJVM = ProjectRef(neuroim4sBuild, "viewJVM")
+lazy val neuroim4sViewJS = ProjectRef(neuroim4sBuild, "viewJS")
+lazy val neuroim4sViewCanvasJS = ProjectRef(neuroim4sBuild, "viewCanvasJS")
+lazy val neuroim4sViewJava2dJVM = ProjectRef(neuroim4sBuild, "viewJava2dJVM")
+lazy val neuroim4sViewJavafxJVM = ProjectRef(neuroim4sBuild, "viewJavafxJVM")
+
+// neuroatlas4s owns catalog/publication, optional volume/surface realizations,
+// loaders and mixed template route policy. ScalaFIM composes its public APIs.
+// Forward explicit overrides so each provider has one owner across the graph.
+lazy val neuroatlas4sRevision = "567c78e0e4e93f19d675159103c03009b7634c22"
+lazy val neuroatlas4sBuild = {
+  Seq("locus4s", "neuroim4s", "neurosurf4s", "mesh4s", "zarr4s", "image4s", "spatial4s", "reframe4s", "gale", "ravel", "graph4s", "intaglio").foreach { provider =>
+    sys.props.get(s"scalafim.$provider.build").foreach(System.setProperty(s"neuroatlas4s.$provider.build", _))
+  }
+  sys.props
+    .get("scalafim.neuroatlas4s.build")
+    .map(path => file(path).getCanonicalFile.toURI)
+    .getOrElse(uri(s"https://github.com/canardlapin/neuroatlas4s.git#$neuroatlas4sRevision"))
+}
+
+lazy val neuroatlas4sCoreJVM = ProjectRef(neuroatlas4sBuild, "coreJVM")
+lazy val neuroatlas4sCoreJS = ProjectRef(neuroatlas4sBuild, "coreJS")
+lazy val neuroatlas4sVolumeJS = ProjectRef(neuroatlas4sBuild, "volumeJS")
+lazy val neuroatlas4sVolumeIoJVM = ProjectRef(neuroatlas4sBuild, "volumeIoJVM")
+
+// Surface anatomy, formats, scenes and backends have one independent provider.
+lazy val neurosurf4sRevision = "a8a1191a57af2bf60f8ded6b14210f5025f1887a"
+lazy val neurosurf4sBuild = {
+  Seq("spatial4s", "locus4s", "mesh4s", "image4s", "graph4s", "zarr4s", "neuroim4s", "reframe4s", "gale", "ravel", "intaglio").foreach { provider =>
+    sys.props.get(s"scalafim.$provider.build").foreach(System.setProperty(s"neurosurf4s.$provider.build", _))
+  }
+  sys.props.get("scalafim.neurosurf4s.build").map(path => file(path).getCanonicalFile.toURI)
+    .getOrElse(uri(s"https://github.com/canardlapin/neurosurf4s.git#$neurosurf4sRevision"))
+}
+lazy val neurosurf4sCoreJVM = ProjectRef(neurosurf4sBuild, "coreJVM")
+lazy val neurosurf4sCoreJS = ProjectRef(neurosurf4sBuild, "coreJS")
+lazy val neurosurf4sIoJVM = ProjectRef(neurosurf4sBuild, "ioJVM")
+lazy val neurosurf4sIoJS = ProjectRef(neurosurf4sBuild, "ioJS")
+lazy val neurosurf4sSpatialJVM = ProjectRef(neurosurf4sBuild, "spatialJVM")
+lazy val neurosurf4sSpatialJS = ProjectRef(neurosurf4sBuild, "spatialJS")
+lazy val neurosurf4sSpatialIoJVM = ProjectRef(neurosurf4sBuild, "spatialIoJVM")
+lazy val neurosurf4sVolumeJVM = ProjectRef(neurosurf4sBuild, "volumeJVM")
+lazy val neurosurf4sVolumeJS = ProjectRef(neurosurf4sBuild, "volumeJS")
+lazy val neurosurf4sVolumeIoJVM = ProjectRef(neurosurf4sBuild, "volumeIoJVM")
+lazy val neurosurf4sRoutingJVM = ProjectRef(neurosurf4sBuild, "routingJVM")
+lazy val neurosurf4sRoutingJS = ProjectRef(neurosurf4sBuild, "routingJS")
+lazy val neurosurf4sRoutingIoJVM = ProjectRef(neurosurf4sBuild, "routingIoJVM")
+lazy val neurosurf4sFixturesJVM = ProjectRef(neurosurf4sBuild, "fixturesJVM")
+lazy val neurosurf4sFixturesJS = ProjectRef(neurosurf4sBuild, "fixturesJS")
+lazy val neurosurf4sViewJVM = ProjectRef(neurosurf4sBuild, "viewJVM")
+lazy val neurosurf4sViewJS = ProjectRef(neurosurf4sBuild, "viewJS")
+lazy val neurosurf4sViewRasterJVM = ProjectRef(neurosurf4sBuild, "viewRasterJVM")
+lazy val neurosurf4sViewRasterJS = ProjectRef(neurosurf4sBuild, "viewRasterJS")
+lazy val neurosurf4sViewVolumeJVM = ProjectRef(neurosurf4sBuild, "viewVolumeJVM")
+lazy val neurosurf4sViewVolumeJS = ProjectRef(neurosurf4sBuild, "viewVolumeJS")
+lazy val neurosurf4sViewLinkJVM = ProjectRef(neurosurf4sBuild, "viewLinkJVM")
+lazy val neurosurf4sViewLinkJS = ProjectRef(neurosurf4sBuild, "viewLinkJS")
+
+// mesh4s owns triangle topology, surface realizations and point fields. It
+// pins the same locus4s, spatial4s and graph4s revisions as ScalaFIM's other
+// providers; ScalaFIM overrides for those are forwarded.
+lazy val mesh4sRevision = "fd8b93ea42879ec5414342a084f05b831a4bbfc7"
+lazy val mesh4sBuild = {
+  Seq("locus4s", "spatial4s", "graph4s").foreach { provider =>
+    sys.props
+      .get(s"scalafim.$provider.build")
+      .foreach(System.setProperty(s"mesh4s.$provider.build", _))
+  }
+  sys.props
+    .get("scalafim.mesh4s.build")
+    .map(path => file(path).getCanonicalFile.toURI)
+    .getOrElse(uri(s"https://github.com/canardlapin/mesh4s.git#$mesh4sRevision"))
+}
+lazy val mesh4sGeometryJVM = ProjectRef(mesh4sBuild, "mesh4s-geometryJVM")
+lazy val mesh4sGeometryJS  = ProjectRef(mesh4sBuild, "mesh4s-geometryJS")
+lazy val mesh4sGraph4sJVM = ProjectRef(mesh4sBuild, "mesh4s-graph4sJVM")
+lazy val mesh4sGraph4sJS = ProjectRef(mesh4sBuild, "mesh4s-graph4sJS")
+
 // graph4s is an independently owned topology and algorithms library. Ordinary
 // builds clone the exact reviewed revision; the property is an explicit local
 // source override for coordinated development.
-lazy val graph4sRevision = "b585e594eec4567bad78ae23206c1a8f535bcd5e"
+lazy val graph4sRevision = "613371f3bd0b12ce99352db0c637645eb62c6283"
 lazy val graph4sBuild =
   sys.props
     .get("scalafim.graph4s.build")
@@ -164,7 +290,7 @@ lazy val graph4sAlgorithmsJS  = ProjectRef(graph4sBuild, "algorithmsJS")
 // General multivariate analysis is developed independently. The optional
 // system property is an explicit local-development override; ordinary builds
 // clone the exact committed source revision.
-lazy val multivarRevision = "2bc14d14ba42a678fbbe169293153eddaba6175c"
+lazy val multivarRevision = "7afdeea290fdcc80b81a4126aa303f93a5348c0e"
 lazy val multivarBuild = {
   // Inference must share the same resample4s classes as native MVPA adapters.
   System.setProperty("multivar.resample4s.build.uri", resample4sBuild.toString)
@@ -179,22 +305,16 @@ lazy val multivarBuild = {
 }
 lazy val multivarJVM   = ProjectRef(multivarBuild, "coreJVM")
 lazy val multivarJS    = ProjectRef(multivarBuild, "coreJS")
-lazy val multivarIrJVM = ProjectRef(multivarBuild, "irJVM")
-lazy val multivarIrJS  = ProjectRef(multivarBuild, "irJS")
-lazy val multivarInferenceJVM = ProjectRef(multivarBuild, "inferenceJVM")
-lazy val multivarInferenceJS  = ProjectRef(multivarBuild, "inferenceJS")
 
 // Renderer-neutral graphics and platform backends are developed independently.
 // Ordinary builds clone the exact public revision; the system property is an
 // explicit local-development override.
-lazy val intaglioRevision = "13747a3a8bf75fd788ff68e1c979d6c84f740605"
+lazy val intaglioRevision = "d553c327824f9916b1c0a055226c6c5e8f77bc59"
 lazy val intaglioBuild =
-  uri(
-    sys.props.getOrElse(
-      "scalafim.intaglio.build",
-      s"https://github.com/canardlapin/intaglio.git#$intaglioRevision"
-    )
-  )
+  sys.props
+    .get("scalafim.intaglio.build")
+    .map(path => file(path).getCanonicalFile.toURI)
+    .getOrElse(uri(s"https://github.com/canardlapin/intaglio.git#$intaglioRevision"))
 lazy val intaglioCoreJVM   = ProjectRef(intaglioBuild, "coreJVM")
 lazy val intaglioCoreJS    = ProjectRef(intaglioBuild, "coreJS")
 lazy val intaglioSvgJVM    = ProjectRef(intaglioBuild, "svgJVM")
@@ -205,7 +325,7 @@ lazy val intaglioJavafxJVM = ProjectRef(intaglioBuild, "javafxJVM")
 // Reusable BIDS semantics are developed independently. Ordinary builds clone
 // the exact reviewed revision; the property is an explicit local-development
 // override for downstream rehearsal.
-lazy val bids4sRevision = "a33678390614a91fadbdef13f22970e78c26e091"
+lazy val bids4sRevision = "5dafc800499b2a4642a19ff47fa5924516b2c024"
 lazy val bids4sBuild =
   uri(
     sys.props.getOrElse(
@@ -266,19 +386,6 @@ lazy val jsSettingsBase = Seq(
   Test / jsEnv := new org.scalajs.jsenv.nodejs.NodeJSEnv()
 )
 
-lazy val locusData =
-  crossProject(JSPlatform, JVMPlatform)
-    .crossType(CrossType.Full)
-    .in(file("modules/locus-data"))
-    .settings(commonSettings)
-    .settings(name := "scalafim-locus-data")
-    .jvmConfigure(_.dependsOn(locus4sCoreJVM, locus4sDataJVM))
-    .jsConfigure(_.dependsOn(locus4sCoreJS, locus4sDataJS))
-    .jsSettings(jsSettingsBase)
-
-lazy val locusDataJS  = locusData.js
-lazy val locusDataJVM = locusData.jvm
-
 lazy val pipeline =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
@@ -323,8 +430,8 @@ lazy val response =
         "org.typelevel" %%% "cats-effect" % "3.5.4"
       )
     )
-    .jvmConfigure(_.dependsOn(ravelCoreJVM))
-    .jsConfigure(_.dependsOn(ravelCoreJS))
+    .jvmConfigure(_.dependsOn(ravelCoreJVM, locus4sProvenanceJVM))
+    .jsConfigure(_.dependsOn(ravelCoreJS, locus4sProvenanceJS))
     .jsSettings(jsSettingsBase)
 
 lazy val responseJS  = response.js
@@ -348,12 +455,7 @@ lazy val latent =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/latent"))
-    .dependsOn(
-      response,
-      responseLaws % "test->compile",
-      image,
-      locusData
-    )
+    .dependsOn(response, responseLaws % "test->compile")
     .settings(commonSettings)
     .settings(
       name := "scalafim-fmri-latent",
@@ -364,6 +466,11 @@ lazy val latent =
     .jvmConfigure(_.dependsOn(galeCoreJVM))
     .jsConfigure(_.dependsOn(galeCoreJS))
     .jsSettings(jsSettingsBase)
+    .jvmConfigure(_.dependsOn(neuroim4sCoreJVM))
+    .jsConfigure(_.dependsOn(neuroim4sCoreJS))
+
+    .jvmConfigure(_.dependsOn(locus4sCoreJVM))
+    .jsConfigure(_.dependsOn(locus4sCoreJS))
 
 lazy val latentJS  = latent.js
 lazy val latentJVM = latent.jvm
@@ -386,7 +493,7 @@ lazy val arJS  = ar.js
 lazy val arJVM = ar.jvm
 
 // Cross-built scenario verdict/policy core. It is test-support only: design,
-// fit, transform and surface depend on its main classes from test scope, so
+// fit, spatial and surface depend on its main classes from test scope, so
 // published production artifacts do not acquire MUnit or scenario-testkit
 // dependencies.
 lazy val scenarioTestkit =
@@ -413,14 +520,7 @@ lazy val hrf =
     .settings(
       name := "scalafim-fmri-hrf",
       libraryDependencies ++= Seq(
-        "org.typelevel" %%% "cats-core" % "2.12.0",
-        "org.typelevel" %%% "spire"     % "0.18.0",
         "org.scalameta" %%% "munit-scalacheck" % "1.1.0" % Test
-      )
-    )
-    .jvmSettings(
-      libraryDependencies ++= Seq(
-        "com.github.wendykierp" % "JTransforms" % "3.1"
       )
     )
     .jvmSettings(scientificCoverageSettings(statementMinimum = 70.0, branchMinimum = 60.0))
@@ -428,21 +528,6 @@ lazy val hrf =
 
 lazy val hrfJS  = hrf.js
 lazy val hrfJVM = hrf.jvm
-
-lazy val hrfLaws =
-  crossProject(JSPlatform, JVMPlatform)
-    .crossType(CrossType.Full)
-    .in(file("modules/hrf-laws"))
-    .dependsOn(hrf)
-    .settings(commonSettings)
-    .settings(
-      name := "scalafim-fmri-hrf-laws",
-      libraryDependencies += "org.scalameta" %%% "munit" % "1.2.1"
-    )
-    .jsSettings(jsSettingsBase)
-
-lazy val hrfLawsJS  = hrfLaws.js
-lazy val hrfLawsJVM = hrfLaws.jvm
 
 lazy val design =
   crossProject(JSPlatform, JVMPlatform)
@@ -454,148 +539,46 @@ lazy val design =
     .settings(
       name := "scalafim-fmri-design",
       libraryDependencies ++= Seq(
-        "com.lihaoyi" %%% "upickle" % "4.1.0",
-        "org.typelevel" %%% "cats-core" % "2.12.0",
-        "org.typelevel" %%% "spire"     % "0.18.0"
+        "com.lihaoyi" %%% "upickle" % "4.1.0"
       )
     )
-    .jvmConfigure(_.dependsOn(galeCoreJVM, intaglioCoreJVM, intaglioSvgJVM % "test->compile"))
+    .jvmConfigure(_.dependsOn(galeCoreJVM))
     .jvmSettings(scientificCoverageSettings(statementMinimum = 70.0, branchMinimum = 58.0))
-    .jsConfigure(_.dependsOn(galeCoreJS, intaglioCoreJS))
+    .jsConfigure(_.dependsOn(galeCoreJS))
     .jsSettings(jsSettingsBase)
 
 lazy val designJS  = design.js
 lazy val designJVM = design.jvm
 
-lazy val image =
+// Optional renderer-neutral graphics. Analysis consumers depend on design alone.
+lazy val designView =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
-    .in(file("modules/image"))
-    .dependsOn(locusData)
+    .in(file("modules/design-view"))
+    .dependsOn(design)
     .settings(commonSettings)
-    .settings(
-      name := "scalafim-image",
-      Test / scalacOptions +=
-        "-Wconf:src=.*NeuroImageErrorContractSuite\\.scala&id=E29:e",
-      imageAlgebraBoundaryCheck := {
-        val repository = (LocalRootProject / baseDirectory).value
-        val removedFiles = Vector(
-          repository / "modules" / "image" / "shared" / "src" / "main" / "scala" / "scalafim" / "image" / "Axis.scala",
-          repository / "modules" / "image" / "shared" / "src" / "main" / "scala" / "scalafim" / "image" / "AxisSet.scala",
-          repository / "modules" / "image" / "shared" / "src" / "main" / "scala" / "scalafim" / "image" / "GridCompatibility.scala",
-          repository / "modules" / "image" / "shared" / "src" / "main" / "scala" / "scalafim" / "image" / "DMat.scala",
-          repository / "modules" / "image" / "shared" / "src" / "main" / "scala" / "scalafim" / "image" / "Affine.scala",
-          repository / "modules" / "image" / "shared" / "src" / "main" / "scala" / "scalafim" / "image" / "Morphism.scala",
-          repository / "modules" / "image" / "shared" / "src" / "main" / "scala" / "scalafim" / "image" / "MorphismExecutionPlan.scala",
-          repository / "modules" / "image" / "shared" / "src" / "main" / "scala" / "scalafim" / "image" / "DenseFieldInterpolationPlan.scala",
-          repository / "modules" / "image" / "shared" / "src" / "main" / "scala" / "scalafim" / "image" / "DenseFieldInverse.scala"
-        ).filter(_.exists)
-        val productionSources =
-          (repository / "modules" ** "*.scala").get.filter { source =>
-            source.getPath.contains("/src/main/scala/")
-          }
-        val legacyReferences =
-          productionSources.filter { source =>
-            val contents = IO.read(source)
-            contents.contains("scalafim.image.Axis") ||
-            contents.contains("scalafim.image.DMat") ||
-            "\\bAxisSet\\b".r.findFirstIn(contents).nonEmpty ||
-            "\\bAffine3DError\\b|\\bDMat\\.invert\\b".r
-              .findFirstIn(contents)
-              .nonEmpty ||
-            "(?m)^\\s*(?:final\\s+)?(?:case\\s+)?(?:class|object|enum|type)\\s+(?:DMat|Affine3D)\\b|(?m)^\\s*object\\s+Affine\\s*:".r
-              .findFirstIn(contents)
-              .nonEmpty ||
-            "\\b(?:ImageDim|Slice2D|Volume3D|Series4D|ImageDimEvidence|ImageSpace|VolumeSpace|SeriesSpace|GridCompatibility|GridMismatch|CertifiedGridCongruence)\\b".r
-              .findFirstIn(contents)
-              .nonEmpty ||
-            "\\b(?:SpatialMorphism|Affine3DMorphism|IdentityMorphism|DenseFieldMorphism|SpatialDomainId|MorphismExecutionPlan|DenseFieldInterpolationPlan|DenseFieldInverse|JacobianField|JacobianMode|MorphismFields)\\b".r
-              .findFirstIn(contents)
-              .nonEmpty ||
-            "\\b(?:DenseCoordinateMap|CompositeCoordinateMap)\\b|\\bCoordinateMap\\.(?:Affine3D|Dense3D|Composite3D|dense3D|composite3D)\\b".r
-              .findFirstIn(contents)
-              .nonEmpty
-          }
-        val obsoleteDependencies =
-          libraryDependencies.value.filter { module =>
-            module.organization == "ai.dragonfly" && module.name.contains("slash")
-          }
-        val sampleSpacesSource =
-          repository / "modules" / "image" / "shared" / "src" / "main" / "scala" / "scalafim" / "image" / "SampleSpaces.scala"
-        val packageSource =
-          repository / "modules" / "image" / "shared" / "src" / "main" / "scala" / "scalafim" / "image" / "package.scala"
-        val publicProviderStateAliases =
-          "(?m)^\\s+(?:inline\\s+)?def\\s+(?:dims|ndim|spatialDims|spatialShape|spacing|origin|orientation|affineD3|inverseAffineD3|gridToIndex|indexToGrid|gridToIndex3D|indexToGrid3D|indexToVoxel3D|spatialSpace|addDim|dropDim|indexToCoord|indexToPoint|voxelToWorld|coordToIndex|coordToIndexPoint|worldToVoxel)\\b".r
-            .findFirstIn(IO.read(sampleSpacesSource))
-        val packageFacadeReturned =
-          "(?m)^\\s*export SampleSpaces\\.\\*\\s*$".r
-            .findFirstIn(IO.read(packageSource))
-            .nonEmpty
-        if (removedFiles.nonEmpty)
-          sys.error(s"removed ScalaFIM algebra sources returned: ${removedFiles.mkString(", ")}")
-        if (legacyReferences.nonEmpty)
-          sys.error(s"production sources reference a removed ScalaFIM algebra: ${legacyReferences.mkString(", ")}")
-        if (obsoleteDependencies.nonEmpty)
-          sys.error(s"obsolete image algebra dependency returned: ${obsoleteDependencies.mkString(", ")}")
-        if (publicProviderStateAliases.nonEmpty)
-          sys.error(s"public SampleSpaces provider-state alias returned: ${publicProviderStateAliases.get}")
-        if (packageFacadeReturned)
-          sys.error("package-wide SampleSpaces export returned")
-        // STP P1.07 exit gate, image half: the same frame-erasure scan as transformBoundaryCheck.
-        FrameErasureGate.selfTest()
-        val erasedSignatures = FrameErasureGate.check(repository)
-        if (erasedSignatures.nonEmpty)
-          sys.error(s"frame-erased signatures outside the allowlist (STP P1.07):\n${erasedSignatures.mkString("\n")}")
-      },
-      Compile / compile := (Compile / compile).dependsOn(imageAlgebraBoundaryCheck).value,
-      libraryDependencies ++= Seq(
-        "org.typelevel" %%% "cats-core"   % "2.12.0",
-        "org.typelevel" %%% "cats-effect" % "3.5.4",
-        "org.typelevel" %%% "spire"       % "0.18.0",
-        "org.scalameta" %%% "munit-scalacheck" % "1.1.0" % Test
-      )
-    )
-    .jvmConfigure(
-      _.dependsOn(
-        galeCoreJVM,
-        image4sCoreJVM,
-        image4sGeometryJVM,
-        image4sLocusJVM,
-        image4sFilterJVM,
-        image4sNiftiJVM,
-        reframe4sLieJVM,
-        reframe4sFieldJVM,
-        reframe4sResampleJVM
-      )
-    )
-    .jsConfigure(
-      _.dependsOn(
-        galeCoreJS,
-        image4sCoreJS,
-        image4sGeometryJS,
-        image4sLocusJS,
-        image4sFilterJS,
-        reframe4sLieJS,
-        reframe4sFieldJS,
-        reframe4sResampleJS
-      )
-    )
+    .settings(strictFirstLevelCompilerSettings)
+    .settings(name := "scalafim-fmri-design-view")
+    .jvmConfigure(_.dependsOn(intaglioCoreJVM, intaglioSvgJVM % "test->compile"))
+    .jsConfigure(_.dependsOn(intaglioCoreJS))
     .jsSettings(jsSettingsBase)
 
-lazy val imageJS  = image.js
-lazy val imageJVM = image.jvm
+lazy val designViewJS  = designView.js
+lazy val designViewJVM = designView.jvm
 
 // Unpublished cross-platform compile contract proving that ScalaFIM consumers
-// can compose the admitted provider APIs directly. Sources deliberately live
-// outside package scalafim and define no adapter algebra.
-lazy val providerSpike =
+// can compose the admitted provider APIs directly. Main sources live outside
+// package scalafim and define no adapter algebra. Strict test-only toolkit scenario
+// courts compose neuroim4s with the existing ScenarioHarness; neither depends on ScalaFIM upstream.
+lazy val providerContract =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
-    .in(file("modules/provider-spike"))
+    .in(file("modules/provider-contract"))
     .settings(commonSettings)
     .settings(
-      name := "scalafim-provider-spike",
-      publish / skip := true
+      name := "scalafim-provider-contract",
+      publish / skip := true,
+      Test / scalacOptions ++= Seq("-Werror", "-Wunused:all", "-Wvalue-discard")
     )
     .jvmConfigure(
       _.dependsOn(
@@ -623,8 +606,26 @@ lazy val providerSpike =
     )
     .jsSettings(jsSettingsBase)
 
-lazy val providerSpikeJS  = providerSpike.js
-lazy val providerSpikeJVM = providerSpike.jvm
+    .jvmConfigure(_.dependsOn(
+      neuroim4sTransformJVM % "test->compile;test->test",
+      neuroim4sTransformIoJVM % "test->compile",
+      neurosurf4sVolumeJVM % "test->compile",
+      scenarioTestkit.jvm % "test->compile"
+    ))
+    .jsConfigure(_.dependsOn(
+      neuroim4sTransformJS % "test->compile;test->test",
+      neurosurf4sVolumeJS % "test->compile",
+      scenarioTestkit.js % "test->compile"
+    ))
+
+    .jvmConfigure(_.dependsOn(locus4sDataJVM % Test, multivarJVM % Test, alderKernelJVM % Test, alderDataJVM % Test,
+      resample4sCoreJVM % Test, resample4sDesignsJVM % Test))
+    .jsConfigure(_.dependsOn(locus4sDataJS % Test, multivarJS % Test, alderKernelJS % Test, alderDataJS % Test,
+      resample4sCoreJS % Test, resample4sDesignsJS % Test))
+    .settings(libraryDependencies += "org.typelevel" %%% "cats-core" % "2.12.0" % Test)
+
+lazy val providerContractJS  = providerContract.js
+lazy val providerContractJVM = providerContract.jvm
 
 lazy val hrfBenchJVM =
   project
@@ -638,71 +639,11 @@ lazy val hrfBenchJVM =
       publish / skip := true
     )
 
-lazy val imageView =
-  crossProject(JSPlatform, JVMPlatform)
-    .crossType(CrossType.Full)
-    .in(file("modules/image-view"))
-    .dependsOn(image)
-    .jvmConfigure(_.dependsOn(intaglioCoreJVM))
-    .jsConfigure(_.dependsOn(intaglioCoreJS))
-    .settings(commonSettings)
-    .settings(
-      name := "scalafim-image-view"
-    )
-    .jsSettings(jsSettingsBase)
-
-lazy val imageViewJS  = imageView.js
-lazy val imageViewJVM = imageView.jvm
-
-lazy val imageViewCanvas =
-  crossProject(JSPlatform)
-    .crossType(CrossType.Full)
-    .in(file("modules/image-view-canvas"))
-    .dependsOn(imageView)
-    .jsConfigure(_.dependsOn(intaglioCanvasJS))
-    .settings(commonSettings)
-    .settings(
-      name := "scalafim-image-view-canvas"
-    )
-    .jsSettings(jsSettingsBase)
-
-lazy val imageViewCanvasJS = imageViewCanvas.js
-
-lazy val imageViewJava2d =
-  crossProject(JVMPlatform)
-    .crossType(CrossType.Full)
-    .in(file("modules/image-view-java2d"))
-    .dependsOn(imageView)
-    .jvmConfigure(_.dependsOn(intaglioJava2dJVM))
-    .settings(commonSettings)
-    .settings(
-      name := "scalafim-image-view-java2d"
-    )
-
-lazy val imageViewJava2dJVM = imageViewJava2d.jvm
-
-lazy val imageViewJavafx =
-  crossProject(JVMPlatform)
-    .crossType(CrossType.Full)
-    .in(file("modules/image-view-javafx"))
-    .dependsOn(imageView)
-    .jvmConfigure(_.dependsOn(intaglioJavafxJVM))
-    .settings(commonSettings)
-    .settings(
-      name := "scalafim-image-view-javafx",
-      libraryDependencies ++= Seq(
-        "org.openjfx" % "javafx-base" % "21.0.5" % Provided classifier javafxPlatformClassifier,
-        "org.openjfx" % "javafx-graphics" % "21.0.5" % Provided classifier javafxPlatformClassifier
-      )
-    )
-
-lazy val imageViewJavafxJVM = imageViewJavafx.jvm
-
 lazy val threshold =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/threshold"))
-    .dependsOn(image, scenarioTestkit % "test->compile")
+    .dependsOn(scenarioTestkit % "test->compile")
     .settings(commonSettings)
     .settings(
       name := "scalafim-fmri-threshold"
@@ -710,6 +651,8 @@ lazy val threshold =
     .jvmConfigure(_.dependsOn(galeCoreJVM))
     .jsConfigure(_.dependsOn(galeCoreJS))
     .jsSettings(jsSettingsBase)
+    .jvmConfigure(_.dependsOn(neuroim4sCoreJVM))
+    .jsConfigure(_.dependsOn(neuroim4sCoreJS))
 
 lazy val thresholdJS  = threshold.js
 lazy val thresholdJVM = threshold.jvm
@@ -718,7 +661,7 @@ lazy val motion =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/motion"))
-    .dependsOn(image)
+
     .settings(commonSettings)
     .settings(
       name := "scalafim-fmri-motion"
@@ -726,288 +669,54 @@ lazy val motion =
     .jvmConfigure(_.dependsOn(image4sGeometryJVM))
     .jsConfigure(_.dependsOn(image4sGeometryJS))
     .jsSettings(jsSettingsBase)
+    .jvmConfigure(_.dependsOn(neuroim4sCoreJVM, neuroim4sIoJVM))
+    .jsConfigure(_.dependsOn(neuroim4sCoreJS))
 
 lazy val motionJS  = motion.js
 lazy val motionJVM = motion.jvm.dependsOn(bids4sJVM)
-
-lazy val surface =
-  crossProject(JSPlatform, JVMPlatform)
-    .crossType(CrossType.Full)
-    .in(file("modules/surface"))
-    .dependsOn(image, transform, locusData, scenarioTestkit % "test->compile")
-    .settings(commonSettings)
-    .settings(
-      name := "scalafim-surface",
-      libraryDependencies ++= Seq(
-        "com.lihaoyi" %%% "upickle" % "4.1.0",
-        "org.scala-lang.modules" %%% "scala-xml" % "2.4.0"
-      )
-    )
-    .jvmConfigure(_.dependsOn(image4sGeometryJVM, graph4sAlgorithmsJVM, zarr4sCoreJVM))
-    .jsConfigure(_.dependsOn(image4sGeometryJS, graph4sAlgorithmsJS, zarr4sCoreJS))
-    .jsSettings(jsSettingsBase)
-
-lazy val surfaceJS  = surface.js
-lazy val surfaceJVM = surface.jvm
-
-// Unpublished JVM fixture support and its qualification courts. Tests that use these fixtures live here,
-// keeping the project graph acyclic: fixtures -> surface, atlas Test -> fixtures Compile.
-lazy val surfaceTestFixtures =
-  crossProject(JSPlatform, JVMPlatform)
-    .crossType(CrossType.Full)
-    .in(file("modules/surface-test-fixtures"))
-    .dependsOn(surface, scenarioTestkit)
-    .settings(commonSettings)
-    .settings(
-      name := "scalafim-surface-test-fixtures",
-      publish / skip := true
-    )
-    .jsSettings(jsSettingsBase)
-
-lazy val surfaceTestFixturesJS = surfaceTestFixtures.js
-lazy val surfaceTestFixturesJVM = surfaceTestFixtures.jvm
-
-lazy val surfaceView =
-  crossProject(JSPlatform, JVMPlatform)
-    .crossType(CrossType.Full)
-    .in(file("modules/surface-view"))
-    .dependsOn(surface)
-    .jvmConfigure(_.dependsOn(intaglioCoreJVM))
-    .jsConfigure(_.dependsOn(intaglioCoreJS))
-    .settings(commonSettings)
-    .settings(
-      name := "scalafim-surface-view"
-    )
-    .jsSettings(jsSettingsBase)
-
-lazy val surfaceViewJS  = surfaceView.js
-lazy val surfaceViewJVM = surfaceView.jvm
-
-lazy val surfaceViewRaster =
-  crossProject(JSPlatform, JVMPlatform)
-    .crossType(CrossType.Full)
-    .in(file("modules/surface-view-raster"))
-    .dependsOn(surfaceView)
-    .jvmConfigure(_.dependsOn(intaglioCoreJVM))
-    .jsConfigure(_.dependsOn(intaglioCoreJS))
-    .settings(commonSettings)
-    .settings(
-      name := "scalafim-surface-view-raster"
-    )
-    .jsSettings(jsSettingsBase)
-
-lazy val surfaceViewRasterJS  = surfaceViewRaster.js
-lazy val surfaceViewRasterJVM = surfaceViewRaster.jvm
-
-lazy val surfaceViewJavafx =
-  crossProject(JVMPlatform)
-    .crossType(CrossType.Full)
-    .in(file("modules/surface-view-javafx"))
-    .dependsOn(surfaceView, surfaceViewRaster)
-    .jvmConfigure(_.dependsOn(intaglioCoreJVM))
-    .settings(commonSettings)
-    .settings(
-      name := "scalafim-surface-view-javafx",
-      // Native JavaFX libraries cannot be reloaded across warm sbt test classloaders.
-      Test / fork := true,
-      Test / run / fork := true,
-      libraryDependencies ++= Seq(
-        "org.openjfx" % "javafx-base" % "21.0.5" % Provided classifier javafxPlatformClassifier,
-        "org.openjfx" % "javafx-graphics" % "21.0.5" % Provided classifier javafxPlatformClassifier
-      )
-    )
-
-lazy val surfaceViewJavafxJVM = surfaceViewJavafx.jvm
-
-lazy val surfaceViewThree =
-  crossProject(JSPlatform)
-    .crossType(CrossType.Full)
-    .in(file("modules/surface-view-three"))
-    .dependsOn(surfaceView, surfaceViewRaster)
-    .jsConfigure(_.dependsOn(intaglioCoreJS))
-    .settings(commonSettings)
-    .settings(
-      name := "scalafim-surface-view-three"
-    )
-    .jsSettings(jsSettingsBase)
-
-lazy val surfaceViewThreeJS = surfaceViewThree.js
-
-lazy val surfaceViewExamples =
-  crossProject(JSPlatform, JVMPlatform)
-    .crossType(CrossType.Full)
-    .in(file("examples/surface-view"))
-    .dependsOn(surfaceView, surfaceViewRaster)
-    .jvmConfigure(_.dependsOn(intaglioCoreJVM))
-    .jsConfigure(_.dependsOn(intaglioCoreJS))
-    .settings(commonSettings)
-    .settings(
-      name := "scalafim-examples-surface-view",
-      publish / skip := true,
-      libraryDependencies += "org.scala-lang.modules" %%% "scala-xml" % "2.4.0"
-    )
-    .jsSettings(jsSettingsBase)
-
-lazy val surfaceViewExamplesJS = surfaceViewExamples.js.dependsOn(surfaceViewThreeJS)
-lazy val surfaceViewExamplesJVM = surfaceViewExamples.jvm.dependsOn(intaglioJava2dJVM % "test->compile")
-  .dependsOn(surfaceViewJavafxJVM)
-  .settings(
-    Test / run / fork := true,
-    libraryDependencies ++= Seq(
-      "org.openjfx" % "javafx-base" % "21.0.5" classifier javafxPlatformClassifier,
-      "org.openjfx" % "javafx-graphics" % "21.0.5" classifier javafxPlatformClassifier
-    )
-  )
-
-lazy val surfaceExamplesJVM =
-  project
-    .in(file("examples/surface-jvm"))
-    .dependsOn(surfaceJVM)
-    .settings(commonSettings)
-    .settings(
-      name := "scalafim-examples-surface-jvm",
-      publish / skip := true,
-      libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % "2.4.0"
-    )
 
 lazy val spatial =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/spatial"))
-    .dependsOn(image, surface, locusData, transform)
     .settings(commonSettings)
-    .settings(
-      name := "scalafim-spatial"
-    )
-    .jvmSettings(
-      // HDF5 transform files are read by transform's jHDF container; tests silence jHDF's logging.
-      libraryDependencies += "org.slf4j" % "slf4j-nop" % "2.0.18" % Test
-    )
-    .jvmConfigure(_.dependsOn(galeCoreJVM))
-    .jsConfigure(_.dependsOn(galeCoreJS))
+    .settings(name := "scalafim-spatial")
+    .jvmConfigure(_.dependsOn(neurosurf4sRoutingJVM % "compile->compile;test->test", neuroim4sRoutingIoJVM,
+      neurosurf4sRoutingIoJVM % "test->compile"))
+    .jsConfigure(_.dependsOn(neurosurf4sRoutingJS % "compile->compile;test->test"))
     .jsSettings(jsSettingsBase)
 
 lazy val spatialJS  = spatial.js
 lazy val spatialJVM = spatial.jvm
 
-// Toolkit transform formats (ITK/ANTs, FSL, AFNI, FreeSurfer, X5), their
-// interpretation into typed world-space transforms, and conversion between
-// them. Generic transform algebra stays in reframe4s; frame identity and
-// coordinate conventions stay in image (scalafim.image.space).
-lazy val transform =
-  crossProject(JSPlatform, JVMPlatform)
-    .crossType(CrossType.Full)
-    .in(file("modules/transform"))
-    .dependsOn(image, scenarioTestkit % "test->compile")
-    .settings(commonSettings)
-    .settings(strictFirstLevelCompilerSettings)
-    .settings(
-      name := "scalafim-transform",
-      libraryDependencies += "org.scalameta" %%% "munit-scalacheck" % "1.1.0" % Test,
-      transformBoundaryCheck := {
-        val repository = (LocalRootProject / baseDirectory).value
-        val sharedMain = repository / "modules" / "transform" / "shared" / "src" / "main" / "scala"
-        val sharedSources = (sharedMain ** "*.scala").get
-        val platformLeaks = sharedSources.filter { source =>
-          "\\bjava\\.(?:io|nio)\\b|\\bio\\.jhdf\\b|\\bscala\\.io\\.Source\\b".r
-            .findFirstIn(IO.read(source))
-            .nonEmpty
-        }
-        if (platformLeaks.nonEmpty)
-          sys.error(s"shared transform sources use platform IO: ${platformLeaks.mkString(", ")}")
-        // STP P1.07: world frames stay typed (project/FrameErasureGate.scala). Frame-erased maps, pullbacks, grids,
-        // sample spaces, boxes and points are allowed only in IO packages and where the heterogeneity is genuinely
-        // dynamic and ownership is re-checked at runtime (FrameErasureGate.Allowlist, by repository-relative path):
-        //   spatial Morphism.scala      graph edges between arbitrary domains (reframe4s eraseFrameRefinements boundary)
-        //   transform StageChain.scala  private stage composition, re-typed to the chain's endpoints on every call
-        FrameErasureGate.selfTest()
-        val erasedSignatures = FrameErasureGate.check(repository)
-        if (erasedSignatures.nonEmpty)
-          sys.error(s"frame-erased signatures outside the allowlist (STP P1.07):\n${erasedSignatures.mkString("\n")}")
-      },
-      Compile / compile := (Compile / compile).dependsOn(transformBoundaryCheck).value
-    )
-    .jvmSettings(libraryDependencies += "io.jhdf" % "jhdf" % jhdfVersion)
-    .jvmConfigure(_.dependsOn(image4sGeometryJVM, reframe4sLieJVM, reframe4sFieldJVM, reframe4sResampleJVM))
-    .jsConfigure(_.dependsOn(image4sGeometryJS, reframe4sLieJS, reframe4sFieldJS, reframe4sResampleJS))
-    .jsSettings(jsSettingsBase)
-
-lazy val transformJS  = transform.js
-lazy val transformJVM = transform.jvm
-
-lazy val atlas =
-  crossProject(JSPlatform, JVMPlatform)
-    .crossType(CrossType.Full)
-    .in(file("modules/atlas"))
-    .dependsOn(image, surface, locusData, spatial, transform)
-    .settings(commonSettings)
-    .settings(
-      name := "scalafim-atlas"
-    )
-    .jvmSettings(
-      libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % "2.4.0",
-      // Full-resolution MNI inversion retains large fields and residual arrays. Give this
-      // native oracle a fresh heap on every gate, independent of the resident sbt server.
-      Test / parallelExecution := false,
-      Test / testForkedParallel := false,
-      Test / testGrouping := {
-        val (nativeOracle, ordinary) = (Test / definedTests).value.partition(
-          _.name == "scalafim.atlas.io.MniTemplateBridgeFilesSuite"
-        )
-        val inherited = (Test / forkOptions).value
-        val nativeOptions = inherited.withRunJVMOptions(
-          inherited.runJVMOptions.filterNot(option => option.startsWith("-Xmx") || option.startsWith("-Xms")) ++
-            Vector("-Xmx3g", "-XX:ActiveProcessorCount=2")
-        )
-        Seq(
-          Tests.Group("atlas", ordinary, Tests.InProcess),
-          Tests.Group("atlas-mni-native-oracle", nativeOracle, Tests.SubProcess(nativeOptions))
-        ).filter(_.tests.nonEmpty)
-      }
-    )
-    // Test-only: the real-asset fsLR fixtures (locked asset gate, SimpleITK inverse oracle, qualification inputs)
-    // live in an unpublished fixture module; atlas drives the public standard-route entry point.
-    .jvmConfigure(_.dependsOn(image4sGeometryJVM, graph4sAlgorithmsJVM, surfaceTestFixturesJVM % "test->compile"))
-    .jsConfigure(_.dependsOn(image4sGeometryJS, graph4sAlgorithmsJS))
-    .jsSettings(jsSettingsBase)
-
-lazy val atlasJS  = atlas.js
-lazy val atlasJVM = atlas.jvm
-
 lazy val atlasExamplesJVM =
   project
     .in(file("examples/atlas-jvm"))
-    .dependsOn(atlasJVM, mvpaSpatialJVM)
+    .dependsOn(neuroatlas4sVolumeIoJVM, mvpaSpatialJVM)
     .settings(commonSettings)
     .settings(
       name := "scalafim-examples-atlas-jvm",
       publish / skip := true
     )
 
-lazy val workflowExamplesJVM =
-  project
-    .in(file("examples/workflows-jvm"))
-    .dependsOn(atlasJVM, mvpaSpatialJVM, mvpaDatasetJVM, fitJVM)
+// Portable in-memory workflows share sources; native IO and ProfileHRF stay JVM-only.
+lazy val workflowExamples =
+  crossProject(JSPlatform, JVMPlatform)
+    .crossType(CrossType.Full)
+    .in(file("examples/workflows"))
+    .dependsOn(mvpaSpatial, mvpaDataset, scenarioTestkit % "test->compile")
+    .jvmConfigure(_.dependsOn(neuroatlas4sVolumeIoJVM, mvpa4sAtlasJVM, fitJVM,
+      neurosurf4sIoJVM % "test->compile", neurosurf4sViewRasterJVM % "test->compile",
+      neurosurf4sViewVolumeJVM % "test->compile", neurosurf4sViewLinkJVM % "test->compile"))
+    .jsConfigure(_.dependsOn(neuroatlas4sVolumeJS, mvpa4sAtlasJS,
+      neurosurf4sIoJS % "test->compile", neurosurf4sViewRasterJS % "test->compile",
+      neurosurf4sViewVolumeJS % "test->compile", neurosurf4sViewLinkJS % "test->compile"))
     .settings(commonSettings)
-    .settings(
-      name := "scalafim-examples-workflows-jvm",
-      publish / skip := true
-    )
+    .settings(name := "scalafim-examples-workflows", publish / skip := true)
+    .jsSettings(jsSettingsBase)
 
-// The in-memory atlas workflow is portable: run the same source and suite on JS.
-lazy val workflowExamplesJS =
-  project
-    .enablePlugins(ScalaJSPlugin)
-    .in(file("examples/workflows-js"))
-    .dependsOn(atlasJS, mvpaSpatialJS, mvpaDatasetJS)
-    .settings(commonSettings)
-    .settings(jsSettingsBase)
-    .settings(
-      name := "scalafim-examples-workflows-js",
-      publish / skip := true,
-      Compile / unmanagedSources += baseDirectory.value.getParentFile / "workflows-jvm/src/main/scala/scalafim/examples/workflows/AtlasMvpaWorkflow.scala",
-      Test / unmanagedSources += baseDirectory.value.getParentFile / "workflows-jvm/src/test/scala/scalafim/examples/workflows/AtlasMvpaWorkflowSuite.scala"
-    )
+lazy val workflowExamplesJVM = workflowExamples.jvm
+lazy val workflowExamplesJS  = workflowExamples.js
 
 lazy val archive =
   crossProject(JSPlatform, JVMPlatform)
@@ -1030,10 +739,12 @@ lazy val estimates =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/estimates"))
-    .dependsOn(archive, image)
+    .dependsOn(archive)
     .settings(commonSettings)
     .settings(name := "scalafim-estimates")
     .jsSettings(jsSettingsBase)
+    .jvmConfigure(_.dependsOn(neuroim4sCoreJVM))
+    .jsConfigure(_.dependsOn(neuroim4sCoreJS))
 
 lazy val estimatesJS = estimates.js
 lazy val estimatesJVM = estimates.jvm
@@ -1048,28 +759,17 @@ lazy val estimatesIo =
       name := "scalafim-estimates-io",
       libraryDependencies += "com.lihaoyi" %%% "upickle" % "4.1.0"
     )
+    .jvmConfigure(_.dependsOn(image4sNiftiJVM))
     .jsSettings(jsSettingsBase)
 
 lazy val estimatesIoJS = estimatesIo.js
 lazy val estimatesIoJVM = estimatesIo.jvm
 
-lazy val fitEstimates =
-  crossProject(JSPlatform, JVMPlatform)
-    .crossType(CrossType.Full)
-    .in(file("modules/fit-estimates"))
-    .dependsOn(fit, estimates, group % "compile->compile;test->test", estimatesIo % "test->compile")
-    .settings(commonSettings)
-    .settings(name := "scalafim-fit-estimates")
-    .jsSettings(jsSettingsBase)
-
-lazy val fitEstimatesJS = fitEstimates.js
-lazy val fitEstimatesJVM = fitEstimates.jvm
-
 lazy val archiveLna =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/archive-lna"))
-    .dependsOn(archive, image)
+    .dependsOn(archive)
     .settings(commonSettings)
     .settings(
       name := "scalafim-archive-lna"
@@ -1080,6 +780,8 @@ lazy val archiveLna =
       libraryDependencies += "io.jhdf" % "jhdf" % jhdfVersion
     )
     .jsSettings(jsSettingsBase)
+    .jvmConfigure(_.dependsOn(neuroim4sCoreJVM))
+    .jsConfigure(_.dependsOn(neuroim4sCoreJS))
 
 lazy val archiveLnaJS  = archiveLna.js
 lazy val archiveLnaJVM = archiveLna.jvm
@@ -1116,13 +818,7 @@ lazy val dataset =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/dataset"))
-    .dependsOn(
-      response,
-      responseLaws % "test->compile",
-      image,
-      hrf,
-      locusData
-    )
+    .dependsOn(response, responseLaws % "test->compile", hrf)
     .settings(commonSettings)
     .settings(
       name := "scalafim-dataset",
@@ -1132,33 +828,20 @@ lazy val dataset =
     .jvmConfigure(_.dependsOn(galeCoreJVM))
     .jsConfigure(_.dependsOn(galeCoreJS))
     .jsSettings(jsSettingsBase)
+    .jvmConfigure(_.dependsOn(neuroim4sCoreJVM, neuroim4sIoJVM))
+    .jsConfigure(_.dependsOn(neuroim4sCoreJS))
+
+    .jvmConfigure(_.dependsOn(locus4sCoreJVM))
+    .jsConfigure(_.dependsOn(locus4sCoreJS))
 
 lazy val datasetJS  = dataset.js
 lazy val datasetJVM = dataset.jvm
-
-lazy val model =
-  crossProject(JSPlatform, JVMPlatform)
-    .crossType(CrossType.Full)
-    .in(file("modules/model"))
-    .dependsOn(design, dataset)
-    .settings(commonSettings)
-    .settings(strictFirstLevelCompilerSettings)
-    .settings(
-      name := "scalafim-fmri-model"
-    )
-    .jvmConfigure(_.dependsOn(galeCoreJVM))
-    .jvmSettings(scientificCoverageSettings(statementMinimum = 58.0, branchMinimum = 52.0))
-    .jsConfigure(_.dependsOn(galeCoreJS))
-    .jsSettings(jsSettingsBase)
-
-lazy val modelJS  = model.js
-lazy val modelJVM = model.jvm
 
 lazy val fit =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/fit"))
-    .dependsOn(model, ar, pipeline % "test->compile", scenarioTestkit % "test->compile")
+    .dependsOn(design, dataset, ar, pipeline % "test->compile", scenarioTestkit % "test->compile")
     .settings(commonSettings)
     .settings(strictFirstLevelCompilerSettings)
     .settings(
@@ -1177,7 +860,7 @@ lazy val phrfComparison =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/phrf-comparison"))
-    .dependsOn(model, ar, hrf, fit)
+    .dependsOn(fit)
     .settings(commonSettings)
     .settings(strictFirstLevelCompilerSettings)
     .settings(
@@ -1211,7 +894,7 @@ lazy val firstLevelLaws =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/first-level-laws"))
-    .dependsOn(fit, hrfLaws, scenarioTestkit % "test->compile")
+    .dependsOn(fit, scenarioTestkit % "test->compile")
     .settings(commonSettings)
     .settings(strictFirstLevelCompilerSettings)
     .settings(
@@ -1224,44 +907,27 @@ lazy val firstLevelLaws =
 lazy val firstLevelLawsJS  = firstLevelLaws.js
 lazy val firstLevelLawsJVM = firstLevelLaws.jvm
 
-lazy val mvpa =
+lazy val mvpaPipeline =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
-    .in(file("modules/mvpa"))
-    .dependsOn(response, locusData, pipeline, scenarioTestkit % "test->compile")
+    .in(file("modules/mvpa-pipeline"))
+    .dependsOn(pipeline)
+    .jvmConfigure(_.dependsOn(mvpa4sCoreJVM))
+    .jsConfigure(_.dependsOn(mvpa4sCoreJS))
     .settings(commonSettings)
-    .settings(
-      name := "scalafim-fmri-mvpa",
-      libraryDependencies += "com.lihaoyi" %%% "ujson" % "4.1.0" % Test
-    )
-    .jvmConfigure(
-      _.dependsOn(
-        galeCoreJVM,
-        multivarJVM,
-        resample4sCoreJVM,
-        resample4sDesignsJVM,
-        multivarInferenceJVM
-      )
-    )
-    .jsConfigure(
-      _.dependsOn(
-        galeCoreJS,
-        multivarJS,
-        resample4sCoreJS,
-        resample4sDesignsJS,
-        multivarInferenceJS
-      )
-    )
+    .settings(name := "scalafim-mvpa-pipeline")
     .jsSettings(jsSettingsBase)
 
-lazy val mvpaJS  = mvpa.js
-lazy val mvpaJVM = mvpa.jvm
+lazy val mvpaPipelineJS  = mvpaPipeline.js
+lazy val mvpaPipelineJVM = mvpaPipeline.jvm
 
 lazy val mvpaFit =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/mvpa-fit"))
-    .dependsOn(fit, mvpa)
+    .dependsOn(fit, scenarioTestkit % "test->compile")
+    .jvmConfigure(_.dependsOn(mvpa4sCoreJVM))
+    .jsConfigure(_.dependsOn(mvpa4sCoreJS))
     .settings(commonSettings)
     .settings(
       name := "scalafim-fmri-mvpa-fit"
@@ -1287,7 +953,6 @@ lazy val connectivity =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/connectivity"))
-    .dependsOn(locusData)
     .settings(commonSettings)
     .settings(
       name := "scalafim-connectivity"
@@ -1296,6 +961,9 @@ lazy val connectivity =
     .jsConfigure(_.dependsOn(galeCoreJS, graph4sCoreJS))
     .jsSettings(jsSettingsBase)
 
+    .jvmConfigure(_.dependsOn(locus4sCoreJVM))
+    .jsConfigure(_.dependsOn(locus4sCoreJS))
+
 lazy val connectivityJS  = connectivity.js
 lazy val connectivityJVM = connectivity.jvm
 
@@ -1303,7 +971,9 @@ lazy val surfaceViewConnectivity =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/surface-view-connectivity"))
-    .dependsOn(surfaceView, connectivity)
+    .dependsOn(connectivity)
+    .jvmConfigure(_.dependsOn(neurosurf4sViewJVM))
+    .jsConfigure(_.dependsOn(neurosurf4sViewJS))
     .settings(commonSettings)
     .settings(
       name := "scalafim-surface-view-connectivity"
@@ -1317,26 +987,34 @@ lazy val mvpaDataset =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/mvpa-dataset"))
-    .dependsOn(mvpa % "compile->compile;test->test", mvpaFit, dataset)
+    .dependsOn(mvpaFit, dataset, scenarioTestkit % "test->compile",
+      mvpaGroup % "test->compile;test->test", mvpaArtifacts % "test->compile")
+    .jvmConfigure(_.dependsOn(mvpa4sCoreJVM, mvpa4sTestkitJVM % Test))
+    .jsConfigure(_.dependsOn(mvpa4sCoreJS, mvpa4sTestkitJS % Test))
     .settings(commonSettings)
     .settings(
       name := "scalafim-fmri-mvpa-dataset"
     )
-    .jvmConfigure(_.dependsOn(alderKernelJVM, alderDataJVM, alderModelsLinearJVM, alderRidgeGaleJVM, alderTuneJVM, alderMetricsJVM))
-    .jsConfigure(_.dependsOn(alderKernelJS, alderDataJS, alderModelsLinearJS, alderRidgeGaleJS, alderTuneJS, alderMetricsJS))
+    .jvmConfigure(_.dependsOn(mvpa4sPredictiveJVM, alderKernelJVM, alderDataJVM))
+    .jsConfigure(_.dependsOn(mvpa4sPredictiveJS, alderKernelJS, alderDataJS))
     .jsSettings(jsSettingsBase)
 
 lazy val mvpaDatasetJS  = mvpaDataset.js
 lazy val mvpaDatasetJVM = mvpaDataset.jvm
 
-// Fitter-independent bounded pattern profiles over existing estimate/archive IO.
+// Fitter-independent bounded pattern profiles over estimate types and archive IO.
 lazy val mvpaArtifacts =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/mvpa-artifacts"))
-    .dependsOn(mvpa, estimatesIo)
+    .dependsOn(estimates, archive, scenarioTestkit % "test->compile")
+    .jvmConfigure(_.dependsOn(mvpa4sCoreJVM))
+    .jsConfigure(_.dependsOn(mvpa4sCoreJS))
     .settings(commonSettings)
-    .settings(name := "scalafim-fmri-mvpa-artifacts")
+    .settings(
+      name := "scalafim-fmri-mvpa-artifacts",
+      libraryDependencies += "com.lihaoyi" %%% "ujson" % "4.1.0"
+    )
     .jvmSettings(Test / fork := true)
     .jsSettings(jsSettingsBase)
 
@@ -1347,7 +1025,11 @@ lazy val mvpaSpatial =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/mvpa-spatial"))
-    .dependsOn(mvpa, image, surface, atlas, locusData, threshold, mvpaDataset % "test->compile")
+    .dependsOn(threshold)
+    .jvmConfigure(_.dependsOn(neurosurf4sCoreJVM % Test))
+    .jsConfigure(_.dependsOn(neurosurf4sCoreJS % Test))
+    .jvmConfigure(_.dependsOn(mvpa4sCoreJVM, mvpa4sLocusJVM % Test, mvpa4sTestkitJVM % Test, mvpa4sPredictiveJVM % "test->compile"))
+    .jsConfigure(_.dependsOn(mvpa4sCoreJS, mvpa4sLocusJS % Test, mvpa4sTestkitJS % Test, mvpa4sPredictiveJS % "test->compile"))
     .settings(commonSettings)
     .settings(
       name := "scalafim-fmri-mvpa-spatial"
@@ -1357,54 +1039,11 @@ lazy val mvpaSpatial =
 lazy val mvpaSpatialJS  = mvpaSpatial.js
 lazy val mvpaSpatialJVM = mvpaSpatial.jvm
 
-/** Unpublished M0 admission court for the provider graph and typed-axis laws.
-  * Production APIs begin in M1; this module prevents the admitted provider
-  * closure from drifting while those laws migrate to their permanent homes.
-  */
-lazy val mvpaFoundationAdmission =
-  crossProject(JSPlatform, JVMPlatform)
-    .crossType(CrossType.Full)
-    .in(file("modules/mvpa-foundation-spike"))
-    .dependsOn(response, locusData)
-    .settings(commonSettings)
-    .settings(
-      name := "scalafim-mvpa-foundation-admission",
-      publish / skip := true,
-      scalacOptions += "-Werror",
-      libraryDependencies ++= Seq(
-        "org.scalameta" %%% "munit"       % "1.3.4" % Test,
-        "org.typelevel" %%% "cats-core"   % "2.12.0" % Test,
-        "org.typelevel" %%% "cats-effect" % "3.5.4" % Test
-      )
-    )
-    .jvmConfigure(
-      _.dependsOn(
-        multivarJVM,
-        alderKernelJVM,
-        alderDataJVM,
-        resample4sCoreJVM,
-        resample4sDesignsJVM
-      )
-    )
-    .jsConfigure(
-      _.dependsOn(
-        multivarJS,
-        alderKernelJS,
-        alderDataJS,
-        resample4sCoreJS,
-        resample4sDesignsJS
-      )
-    )
-    .jsSettings(jsSettingsBase)
-
-lazy val mvpaFoundationAdmissionJS  = mvpaFoundationAdmission.js
-lazy val mvpaFoundationAdmissionJVM = mvpaFoundationAdmission.jvm
-
 lazy val group =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/group"))
-    .dependsOn(image, dataset, design, estimates)
+    .dependsOn(dataset, design, estimates)
     .settings(commonSettings)
     .settings(
       name := "scalafim-fmri-group"
@@ -1412,6 +1051,8 @@ lazy val group =
     .jvmConfigure(_.dependsOn(galeCoreJVM))
     .jsConfigure(_.dependsOn(galeCoreJS))
     .jsSettings(jsSettingsBase)
+    .jvmConfigure(_.dependsOn(neuroim4sCoreJVM))
+    .jsConfigure(_.dependsOn(neuroim4sCoreJS))
 
 lazy val groupJS  = group.js
 lazy val groupJVM = group.jvm
@@ -1422,7 +1063,9 @@ lazy val mvpaGroup =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/mvpa-group"))
-    .dependsOn(mvpa, group)
+    .dependsOn(group)
+    .jvmConfigure(_.dependsOn(mvpa4sCoreJVM, mvpa4sTestkitJVM % Test))
+    .jsConfigure(_.dependsOn(mvpa4sCoreJS, mvpa4sTestkitJS % Test))
     .settings(commonSettings)
     .settings(name := "scalafim-fmri-mvpa-group")
     .jsSettings(jsSettingsBase)
@@ -1434,7 +1077,7 @@ lazy val fmriWorkflow =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/fmri-workflow"))
-    .dependsOn(dataset, model, fit, group)
+    .dependsOn(fit, group % "compile->compile;test->test", estimatesIo % "test->compile")
     .settings(commonSettings)
     .settings(
       name := "scalafim-fmri-workflow"
@@ -1470,7 +1113,7 @@ lazy val datasetZarr =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/dataset-zarr"))
-    .dependsOn(dataset, archiveZarr, image, fit % "test->compile")
+    .dependsOn(dataset, archiveZarr, fit % "test->compile")
     .settings(commonSettings)
     .settings(
       name := "scalafim-dataset-zarr"
@@ -1478,6 +1121,8 @@ lazy val datasetZarr =
     .jvmConfigure(_.dependsOn(galeCoreJVM, bids4sJVM, zarr4sCoreJVM))
     .jsConfigure(_.dependsOn(galeCoreJS, bids4sJS, zarr4sCoreJS))
     .jsSettings(jsSettingsBase)
+    .jvmConfigure(_.dependsOn(neuroim4sCoreJVM, neuroim4sIoJVM))
+    .jsConfigure(_.dependsOn(neuroim4sCoreJS))
 
 lazy val datasetZarrJS  = datasetZarr.js
 lazy val datasetZarrJVM = datasetZarr.jvm
@@ -1486,8 +1131,6 @@ lazy val root =
   project
     .in(file("."))
     .aggregate(
-      locusDataJS,
-      locusDataJVM,
       pipelineJS,
       pipelineJVM,
       responseJS,
@@ -1500,67 +1143,45 @@ lazy val root =
       arJVM,
       hrfJS,
       hrfJVM,
-      hrfLawsJS,
-      hrfLawsJVM,
       scenarioTestkitJS,
       scenarioTestkitJVM,
       designJS,
       designJVM,
-      imageJS,
-      imageJVM,
-      providerSpikeJS,
-      providerSpikeJVM,
-      imageViewJS,
-      imageViewJVM,
-      imageViewCanvasJS,
-      imageViewJava2dJVM,
-      imageViewJavafxJVM,
+      designViewJS,
+      designViewJVM,
+      providerContractJS,
+      providerContractJVM,
+      neuroim4sViewJS,
+      neuroim4sViewJVM,
+      neuroim4sViewCanvasJS,
+      neuroim4sViewJava2dJVM,
+      neuroim4sViewJavafxJVM,
       thresholdJS,
       thresholdJVM,
       motionJS,
       motionJVM,
-      surfaceJS,
-      surfaceJVM,
-      surfaceTestFixturesJVM,
-      surfaceTestFixturesJS,
-      surfaceViewJS,
-      surfaceViewJVM,
-      surfaceViewRasterJS,
-      surfaceViewRasterJVM,
-      surfaceViewJavafxJVM,
-      surfaceViewThreeJS,
-      surfaceViewExamplesJS,
-      surfaceViewExamplesJVM,
-      transformJS,
-      transformJVM,
       spatialJS,
       spatialJVM,
-      atlasJS,
-      atlasJVM,
       archiveJS,
       archiveJVM,
       estimatesJS,
       estimatesJVM,
       estimatesIoJS,
       estimatesIoJVM,
-      fitEstimatesJS,
-      fitEstimatesJVM,
       archiveLnaJS,
       archiveLnaJVM,
       archivedResponseInteropJS,
       archivedResponseInteropJVM,
       datasetJS,
       datasetJVM,
-      modelJS,
-      modelJVM,
       fitJS,
       fitJVM,
       phrfComparisonJS,
       phrfComparisonJVM,
       firstLevelLawsJS,
       firstLevelLawsJVM,
-      mvpaJS,
-      mvpaJVM,
+      mvpaPipelineJS,
+      mvpaPipelineJVM,
       mvpaFitJS,
       mvpaFitJVM,
       connectivityJS,
@@ -1573,9 +1194,6 @@ lazy val root =
       mvpaArtifactsJVM,
       mvpaSpatialJS,
       mvpaSpatialJVM,
-      mvpaFoundationAdmissionJS,
-      mvpaFoundationAdmissionJVM,
-      surfaceExamplesJVM,
       atlasExamplesJVM,
       workflowExamplesJVM,
       workflowExamplesJS,
@@ -1595,13 +1213,130 @@ lazy val root =
       publish / skip := true
     )
 
-addCommandAlias("scalafimCompileAll", ";locusDataJVM/compile;locusDataJS/compile;pipelineJVM/compile;pipelineJS/compile;responseJVM/compile;responseJS/compile;responseLawsJVM/compile;responseLawsJS/compile;latentJVM/compile;latentJS/compile;arJVM/compile;arJS/compile;hrfJVM/compile;hrfJS/compile;hrfLawsJVM/compile;hrfLawsJS/compile;scenarioTestkitJVM/compile;scenarioTestkitJS/compile;designJVM/compile;designJS/compile;imageJVM/compile;imageJS/compile;providerSpikeJVM/compile;providerSpikeJS/compile;imageViewJVM/compile;imageViewJS/compile;imageViewCanvasJS/compile;imageViewJava2dJVM/compile;imageViewJavafxJVM/compile;thresholdJVM/compile;thresholdJS/compile;motionJVM/compile;motionJS/compile;surfaceJVM/compile;surfaceJS/compile;surfaceTestFixturesJVM/compile;surfaceTestFixturesJS/compile;surfaceViewJVM/compile;surfaceViewJS/compile;surfaceViewRasterJVM/compile;surfaceViewRasterJS/compile;surfaceViewJavafxJVM/compile;surfaceViewThreeJS/compile;surfaceViewConnectivityJVM/compile;surfaceViewConnectivityJS/compile;surfaceViewExamplesJVM/compile;surfaceViewExamplesJS/compile;transformJVM/compile;transformJS/compile;spatialJVM/compile;spatialJS/compile;atlasJVM/compile;atlasJS/compile;archiveJVM/compile;archiveJS/compile;estimatesJVM/compile;estimatesJS/compile;estimatesIoJVM/compile;estimatesIoJS/compile;fitEstimatesJVM/compile;fitEstimatesJS/compile;archiveLnaJVM/compile;archiveLnaJS/compile;archivedResponseInteropJVM/compile;archivedResponseInteropJS/compile;datasetJVM/compile;datasetJS/compile;modelJVM/compile;modelJS/compile;fitJVM/compile;fitJS/compile;phrfComparisonJVM/compile;phrfComparisonJS/compile;firstLevelLawsJVM/compile;firstLevelLawsJS/compile;mvpaJVM/compile;mvpaJS/compile;mvpaFitJVM/compile;mvpaFitJS/compile;connectivityJVM/compile;connectivityJS/compile;mvpaDatasetJVM/compile;mvpaDatasetJS/compile;mvpaArtifactsJVM/compile;mvpaArtifactsJS/compile;mvpaSpatialJVM/compile;mvpaSpatialJS/compile;mvpaFoundationAdmissionJVM/compile;mvpaFoundationAdmissionJS/compile;groupJVM/compile;groupJS/compile;mvpaGroupJVM/compile;mvpaGroupJS/compile;fmriWorkflowJVM/compile;fmriWorkflowJS/compile;archiveZarrJVM/compile;archiveZarrJS/compile;datasetZarrJVM/compile;datasetZarrJS/compile")
-addCommandAlias("scalafimTestAll", ";locusDataJVM/test;locusDataJS/test;pipelineJVM/test;pipelineJS/test;responseJVM/test;responseJS/test;responseLawsJVM/test;responseLawsJS/test;latentJVM/test;latentJS/test;arJVM/test;arJS/test;hrfJVM/test;hrfJS/test;hrfLawsJVM/test;hrfLawsJS/test;scenarioTestkitJVM/test;scenarioTestkitJS/test;designJVM/test;designJS/test;imageJVM/test;imageJS/test;providerSpikeJVM/test;providerSpikeJS/test;imageViewJVM/test;imageViewJS/test;imageViewCanvasJS/test;imageViewJava2dJVM/test;imageViewJavafxJVM/test;thresholdJVM/test;thresholdJS/test;motionJVM/test;motionJS/test;surfaceJVM/test;surfaceJS/test;surfaceTestFixturesJVM/test;surfaceTestFixturesJS/test;surfaceViewJVM/test;surfaceViewJS/test;surfaceViewRasterJVM/test;surfaceViewRasterJS/test;surfaceViewJavafxJVM/test;surfaceViewThreeJS/test;surfaceViewConnectivityJVM/test;surfaceViewConnectivityJS/test;surfaceViewExamplesJVM/test;surfaceViewExamplesJS/test;transformJVM/test;transformJS/test;spatialJVM/test;spatialJS/test;atlasJVM/test;atlasJS/test;archiveJVM/test;archiveJS/test;estimatesJVM/test;estimatesJS/test;estimatesIoJVM/test;estimatesIoJS/test;fitEstimatesJVM/test;fitEstimatesJS/test;archiveLnaJVM/test;archiveLnaJS/test;archivedResponseInteropJVM/test;archivedResponseInteropJS/test;datasetJVM/test;datasetJS/test;modelJVM/test;modelJS/test;fitJVM/test;fitJS/test;phrfComparisonJVM/test;phrfComparisonJS/test;firstLevelLawsJVM/test;firstLevelLawsJS/test;mvpaJVM/test;mvpaJS/test;mvpaFitJVM/test;mvpaFitJS/test;connectivityJVM/test;connectivityJS/test;mvpaDatasetJVM/test;mvpaDatasetJS/test;mvpaArtifactsJVM/test;mvpaArtifactsJS/test;mvpaSpatialJVM/test;mvpaSpatialJS/test;mvpaFoundationAdmissionJVM/test;mvpaFoundationAdmissionJS/test;groupJVM/test;groupJS/test;mvpaGroupJVM/test;mvpaGroupJS/test;fmriWorkflowJVM/test;fmriWorkflowJS/test;archiveZarrJVM/test;archiveZarrJS/test;datasetZarrJVM/test;datasetZarrJS/test")
-addCommandAlias("compileAll", "scalafimCompileAll")
-addCommandAlias("testAll", "scalafimTestAll")
-addCommandAlias("examplesCompile", ";surfaceExamplesJVM/compile;surfaceViewExamplesJVM/compile;surfaceViewExamplesJS/compile;atlasExamplesJVM/compile;workflowExamplesJVM/compile;workflowExamplesJS/compile")
-addCommandAlias("examplesTest", ";surfaceExamplesJVM/test;surfaceViewExamplesJVM/test;surfaceViewExamplesJS/test;atlasExamplesJVM/test;workflowExamplesJVM/test;workflowExamplesJS/test")
-addCommandAlias("surfaceViewConformance", ";surfaceJVM/test;surfaceJS/test;surfaceTestFixturesJVM/test;surfaceTestFixturesJS/test;surfaceViewJVM/test;surfaceViewJS/test;surfaceViewRasterJVM/test;surfaceViewRasterJS/test;surfaceViewJavafxJVM/test;surfaceViewThreeJS/test;surfaceViewConnectivityJVM/test;surfaceViewConnectivityJS/test")
-addCommandAlias("surfaceViewAdmissionJVM", ";surfaceViewRasterJVM/runMain scalafim.surface.view.raster.SurfaceRasterAdmissionBenchmark;surfaceViewJavafxJVM/Test/runMain scalafim.surface.view.javafx.JavaFxSurfaceAdmissionBenchmark")
-addCommandAlias("surfaceViewVisualQaJVM", ";surfaceViewExamplesJVM/Test/runMain scalafim.surface.view.javafx.JavaFxGiftiParityProbe;surfaceViewJavafxJVM/Test/runMain scalafim.surface.view.javafx.JavaFxSurfaceCorrectnessProbe;surfaceViewJavafxJVM/Test/runMain scalafim.surface.view.javafx.JavaFxSurfaceInteractionProbe")
-addCommandAlias("atlasCoverage", ";set atlasJVM / coverageEnabled := true;atlasJVM/test;atlasJVM/coverageReport;set atlasJVM / coverageEnabled := false")
+// Resolve the real transitive Compile closures on both platforms; source-import
+// checks alone cannot detect an accidental runtime, rendering or Test backedge.
+lazy val ecosystemBoundaries = taskKey[Unit]("Check ecosystem ownership and resolved provider Compile boundaries")
+ecosystemBoundaries / aggregate := false
+ecosystemBoundaries := {
+  val log = streams.value.log
+  val repo = baseDirectory.value
+  val output = target.value / "ecosystem-boundaries"
+  val closures = Seq(
+    "mvpa-predictive-JVM" -> (mvpa4sPredictiveJVM / Compile / fullClasspath).value,
+    "mvpa-predictive-JS" -> (mvpa4sPredictiveJS / Compile / fullClasspath).value,
+    "mvpa-core-JVM" -> (mvpa4sCoreJVM / Compile / fullClasspath).value,
+    "mvpa-core-JS" -> (mvpa4sCoreJS / Compile / fullClasspath).value,
+    "mvpa-locus-JVM" -> (mvpa4sLocusJVM / Compile / fullClasspath).value,
+    "mvpa-locus-JS" -> (mvpa4sLocusJS / Compile / fullClasspath).value,
+    "mvpa-atlas-JVM" -> (mvpa4sAtlasJVM / Compile / fullClasspath).value,
+    "mvpa-atlas-JS" -> (mvpa4sAtlasJS / Compile / fullClasspath).value,
+    "mvpa-surface-JVM" -> (mvpa4sSurfaceJVM / Compile / fullClasspath).value,
+    "mvpa-surface-JS" -> (mvpa4sSurfaceJS / Compile / fullClasspath).value,
+    "atlas-core-JVM" -> (neuroatlas4sCoreJVM / Compile / fullClasspath).value,
+    "atlas-core-JS" -> (neuroatlas4sCoreJS / Compile / fullClasspath).value,
+    "surface-core-JVM" -> (neurosurf4sCoreJVM / Compile / fullClasspath).value,
+    "surface-core-JS" -> (neurosurf4sCoreJS / Compile / fullClasspath).value,
+    "volume-core-JVM" -> (neuroim4sCoreJVM / Compile / fullClasspath).value,
+    "volume-core-JS" -> (neuroim4sCoreJS / Compile / fullClasspath).value,
+    "spaces-JVM" -> (neuroim4sSpacesJVM / Compile / fullClasspath).value,
+    "spaces-JS" -> (neuroim4sSpacesJS / Compile / fullClasspath).value,
+    "locus-core-JVM" -> (locus4sCoreJVM / Compile / fullClasspath).value,
+    "locus-core-JS" -> (locus4sCoreJS / Compile / fullClasspath).value,
+    "locus-data-JVM" -> (locus4sDataJVM / Compile / fullClasspath).value,
+    "locus-data-JS" -> (locus4sDataJS / Compile / fullClasspath).value,
+    "locus-provenance-JVM" -> (locus4sProvenanceJVM / Compile / fullClasspath).value,
+    "locus-provenance-JS" -> (locus4sProvenanceJS / Compile / fullClasspath).value
+  )
+  val extracted = Project.extract(state.value)
+  val structure = extracted.structure
+  val owners = Map(structure.root -> "scalafim", mvpa4sBuild -> "mvpa4s",
+    neuroim4sBuild -> "neuroim4s", neurosurf4sBuild -> "neurosurf4s",
+    neuroatlas4sBuild -> "neuroatlas4s", image4sBuild -> "image4s",
+    reframe4sBuild -> "reframe4s",
+    mesh4sBuild -> "mesh4s", intaglioBuild -> "intaglio") ++
+    sys.props.get("scalafim.spatial4s.build").map(path => file(path).getCanonicalFile.toURI -> "spatial4s").toSeq
+  val builds = structure.units.keys.toSeq.map(_.toString).sorted
+  val projects = structure.allProjectRefs.map { ref =>
+    val owner = owners.getOrElse(ref.build,
+      if (extracted.get(ref / organization) == "scalafim") "scalafim"
+      else """https://github.com/canardlapin/([^/]+)\.git#[0-9a-f]{40}""".r
+        .findFirstMatchIn(ref.build.toString).map(_.group(1)).getOrElse(""))
+    Seq("@project", owner, ref.project, extracted.get(ref / baseDirectory).getCanonicalPath).mkString("\t")
+  }
+  val artifacts = closures.flatMap { case (_, paths) =>
+    paths.flatMap { entry =>
+      entry.get(moduleID.key).map { module =>
+        Seq("@artifact", entry.data.getCanonicalPath, module.organization, module.name).mkString("\t")
+      }
+    }
+  }.distinct
+  val rows = builds.map("@build\t" + _) ++ projects ++ artifacts ++ closures.flatMap { case (label, paths) =>
+    paths.map(entry => label + "\t" + entry.data.getCanonicalPath)
+  }
+  IO.createDirectory(output)
+  val manifest = output / "compile-classpaths.tsv"
+  IO.writeLines(manifest, rows)
+  val command = Seq("python3", (repo / "tools/ci/check_ecosystem_boundaries.py").getPath,
+    "--root", repo.getPath, "--classpath-manifest", manifest.getPath,
+    "--receipt", (output / "receipt.json").getPath)
+  val exit = scala.sys.process.Process(command, repo).!(scala.sys.process.ProcessLogger(
+    line => log.info(line), line => log.error(line)))
+  if (exit != 0) sys.error("Ecosystem ownership or Compile boundary check failed")
+}
+
+addCommandAlias("scalafimCompileAll", ";ecosystemBoundaries;mvpa4sImagingCompileAll;neuroatlasCompileAll;neurosurfCompileAll;neuroimViewCompileAll;pipelineJVM/compile;pipelineJS/compile;responseJVM/compile;responseJS/compile;responseLawsJVM/compile;responseLawsJS/compile;latentJVM/compile;latentJS/compile;arJVM/compile;arJS/compile;hrfJVM/compile;hrfJS/compile;scenarioTestkitJVM/compile;scenarioTestkitJS/compile;designJVM/compile;designJS/compile;designViewJVM/compile;designViewJS/compile;providerContractJVM/compile;providerContractJS/compile;thresholdJVM/compile;thresholdJS/compile;motionJVM/compile;motionJS/compile;surfaceViewConnectivityJVM/compile;surfaceViewConnectivityJS/compile;spatialJVM/compile;spatialJS/compile;archiveJVM/compile;archiveJS/compile;estimatesJVM/compile;estimatesJS/compile;estimatesIoJVM/compile;estimatesIoJS/compile;archiveLnaJVM/compile;archiveLnaJS/compile;archivedResponseInteropJVM/compile;archivedResponseInteropJS/compile;datasetJVM/compile;datasetJS/compile;fitJVM/compile;fitJS/compile;phrfComparisonJVM/compile;phrfComparisonJS/compile;firstLevelLawsJVM/compile;firstLevelLawsJS/compile;mvpaPipelineJVM/compile;mvpaPipelineJS/compile;mvpaFitJVM/compile;mvpaFitJS/compile;connectivityJVM/compile;connectivityJS/compile;mvpaDatasetJVM/compile;mvpaDatasetJS/compile;mvpaArtifactsJVM/compile;mvpaArtifactsJS/compile;mvpaSpatialJVM/compile;mvpaSpatialJS/compile;groupJVM/compile;groupJS/compile;mvpaGroupJVM/compile;mvpaGroupJS/compile;fmriWorkflowJVM/compile;fmriWorkflowJS/compile;archiveZarrJVM/compile;archiveZarrJS/compile;datasetZarrJVM/compile;datasetZarrJS/compile")
+addCommandAlias("scalafimTestAll", ";neurosurfCoreTestAll;neurosurfSpatialTestAll;neurosurfFixtureTestAll;neurosurfViewJvmTestAll;neurosurfViewJsTestAll;neurosurfBrowserTestAll;neurosurfExamplesJvmTestAll;neurosurfNativeTestAll;mvpa4sCoreTestAll;mvpa4sPredictiveTestAll;mvpa4sLocusTestAll;scalafimMvpaImagingTestAll;pipelineJVM/test;pipelineJS/test;responseJVM/test;responseJS/test;responseLawsJVM/test;responseLawsJS/test;latentJVM/test;latentJS/test;arJVM/test;arJS/test;hrfJVM/test;hrfJS/test;scenarioTestkitJVM/test;scenarioTestkitJS/test;designJVM/test;designJS/test;designViewJVM/test;designViewJS/test;neuroimTestAll;neuroimTransformTestAll;neuroimRoutingTestAll;neuroatlasCoreTestAll;neuroatlasVolumeTestAll;neuroatlasSurfaceTestAll;neuroatlasRoutingTestAll;neuroimViewJvmTestAll;neuroimViewJsTestAll;providerContractJVM/test;providerContractJS/test;thresholdJVM/test;thresholdJS/test;motionJVM/test;motionJS/test;surfaceViewConnectivityJVM/test;surfaceViewConnectivityJS/test;spatialJVM/test;spatialJS/test;archiveJVM/test;archiveJS/test;estimatesJVM/test;estimatesJS/test;estimatesIoJVM/test;estimatesIoJS/test;archiveLnaJVM/test;archiveLnaJS/test;archivedResponseInteropJVM/test;archivedResponseInteropJS/test;datasetJVM/test;datasetJS/test;fitJVM/test;fitJS/test;phrfComparisonJVM/test;phrfComparisonJS/test;firstLevelLawsJVM/test;firstLevelLawsJS/test;mvpaPipelineJVM/test;mvpaPipelineJS/test;mvpaFitJVM/test;mvpaFitJS/test;connectivityJVM/test;connectivityJS/test;mvpaDatasetJVM/test;mvpaDatasetJS/test;mvpaArtifactsJVM/test;mvpaArtifactsJS/test;mvpaSpatialJVM/test;mvpaSpatialJS/test;groupJVM/test;groupJS/test;mvpaGroupJVM/test;mvpaGroupJS/test;fmriWorkflowJVM/test;fmriWorkflowJS/test;archiveZarrJVM/test;archiveZarrJS/test;datasetZarrJVM/test;datasetZarrJS/test")
+addCommandAlias("examplesCompile", ";atlasExamplesJVM/compile;workflowExamplesJVM/compile;workflowExamplesJS/compile")
+addCommandAlias("examplesTest", ";atlasExamplesJVM/test;workflowExamplesJVM/test;workflowExamplesJS/test")
+
+addCommandAlias("neuroimTestAll", s";{${neuroim4sBuild}}spacesJVM/test;{${neuroim4sBuild}}spacesJS/test;{${neuroim4sBuild}}coreJVM/test;{${neuroim4sBuild}}coreJS/test;{${neuroim4sBuild}}ioJVM/test")
+
+addCommandAlias("neuroimRoutingTestAll", s";{${neuroim4sBuild}}routingJVM/test;{${neuroim4sBuild}}routingJS/test;{${neuroim4sBuild}}routingIoJVM/test")
+
+addCommandAlias("neuroimTransformTestAll", s";{${neuroim4sBuild}}transformJVM/test;{${neuroim4sBuild}}transformJS/test;{${neuroim4sBuild}}transformIoJVM/test")
+
+addCommandAlias("neuroatlasVolumeTestAll", ";" + Seq("volumeJVM", "volumeJS", "volumeIoJVM").map(p => s"{${neuroatlas4sBuild}}$p/test").mkString(";"))
+
+// Provider-qualified commands remain explicit in the bounded test inventory.
+addCommandAlias("neuroimViewCompileAll", Seq("viewJVM", "viewJS", "viewCanvasJS", "viewJava2dJVM", "viewJavafxJVM")
+  .flatMap(project => Seq(s"{${neuroim4sBuild}}$project/compile", s"{${neuroim4sBuild}}$project/Test/compile")).mkString(";", ";", ""))
+addCommandAlias("neuroimViewJvmTestAll", Seq("viewJVM", "viewJava2dJVM", "viewJavafxJVM")
+  .map(project => s"{${neuroim4sBuild}}$project/test").mkString(";", ";", ""))
+addCommandAlias("neuroimViewJsTestAll", Seq("viewJS", "viewCanvasJS")
+  .map(project => s"{${neuroim4sBuild}}$project/test").mkString(";", ";", ""))
+
+// Optional providers retain their owning behavior tests after extraction.
+addCommandAlias("mvpa4sCoreTestAll", ";" + Seq("coreJVM", "coreJS", "testkitJVM", "testkitJS").map(p => s"{${mvpa4sBuild}}$p/test").mkString(";"))
+addCommandAlias("mvpa4sPredictiveTestAll", ";" + Seq("predictiveJVM", "predictiveJS", "consumerJVM", "consumerJS").map(p => s"{${mvpa4sBuild}}$p/test").mkString(";"))
+addCommandAlias("mvpa4sLocusTestAll", s";{${mvpa4sBuild}}locusJVM/test;{${mvpa4sBuild}}locusJS/test")
+
+addCommandAlias("neurosurfCoreTestAll", ";" + Seq("coreJVM", "coreJS", "ioJVM", "ioJS").map(p => s"{${neurosurf4sBuild}}$p/test").mkString(";"))
+
+addCommandAlias("neurosurfSpatialTestAll", ";" + Seq("spatialJVM", "spatialJS", "spatialIoJVM", "volumeJVM", "volumeJS", "volumeIoJVM", "routingJVM", "routingJS", "routingIoJVM").map(p => s"{${neurosurf4sBuild}}$p/test").mkString(";"))
+
+addCommandAlias("neurosurfFixtureTestAll", ";" + Seq("fixturesJVM", "fixturesJS").map(p => s"{${neurosurf4sBuild}}$p/test").mkString(";"))
+
+addCommandAlias("neurosurfViewJvmTestAll", ";" + Seq("viewJVM", "viewLinkJVM", "viewVolumeJVM", "viewRasterJVM").map(p => s"{${neurosurf4sBuild}}$p/test").mkString(";"))
+
+addCommandAlias("neurosurfViewJsTestAll", ";" + Seq("viewJS", "viewLinkJS", "viewVolumeJS", "viewRasterJS").map(p => s"{${neurosurf4sBuild}}$p/test").mkString(";"))
+
+addCommandAlias("neurosurfBrowserTestAll", ";" + Seq("viewThreeJS", "viewThreeVolumeJS", "viewExamplesJS").map(p => s"{${neurosurf4sBuild}}$p/test").mkString(";"))
+
+addCommandAlias("neurosurfExamplesJvmTestAll", ";" + Seq("viewExamplesJVM", "surfaceExamplesJVM").map(p => s"{${neurosurf4sBuild}}$p/test").mkString(";"))
+
+addCommandAlias("neurosurfNativeTestAll", ";" + Seq("viewJavafxJVM").map(p => s"{${neurosurf4sBuild}}$p/test").mkString(";"))
+
+addCommandAlias("neurosurfCompileAll", ";" + Seq("coreJVM", "coreJS", "ioJVM", "ioJS", "spatialJVM", "spatialJS", "spatialIoJVM", "volumeJVM", "volumeJS", "volumeIoJVM", "routingJVM", "routingJS", "routingIoJVM", "fixturesJVM", "fixturesJS", "viewJVM", "viewLinkJVM", "viewVolumeJVM", "viewRasterJVM", "viewJS", "viewLinkJS", "viewVolumeJS", "viewRasterJS", "viewThreeJS", "viewThreeVolumeJS", "viewExamplesJS", "viewExamplesJVM", "surfaceExamplesJVM", "viewJavafxJVM").map(p => s"{${neurosurf4sBuild}}$p/compile").mkString(";"))
+
+addCommandAlias("neuroatlasCoreTestAll", ";" + Seq("coreJVM", "coreJS", "ioJVM").map(p => s"{${neuroatlas4sBuild}}$p/test").mkString(";"))
+
+addCommandAlias("neuroatlasSurfaceTestAll", ";" + Seq("surfaceJVM", "surfaceJS", "surfaceIoJVM").map(p => s"{${neuroatlas4sBuild}}$p/test").mkString(";"))
+
+addCommandAlias("neuroatlasRoutingTestAll", ";" + Seq("routingJVM", "routingJS", "routingIoJVM").map(p => s"{${neuroatlas4sBuild}}$p/test").mkString(";"))
+
+addCommandAlias("neuroatlasCompileAll", ";" + Seq("coreJVM", "coreJS", "ioJVM", "volumeJVM", "volumeJS", "volumeIoJVM", "surfaceJVM", "surfaceJS", "surfaceIoJVM", "routingJVM", "routingJS", "routingIoJVM").map(p => s"{${neuroatlas4sBuild}}$p/compile").mkString(";"))
+
+addCommandAlias("mvpa4sImagingCompileAll", ";" + Seq("surfaceJVM", "surfaceJS", "atlasJVM", "atlasJS", "imagingConsumerJVM", "imagingConsumerJS").map(p => s"{${mvpa4sBuild}}$p/compile").mkString(";"))
+
+// Source builds share sbt command aliases; keep this distinct from the provider alias.
+addCommandAlias("scalafimMvpaImagingTestAll", ";" + Seq("surfaceJVM", "surfaceJS", "atlasJVM", "atlasJS", "imagingConsumerJVM", "imagingConsumerJS").map(p => s"{${mvpa4sBuild}}$p/test").mkString(";"))

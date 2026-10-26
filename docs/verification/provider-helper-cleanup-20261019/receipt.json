@@ -1,0 +1,166 @@
+{
+  "schema_version": 1,
+  "recorded_utc": "2026-10-19T22:51:53.046322+00:00",
+  "baseline_commit": "7c730f99e928b3ce5040f8c05f4b1134c4e09f9a",
+  "qualified_source_blobs": {
+    "modules/image/jvm/src/test/scala/scalafim/image/NativeImageAllocationSuite.scala": "fcb4fdfe3178ac518d325cc04fcb562916b81536",
+    "modules/image/shared/src/main/scala/scalafim/image/NeuroStats.scala": "4ab09ae5e6c888f138a9bfe64f055f9df31a4d2a",
+    "modules/image/shared/src/main/scala/scalafim/image/SelectedImage.scala": "7c008e2d1f0463d37e4dd09fb5cfae660a82e08c",
+    "modules/image/shared/src/test/scala/scalafim/image/CoreSuite.scala": "1bbdbc72ab3056a03ff52f542186be83eb94c7de",
+    "modules/image/shared/src/test/scala/scalafim/image/DomainValiditySuite.scala": "31963c33e6eb5c75bb3734cdb2489bc2a21b75e5",
+    "modules/image/shared/src/test/scala/scalafim/image/ExactVoxelRegionSuite.scala": "5e5c8773a234a373d7afcf6e4931344319f8eabe",
+    "modules/image/shared/src/test/scala/scalafim/image/FunctionalImageSuite.scala": "731380b27acf0c7e6c292d843fc1c5e3ddd93d50",
+    "modules/image/shared/src/test/scala/scalafim/image/OwnershipSuite.scala": "539c6ee1966ffa656cb58718dde3f0428079e93e",
+    "modules/image/shared/src/test/scala/scalafim/image/SelectedImageSuite.scala": "13fb2d179c6340d137f464075d8d6622d8838107",
+    "modules/image/shared/src/test/scala/scalafim/image/SubVectorSyntaxSuite.scala": "374c6598ced30b3da575588ad58c9da48398e525",
+    "modules/spatial/shared/src/main/scala/scalafim/spatial/DiscreteTransport.scala": null,
+    "modules/spatial/shared/src/test/scala/scalafim/spatial/DomainLocusSuite.scala": "4beb7f55515679ec2edfb2a42feefad3480f5c24",
+    "build.sbt": "da9e4f97b12f3ae1f97fc32b6dcd1c12abc6dd34"
+  },
+  "source_inputs_unchanged": true,
+  "production_line_delta": -168,
+  "provider_pin_changes": false,
+  "scalafim_publication": false,
+  "test_executions": 1125,
+  "skips": 0,
+  "scalafim_compile_all": "passed JVM and JS",
+  "scala_source_warnings": [],
+  "unchanged_logic": {
+    "modules/image/shared/src/main/scala/scalafim/image/NeuroStats.scala": "Only redundant identity-accessor calls removed; all other bytes unchanged",
+    "modules/image/jvm/src/test/scala/scalafim/image/NativeImageAllocationSuite.scala": "Only redundant identity-accessor calls removed; all other bytes unchanged"
+  },
+  "allocation_checks": [
+    {
+      "case": "map-view-safe",
+      "samples": "64000",
+      "bytes": "519440",
+      "limit": "708608"
+    },
+    {
+      "case": "zip-view-safe",
+      "samples": "64000",
+      "bytes": "519136",
+      "limit": "708608"
+    },
+    {
+      "case": "temporal-reduction",
+      "samples": "32000",
+      "bytes": "261248",
+      "limit": "452608"
+    },
+    {
+      "case": "linear-resampling",
+      "samples": "64000",
+      "bytes": "533480",
+      "limit": "708608"
+    },
+    {
+      "case": "ravel-stencil",
+      "samples": "64000",
+      "bytes": "1052360",
+      "limit": "1286144"
+    },
+    {
+      "case": "dense-to-selected",
+      "samples": "21334",
+      "bytes": "685200",
+      "limit": "879296"
+    },
+    {
+      "case": "selected-to-dense",
+      "samples": "64000",
+      "bytes": "1029216",
+      "limit": "1220608"
+    },
+    {
+      "case": "prepared-exact-searchlight",
+      "samples": "64000",
+      "bytes": "2050632",
+      "limit": "2244608"
+    }
+  ],
+  "adverse_evidence": "Initial compile exposed four multiline test-only constructor callers. Migrated to checked create with explicit existing ValueSemantics; assertions and budgets preserved. Failed log retained.",
+  "checks": [
+    {
+      "name": "affected-gates.log",
+      "raw_log_sha256": "e402c3873fc5b1d6c04a9f67b8e9122420746113f1122a98770f728d72eff0f1",
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-19T22:46:40.990886+00:00",
+        "finished_utc": "2026-10-19T22:47:46.504538+00:00",
+        "duration_seconds": 65.514127,
+        "command": [
+          "python3",
+          "tools/build/sbt-warm",
+          "imageJVM/test",
+          "imageJS/test",
+          "spatialJVM/test",
+          "spatialJS/test",
+          "scalafimCompileAll"
+        ],
+        "cwd": "/private/tmp/scalafim-simplify-a-20261019",
+        "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/provider-helper-cleanup-20261019/affected-gates.log",
+        "exit_code": 1,
+        "child_returncode": 1,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 1800.0,
+        "log_bytes": 10818
+      },
+      "test_totals": []
+    },
+    {
+      "name": "final-gates.log",
+      "raw_log_sha256": "5be252e1ab1e8e8c82be26430e018f023605cd405464c7f49eb5c806475b8907",
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-19T22:48:24.004825+00:00",
+        "finished_utc": "2026-10-19T22:51:33.301392+00:00",
+        "duration_seconds": 189.295619,
+        "command": [
+          "python3",
+          "tools/build/sbt-warm",
+          "imageJVM/test",
+          "imageJS/test",
+          "spatialJVM/test",
+          "spatialJS/test",
+          "scalafimCompileAll"
+        ],
+        "cwd": "/private/tmp/scalafim-simplify-a-20261019",
+        "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/provider-helper-cleanup-20261019/final-gates.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 1800.0,
+        "log_bytes": 95111
+      },
+      "test_totals": [
+        {
+          "total": 359,
+          "failed": 0,
+          "errors": 0,
+          "passed": 359
+        },
+        {
+          "total": 329,
+          "failed": 0,
+          "errors": 0,
+          "passed": 329
+        },
+        {
+          "total": 231,
+          "failed": 0,
+          "errors": 0,
+          "passed": 231
+        },
+        {
+          "total": 206,
+          "failed": 0,
+          "errors": 0,
+          "passed": 206
+        }
+      ]
+    }
+  ]
+}

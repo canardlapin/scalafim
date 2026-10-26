@@ -1,10 +1,11 @@
 package scalafim.fmri.mvpa.artifacts
 
+import scalafim.scenarios.{ScenarioHarness, ScenarioTolerance}
 import gale.linalg.DMat
 import java.nio.file.Files
 import multivar.core.{SpaceRole, ValueId, ValueIdentity}
-import scalafim.fmri.mvpa.AxisRef
-import scalafim.fmri.mvpa.pattern.*
+import mvpa4s.AxisRef
+import mvpa4s.pattern.*
 
 class PatternPredictionArchiveSuite extends munit.FunSuite:
   private def right[A](v: Either[?,A]): A = v.fold(e=>fail(e.toString),identity)
@@ -22,17 +23,22 @@ class PatternPredictionArchiveSuite extends munit.FunSuite:
     val covariance=right(ResidualCovariance.fromFactors(n,Vector(2.0,1.0),DMat.dense(2,1,Vector(1.0,1.0)))); val prior=right(TargetPriorCovariance(q,DMat.dense(2,2,Vector(2.0,.3,.3,1.0)),id("sigma"),"declared-metric"))
     val before=right(PatternPrediction.fromArtifact(n,q,r,artifact,covariance,Some(prior))); val root=Files.createTempDirectory("prediction-archive-"); val stored=right(right(LocalPatternArchive.open(root)).write("fit",declaration,artifact,s)); val restored=right(right(LocalPatternArchive.open(root)).read(stored.metadata,s)).artifact
     val after=right(PatternPrediction.fromArtifact(n,q,r,restored,covariance,Some(prior))); val x=right(AxisValues(n,Vector(11.0,-4.5)))
-    close(right(before.rawScores(x)).values.values.head,right(after.rawScores(x)).values.values.head); close(right(before.calibratedScores(x)).values.values.head,right(after.calibratedScores(x)).values.values.head)
-    val beforeDecoded = right(before.decode(x)).values.values
-    val afterDecoded = right(after.decode(x)).values.values
-    beforeDecoded.zip(afterDecoded).foreach((a, b) => close(a, b))
     val y = right(AxisValues(q, Vector(1.0, -1.0)))
-    right(before.encode(y)).values.zip(right(after.encode(y)).values).foreach((a, b) => close(a, b))
-    assertEquals(before.numericalIdentity, after.numericalIdentity)
-    restored.target match
+    val policyPreserved = restored.target match
       case TargetGeometry.Continuous(v) =>
-        assertEquals(v.metricDiagonal.values,Vector(2.0,3.0)); assertEquals(v.blockWeights.head._2.values,Vector(2.0,3.0))
-      case _ => fail("continuous")
+        v.metricDiagonal.values == Vector(2.0, 3.0) && v.blockWeights.head._2.values == Vector(2.0, 3.0)
+      case _ => false
+    val tolerance = ScenarioTolerance.absolute(1e-10)
+    val result = ScenarioHarness.result("u4-jvm-archive-reopen-prediction",
+      ScenarioHarness.values("raw-scores", right(after.rawScores(x)).values.values, right(before.rawScores(x)).values.values, tolerance) ++
+      ScenarioHarness.values("calibrated-scores", right(after.calibratedScores(x)).values.values, right(before.calibratedScores(x)).values.values, tolerance) ++
+      ScenarioHarness.values("decoded-values", right(after.decode(x)).values.values, right(before.decode(x)).values.values, tolerance) ++
+      ScenarioHarness.values("encoded-values", right(after.encode(y)).values, right(before.encode(y)).values, tolerance) ++ Vector(
+        ScenarioHarness.fact("numerical-identity", before.numericalIdentity == after.numericalIdentity, before.numericalIdentity.toString),
+        ScenarioHarness.fact("target-policy", policyPreserved, "metric and block weights remain prediction inputs"),
+        ScenarioHarness.fact("physical-reopen", stored.payloads.forall(p => Files.exists(root.resolve(p.reference.path))) &&
+          Files.exists(root.resolve(stored.metadata.path)), "fresh archive reader verifies persisted objects")))
+    assert(result.ciPass, result.render)
 
   test("categorical class keys and priors remain prediction inputs after restoration"):
     val n=axis("cn",Vector("n1","n2")); val q=axis("cq",Vector("q")); val r=axis("cr",Vector("r")); val s=axis("cs",Vector("s1","s2")); val classes=axis("class",Vector("z","a","m"))

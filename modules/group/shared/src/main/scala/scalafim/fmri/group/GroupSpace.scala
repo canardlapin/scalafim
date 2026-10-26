@@ -1,7 +1,7 @@
 package scalafim.fmri.group
 
-import scalafim.image.SomeSampleSpace
-import scalafim.image.SampleSpaces.*
+import image4s.SomeSampleSpace
+import neuroim4s.image.SampleSpaces.*
 
 /** The sample axis of a group analysis. fmrigds's insight is that a "sample"
   * can be a voxel, a parcel, a surface vertex, or a latent component; the group
@@ -26,7 +26,7 @@ object GroupSpace:
     */
   final case class VoxelAxis(space: SomeSampleSpace, sampleIndices: Vector[Int]) extends GroupSpace:
     require(sampleIndices.nonEmpty, "voxel axis must reference at least one voxel")
-    private val gridSize = space.spatialDims.product
+    private val gridSize = space.grid.shape.product
     require(sampleIndices.forall(i => i >= 0 && i < gridSize), "voxel index out of spatial bounds")
     def nSamples: Int = sampleIndices.length
 

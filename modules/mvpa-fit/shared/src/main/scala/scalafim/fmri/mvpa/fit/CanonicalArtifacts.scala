@@ -5,9 +5,9 @@ import multivar.core.*
 import multivar.family.canonical.*
 import scalafim.dataset.RunId
 import scalafim.fmri.fit.{RunIndex, TemporalPreparationReceipt, TrainingRunScope}
-import scalafim.fmri.mvpa.{AxisDescriptor, AxisDigest}
-import scalafim.fmri.mvpa.analysis.*
-import scalafim.fmri.mvpa.decomposition.DecompositionPurpose
+import mvpa4s.{AxisDescriptor, AxisDigest}
+import mvpa4s.analysis.*
+import mvpa4s.decomposition.DecompositionPurpose
 
 final case class CanonicalTrainingReceipt(
     trainingRuns: Vector[RunId], temporalPreparation: Vector[(RunId, TemporalPreparationReceipt)],

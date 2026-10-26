@@ -1,11 +1,13 @@
 package scalafim.spatial
 
-import scalafim.image.world.SubjectId
+import neurosurf4s.routing.*
+
+import neuroim4s.spaces.SubjectId
 
 import ravel.NDArray as RavelArray
-import scalafim.image.{GridSpec, Resample, SampleSpaces, SpatialPullbacks}
-import scalafim.image.SampleSpaces.*
-import scalafim.surface.*
+import neuroim4s.image.{GridSpec, Resample, SampleSpaces, SpatialPullbacks}
+import neuroim4s.image.SampleSpaces.*
+import neurosurf4s.surface.*
 
 class MixedPullbackSuite extends munit.FunSuite:
 
@@ -32,7 +34,9 @@ class MixedPullbackSuite extends munit.FunSuite:
 
   private def volumeGrid(domain: Domain): GridSpec[?] =
     domain.geometry match
-      case SamplingGeometry.Volume(space, _) => GridSpec.fromSpace(space)
+      case SamplingGeometry.Volume(volumeGrid) =>
+        val space = volumeGrid.space
+        GridSpec.fromSpace(space)
       case _ => fail(s"domain ${domain.id.value} is not volumetric")
 
   private def surfaceAt(xs: Vector[Double], kind: SurfaceKind): SurfaceGeometry =

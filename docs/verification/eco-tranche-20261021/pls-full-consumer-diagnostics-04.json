@@ -1,0 +1,330 @@
+{
+  "sourceCommit": "dcc0892bd882908abde8d747ee6a4fefb9e1c750",
+  "scalafimRevision": "bf84f9d8c897d274cb1bde9811b71b574b677ec6",
+  "atlasRevision": "07e3d24d58d196c82c24429aefa7b7d65a671a34",
+  "execution": {
+    "schema_version": 1,
+    "started_utc": "2026-10-21T05:30:33.763765+00:00",
+    "finished_utc": "2026-10-21T05:33:13.967132+00:00",
+    "duration_seconds": 160.203359,
+    "command": [
+      "env",
+      "TMPDIR=/Volumes/My Passport for Mac/e01tmp",
+      "sbt",
+      "-batch",
+      "-J-Xmx4g",
+      "-J-Djava.io.tmpdir=/Volumes/My Passport for Mac/e01tmp",
+      "-Dsbt.supershell=false",
+      "-Dsbt.log.noformat=true",
+      "-Dsbt.global.base=/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/fresh-integration-global",
+      "-Dplsneuro.providers=/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/main-imaging-providers",
+      "desktop/compile"
+    ],
+    "cwd": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/plsneuro-linked-qualified-03",
+    "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/pls-main-fresh-compile-04.log",
+    "exit_code": 1,
+    "child_returncode": 1,
+    "reason": "exited",
+    "detail": null,
+    "timeout_seconds": 1200.0,
+    "log_bytes": 42420
+  },
+  "logSha256": "0e3c098ccbbd85be2d00521fc9bb743981fc70a828aab20a1d6b94ea046bdf3d",
+  "reportedErrorCount": 41,
+  "diagnostics": [
+    {
+      "code": "E008",
+      "file": "modules/adapters/src/main/scala/plsneuro/adapters/BidsFirstLevelService.scala",
+      "line": 11,
+      "column": 90,
+      "detail": "[error] 11 |import scalafim.fmri.design.{CoefficientAxis, ColumnRole, DesignError, DesignFingerprint, EventSupportReceipt, StructuralColumn, StructuralColumnOrigin}\n[error]    |                                                                                          ^^^^^^^^^^^^^^^^^^^\n[error]    |       value EventSupportReceipt is not a member of scalafim.fmri.design"
+    },
+    {
+      "code": "E006",
+      "file": "modules/adapters/src/main/scala/plsneuro/adapters/BidsFirstLevelService.scala",
+      "line": 20,
+      "column": 53,
+      "detail": "[error] 20 |  case ResponseSupport(unit: FirstLevelUnit, tables: BoundFirstLevelTables, receipt: EventSupportReceipt)\n[error]    |                                                     ^^^^^^^^^^^^^^^^^^^^^\n[error]    |                                   Not found: type BoundFirstLevelTables\n[error]    |\n[error]    | longer explanation available when compiling with `-explain`"
+    },
+    {
+      "code": "E006",
+      "file": "modules/adapters/src/main/scala/plsneuro/adapters/BidsFirstLevelService.scala",
+      "line": 20,
+      "column": 85,
+      "detail": "[error] 20 |  case ResponseSupport(unit: FirstLevelUnit, tables: BoundFirstLevelTables, receipt: EventSupportReceipt)\n[error]    |                                                                                     ^^^^^^^^^^^^^^^^^^^\n[error]    |                                     Not found: type EventSupportReceipt\n[error]    |\n[error]    | longer explanation available when compiling with `-explain`"
+    },
+    {
+      "code": "E008",
+      "file": "modules/glm-review-javafx/src/main/scala/glm/review/fx/EventSourcePane.scala",
+      "line": 84,
+      "column": 46,
+      "detail": "[error] 84 |        val rows = review.source.schema.audit.sourceEvents.filter(row => row.blockId == review.source.run.oneBased-1 &&\n[error]    |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n[error]    |  value sourceEvents is not a member of scalafim.fmri.design.DesignAudit\n[error] one error found"
+    },
+    {
+      "code": "E008",
+      "file": "modules/adapters/src/main/scala/plsneuro/adapters/BidsFirstLevelService.scala",
+      "line": 34,
+      "column": 97,
+      "detail": "[error] 34 |    case ResponseSupport(unit, _, receipt) => s\"Participant ${unit.subject.value}: ${DesignError.ResponseSupportRejected(receipt).message}\"\n[error]    |                                                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n[error]    |value ResponseSupportRejected is not a member of object scalafim.fmri.design.DesignError"
+    },
+    {
+      "code": "E006",
+      "file": "modules/adapters/src/main/scala/plsneuro/adapters/BidsFirstLevelService.scala",
+      "line": 45,
+      "column": 12,
+      "detail": "[error] 45 |    inputs: BoundFirstLevelTables,\n[error]    |            ^^^^^^^^^^^^^^^^^^^^^\n[error]    |            Not found: type BoundFirstLevelTables\n[error]    |\n[error]    | longer explanation available when compiling with `-explain`"
+    },
+    {
+      "code": "E006",
+      "file": "modules/adapters/src/main/scala/plsneuro/adapters/BidsFirstLevelService.scala",
+      "line": 52,
+      "column": 28,
+      "detail": "[error] 52 |    responseSupport: Vector[EventSupportReceipt] = Vector.empty,\n[error]    |                            ^^^^^^^^^^^^^^^^^^^\n[error]    |                            Not found: type EventSupportReceipt\n[error]    |\n[error]    | longer explanation available when compiling with `-explain`"
+    },
+    {
+      "code": "E006",
+      "file": "modules/adapters/src/main/scala/plsneuro/adapters/BidsFirstLevelService.scala",
+      "line": 54,
+      "column": 21,
+      "detail": "[error] 54 |    sampling: Option[ResolvedSamplingReference] = None,\n[error]    |                     ^^^^^^^^^^^^^^^^^^^^^^^^^\n[error]    |                     Not found: type ResolvedSamplingReference\n[error]    |\n[error]    | longer explanation available when compiling with `-explain`"
+    },
+    {
+      "code": "E006",
+      "file": "modules/adapters/src/main/scala/plsneuro/adapters/BidsFirstLevelService.scala",
+      "line": 65,
+      "column": 12,
+      "detail": "[error] 65 |    inputs: BoundFirstLevelTables,\n[error]    |            ^^^^^^^^^^^^^^^^^^^^^\n[error]    |            Not found: type BoundFirstLevelTables\n[error]    |\n[error]    | longer explanation available when compiling with `-explain`"
+    },
+    {
+      "code": "E006",
+      "file": "modules/adapters/src/main/scala/plsneuro/adapters/BidsFirstLevelService.scala",
+      "line": 71,
+      "column": 28,
+      "detail": "[error] 71 |    responseSupport: Vector[EventSupportReceipt],\n[error]    |                            ^^^^^^^^^^^^^^^^^^^\n[error]    |                            Not found: type EventSupportReceipt\n[error]    |\n[error]    | longer explanation available when compiling with `-explain`"
+    },
+    {
+      "code": "E006",
+      "file": "modules/adapters/src/main/scala/plsneuro/adapters/BidsFirstLevelService.scala",
+      "line": 73,
+      "column": 14,
+      "detail": "[error] 73 |    sampling: ResolvedSamplingReference,\n[error]    |              ^^^^^^^^^^^^^^^^^^^^^^^^^\n[error]    |              Not found: type ResolvedSamplingReference\n[error]    |\n[error]    | longer explanation available when compiling with `-explain`"
+    },
+    {
+      "code": "E006",
+      "file": "modules/adapters/src/main/scala/plsneuro/adapters/BidsFirstLevelService.scala",
+      "line": 123,
+      "column": 28,
+      "detail": "[error] 123 |    responseSupport: Vector[EventSupportReceipt],\n[error]     |                            ^^^^^^^^^^^^^^^^^^^\n[error]     |                            Not found: type EventSupportReceipt\n[error]     |\n[error]     | longer explanation available when compiling with `-explain`"
+    },
+    {
+      "code": "E006",
+      "file": "modules/adapters/src/main/scala/plsneuro/adapters/BidsFirstLevelService.scala",
+      "line": 124,
+      "column": 14,
+      "detail": "[error] 124 |    sampling: ResolvedSamplingReference\n[error]     |              ^^^^^^^^^^^^^^^^^^^^^^^^^\n[error]     |              Not found: type ResolvedSamplingReference\n[error]     |\n[error]     | longer explanation available when compiling with `-explain`"
+    },
+    {
+      "code": "E006",
+      "file": "modules/adapters/src/main/scala/plsneuro/adapters/BidsFirstLevelService.scala",
+      "line": 199,
+      "column": 16,
+      "detail": "[error] 199 |    val opened: OpenedFirstLevelDataset,\n[error]     |                ^^^^^^^^^^^^^^^^^^^^^^^\n[error]     |                Not found: type OpenedFirstLevelDataset\n[error]     |\n[error]     | longer explanation available when compiling with `-explain`"
+    },
+    {
+      "code": "E008",
+      "file": "modules/adapters/src/main/scala/plsneuro/adapters/BidsFirstLevelService.scala",
+      "line": 244,
+      "column": 188,
+      "detail": "[error] 244 |      yield FirstLevelArtifact(opened.unit, specification, opened.tables, result, identity, features, verifiedInputs, catalogRevisions, selection, plan.model.eventModel.designSchema.audit.responseSupport, Some(reads), Some(opened.sampling), spatialSupport)\n[error]     |                                                                                                                                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n[error]     |value responseSupport is not a member of scalafim.fmri.design.DesignAudit"
+    },
+    {
+      "code": "E008",
+      "file": "modules/adapters/src/main/scala/plsneuro/adapters/BidsFirstLevelService.scala",
+      "line": 287,
+      "column": 97,
+      "detail": "[error] 287 |          spatialSupport, reads, retention.preparation, plan.model.eventModel.designSchema.audit.responseSupport, opened.sampling)\n[error]     |                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n[error]     |value responseSupport is not a member of scalafim.fmri.design.DesignAudit"
+    },
+    {
+      "code": "E008",
+      "file": "modules/adapters/src/main/scala/plsneuro/adapters/BidsFirstLevelService.scala",
+      "line": 301,
+      "column": 78,
+      "detail": "[error] 301 |        catalogRevisions, selection, plan.model.eventModel.designSchema.audit.responseSupport, reads, opened.sampling,\n[error]     |                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n[error]     |value responseSupport is not a member of scalafim.fmri.design.DesignAudit"
+    },
+    {
+      "code": "E006",
+      "file": "modules/adapters/src/main/scala/plsneuro/adapters/BidsFirstLevelService.scala",
+      "line": 406,
+      "column": 35,
+      "detail": "[error] 406 |  def reviewSpatialSupport(limits: StudySpatialLimits,\n[error]     |                                   ^^^^^^^^^^^^^^^^^^\n[error]     |                                   Not found: type StudySpatialLimits\n[error]     |\n[error]     | longer explanation available when compiling with `-explain`"
+    },
+    {
+      "code": "E006",
+      "file": "modules/adapters/src/main/scala/plsneuro/adapters/StudySpatialReview.scala",
+      "line": 46,
+      "column": 72,
+      "detail": "[error] 46 |  private[adapters] def compile(session: BidsFirstLevelSession, limits: StudySpatialLimits,\n[error]    |                                                                        ^^^^^^^^^^^^^^^^^^\n[error]    |                                      Not found: type StudySpatialLimits\n[error]    |\n[error]    | longer explanation available when compiling with `-explain`"
+    },
+    {
+      "code": "E006",
+      "file": "modules/adapters/src/main/scala/plsneuro/adapters/BidsFirstLevelService.scala",
+      "line": 416,
+      "column": 25,
+      "detail": "[error] 416 |      samplingReference: SamplingReference = SamplingReference.VolumeMidpoint,\n[error]     |                         ^^^^^^^^^^^^^^^^^\n[error]     |                         Not found: type SamplingReference\n[error]     |\n[error]     | longer explanation available when compiling with `-explain`"
+    },
+    {
+      "code": "E006",
+      "file": "modules/adapters/src/main/scala/plsneuro/adapters/BidsFirstLevelService.scala",
+      "line": 427,
+      "column": 25,
+      "detail": "[error] 427 |      samplingReference: SamplingReference = SamplingReference.VolumeMidpoint,\n[error]     |                         ^^^^^^^^^^^^^^^^^\n[error]     |                         Not found: type SamplingReference\n[error]     |\n[error]     | longer explanation available when compiling with `-explain`"
+    },
+    {
+      "code": "E006",
+      "file": "modules/adapters/src/main/scala/plsneuro/adapters/BidsFirstLevelService.scala",
+      "line": 429,
+      "column": 22,
+      "detail": "[error] 429 |      responseAccess: FirstLevelResponseAccess = FirstLevelResponseAccess.Immediate,\n[error]     |                      ^^^^^^^^^^^^^^^^^^^^^^^^\n[error]     |                      Not found: type FirstLevelResponseAccess\n[error]     |\n[error]     | longer explanation available when compiling with `-explain`"
+    },
+    {
+      "code": "E006",
+      "file": "modules/adapters/src/main/scala/plsneuro/adapters/BidsFirstLevelService.scala",
+      "line": 429,
+      "column": 49,
+      "detail": "[error] 429 |      responseAccess: FirstLevelResponseAccess = FirstLevelResponseAccess.Immediate,\n[error]     |                                                 ^^^^^^^^^^^^^^^^^^^^^^^^\n[error]     |                                   Not found: FirstLevelResponseAccess\n[error]     |\n[error]     | longer explanation available when compiling with `-explain`"
+    },
+    {
+      "code": "E006",
+      "file": "modules/adapters/src/main/scala/plsneuro/adapters/BidsFirstLevelService.scala",
+      "line": 416,
+      "column": 45,
+      "detail": "[error] 416 |      samplingReference: SamplingReference = SamplingReference.VolumeMidpoint,\n[error]     |                                             ^^^^^^^^^^^^^^^^^\n[error]     |                                          Not found: SamplingReference\n[error]     |\n[error]     | longer explanation available when compiling with `-explain`"
+    },
+    {
+      "code": "E006",
+      "file": "modules/adapters/src/main/scala/plsneuro/adapters/BidsFirstLevelService.scala",
+      "line": 448,
+      "column": 16,
+      "detail": "[error] 448 |      opened <- FirstLevelUnitDataset.open(unit, DatasetId(s\"${recipe.datasetId.value}.${unit.id.value}\"), evidenceFor = spaceEvidence,\n[error]     |                ^^^^^^^^^^^^^^^^^^^^^\n[error]     |                Not found: FirstLevelUnitDataset\n[error]     |\n[error]     | longer explanation available when compiling with `-explain`"
+    },
+    {
+      "code": "E006",
+      "file": "modules/adapters/src/main/scala/plsneuro/adapters/BidsFirstLevelService.scala",
+      "line": 427,
+      "column": 45,
+      "detail": "[error] 427 |      samplingReference: SamplingReference = SamplingReference.VolumeMidpoint,\n[error]     |                                             ^^^^^^^^^^^^^^^^^\n[error]     |                                          Not found: SamplingReference\n[error]     |\n[error]     | longer explanation available when compiling with `-explain`"
+    },
+    {
+      "code": "E008",
+      "file": "modules/adapters/src/main/scala/plsneuro/adapters/ContrastEstimates.scala",
+      "line": 45,
+      "column": 87,
+      "detail": "[error] 45 |    val model = request.model.specification.copy(responseSupport = owner.specification.responseSupport)\n[error]    |                                                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n[error]    |value responseSupport is not a member of scalafim.fmri.model.ModelBuildSpec"
+    },
+    {
+      "code": "E008",
+      "file": "modules/adapters/src/main/scala/plsneuro/adapters/GroupResponses.scala",
+      "line": 106,
+      "column": 42,
+      "detail": "[error] 106 |      value.source.artifact.specification.responseSupport.map(r => (r.policy, r.absoluteTolerance))\n[error]     |      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n[error]     |value responseSupport is not a member of scalafim.fmri.model.ModelBuildSpec\n[error] -- Error: /Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/plsneuro-linked-qualified-03/modules/adapters/src/main/scala/plsneuro/adapters/GroupResponses.scala:111:90 \n[error] 111 |        spec.copy(defaultHrf = referenceSpec.defaultHrf, nuisance = None, responseSupport = None) == referenceSpec.copy(nuisance = None, responseSupport = None) &&\n[error]     |                                                                          ^^^^^^^^^^^^^^^^^^^^^^\n[error]     |method copy in class ModelBuildSpec: (formula: String, blockColumn: Option[String], durationColumn: Option[String],\n[error]     |  baselineBasis: scalafim.fmri.design.baseline.BaselineBasis,\n[error]     |  baselineDegree: Int,\n[error]     |  baselineIntercept: scalafim.fmri.design.baseline.Intercept,\n[error]     |  strategy: scalafim.fmri.model.FitStrategy, defaultHrf: scalafim.fmri.hrf.Hrf,\n[error]     |  precision: scalafim.fmri.hrf.Seconds, dropEmpty: Boolean, summate: Boolean,\n[error]     |  strict: Boolean,\n[error]     |  contrastSets:\n[error]     |    Map[String, scalafim.fmri.design.contrast.ContrastSpec.ContrastSet],\n[error]     |  nuisance: Option[scalafim.fmri.model.NuisanceRegressors],\n[error]     |  factorLevels: scalafim.fmri.design.FactorLevelRegistry,\n[error]     |  emptyCellPolicy: scalafim.fmri.design.EmptyCellPolicy,\n[error]     |  factorSchemaBinding: Option[scalafim.fmri.design.FactorSchemaBinding],\n[error]     |  hrfByCell: Option[scalafim.fmri.design.HrfByCell],\n[error]     |  hrfByPhase: Option[scalafim.fmri.design.HrfByPhase],\n[error]     |  missingValuePolicy: scalafim.fmri.design.MissingValuePolicy,\n[error]     |  degenerateModulatorPolicy: scalafim.fmri.design.DegenerateModulatorPolicy,\n[error]     |  orthogonalization: scalafim.fmri.design.ModulatorOrthogonalizationPlan,\n[error]     |  derived: scalafim.fmri.design.formula.DerivedEventPlan):\n[error]     |  scalafim.fmri.model.ModelBuildSpec does not have a parameter responseSupport"
+    },
+    {
+      "code": "E008",
+      "file": "modules/adapters/src/main/scala/plsneuro/adapters/ParticipantEstimates.scala",
+      "line": 118,
+      "column": 49,
+      "detail": "[error] 118 |              _ <- Either.cond(receipt.execution.fixedEffectsPolicy.contains(FixedEffects.DefaultPolicy) &&\n[error]     |                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n[error]     |value fixedEffectsPolicy is not a member of scalafim.fmri.fit.EstimateExecutionDescription"
+    },
+    {
+      "code": "E008",
+      "file": "modules/adapters/src/main/scala/plsneuro/adapters/ParticipantInventory.scala",
+      "line": 179,
+      "column": 88,
+      "detail": "[error] 179 |    val inventory = RunInventory(label, run.repetitionTime.seconds, run.timepoints, run.timing.sliceTimingCorrected,\n[error]     |                                                                                    ^^^^^^^^^^\n[error]     |       value timing is not a member of scalafim.fmri.workflow.RunInput"
+    },
+    {
+      "code": "E008",
+      "file": "modules/adapters/src/main/scala/plsneuro/adapters/StudyPreflightReview.scala",
+      "line": 49,
+      "column": 72,
+      "detail": "[error] 49 |              CatalogIssueCode.MissingRepetitionTime | CatalogIssueCode.InvalidTimingMetadata => PreflightTarget.FirstLevelModel\n[error]    |                                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n[error]    |value InvalidTimingMetadata is not a member of object scalafim.fmri.workflow.CatalogIssueCode"
+    },
+    {
+      "code": "E008",
+      "file": "modules/adapters/src/main/scala/plsneuro/adapters/StudySpatialReview.scala",
+      "line": 5,
+      "column": 61,
+      "detail": "[error] 5 |import scalafim.fmri.workflow.{FirstLevelUnit, StudyCatalog, StudySpatialLimits, StudySpatialSupport, StudySpatialSupportJvm}\n[error]   |                                                             ^^^^^^^^^^^^^^^^^^\n[error]   |        value StudySpatialLimits is not a member of scalafim.fmri.workflow"
+    },
+    {
+      "code": "E008",
+      "file": "modules/adapters/src/main/scala/plsneuro/adapters/StudySpatialReview.scala",
+      "line": 5,
+      "column": 81,
+      "detail": "[error] 5 |import scalafim.fmri.workflow.{FirstLevelUnit, StudyCatalog, StudySpatialLimits, StudySpatialSupport, StudySpatialSupportJvm}\n[error]   |                                                                                 ^^^^^^^^^^^^^^^^^^^\n[error]   |       value StudySpatialSupport is not a member of scalafim.fmri.workflow"
+    },
+    {
+      "code": "E008",
+      "file": "modules/adapters/src/main/scala/plsneuro/adapters/StudySpatialReview.scala",
+      "line": 5,
+      "column": 102,
+      "detail": "[error] 5 |import scalafim.fmri.workflow.{FirstLevelUnit, StudyCatalog, StudySpatialLimits, StudySpatialSupport, StudySpatialSupportJvm}\n[error]   |                                                                                                      ^^^^^^^^^^^^^^^^^^^^^^\n[error]   |    value StudySpatialSupportJvm is not a member of scalafim.fmri.workflow"
+    },
+    {
+      "code": "E006",
+      "file": "modules/adapters/src/main/scala/plsneuro/adapters/StudySpatialReview.scala",
+      "line": 13,
+      "column": 17,
+      "detail": "[error] 13 |    val support: StudySpatialSupport,\n[error]    |                 ^^^^^^^^^^^^^^^^^^^\n[error]    |                 Not found: type StudySpatialSupport\n[error]    |\n[error]    | longer explanation available when compiling with `-explain`"
+    },
+    {
+      "code": "E006",
+      "file": "modules/adapters/src/main/scala/plsneuro/adapters/StudySpatialReview.scala",
+      "line": 37,
+      "column": 14,
+      "detail": "[error] 37 |      limits: StudySpatialLimits, staging: Option[NiftiStagingCache] = None): Either[FirstLevelError, StudySpatialReview] =\n[error]    |              ^^^^^^^^^^^^^^^^^^\n[error]    |              Not found: type StudySpatialLimits\n[error]    |\n[error]    | longer explanation available when compiling with `-explain`"
+    },
+    {
+      "code": "E006",
+      "file": "modules/adapters/src/main/scala/plsneuro/adapters/StudySpatialReview.scala",
+      "line": 51,
+      "column": 14,
+      "detail": "[error] 51 |      limits: StudySpatialLimits, staging: Option[NiftiStagingCache]): Either[FirstLevelError, StudySpatialReview] =\n[error]    |              ^^^^^^^^^^^^^^^^^^\n[error]    |              Not found: type StudySpatialLimits\n[error]    |\n[error]    | longer explanation available when compiling with `-explain`"
+    },
+    {
+      "code": "E006",
+      "file": "modules/adapters/src/main/scala/plsneuro/adapters/StudySpatialReview.scala",
+      "line": 62,
+      "column": 17,
+      "detail": "[error] 62 |      support <- StudySpatialSupportJvm.compile(catalog, limits, session.spaceEvidence, staging).left.map(FirstLevelError.Binding.apply)\n[error]    |                 ^^^^^^^^^^^^^^^^^^^^^^\n[error]    |                 Not found: StudySpatialSupportJvm\n[error]    |\n[error]    | longer explanation available when compiling with `-explain`"
+    },
+    {
+      "code": "E008",
+      "file": "modules/adapters/src/main/scala/plsneuro/adapters/SurfaceResourceFile.scala",
+      "line": 5,
+      "column": 48,
+      "detail": "[error] 5 |import scalafim.surface.io.{GiftiSurfaceReader, FreeSurferMorphometryReader}\n[error]   |                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n[error]   |  value FreeSurferMorphometryReader is not a member of scalafim.surface.io"
+    },
+    {
+      "code": "E006",
+      "file": "modules/adapters/src/main/scala/plsneuro/adapters/SurfaceResourceFile.scala",
+      "line": 79,
+      "column": 18,
+      "detail": "[error] 79 |                  FreeSurferMorphometryReader.readEither(parent.resolve(definition(\"file\").str), sampling.plan.surfaces.white)\n[error]    |                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n[error]    |                  Not found: FreeSurferMorphometryReader\n[error]    |\n[error]    | longer explanation available when compiling with `-explain`"
+    },
+    {
+      "code": "E008",
+      "file": "modules/adapters/src/main/scala/plsneuro/adapters/TaskSignAdmission.scala",
+      "line": 105,
+      "column": 31,
+      "detail": "[error] 105 |      _ <- valid(id, execution.fixedEffectsPolicy.contains(FixedEffects.DefaultPolicy),\n[error]     |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n[error]     |value fixedEffectsPolicy is not a member of scalafim.fmri.fit.EstimateExecutionDescription\n[error] 41 errors found\n[error] (adapters / Compile / compileIncremental) Compilation failed\n[error] (glmReviewJavafx / Compile / compileIncremental) Compilation failed\n[error] Total time: 97 s (0:01:37.0), completed Oct 21, 2026, 1:33:13 a.m."
+    }
+  ],
+  "deltaFromCompile03": "67 ->41 diagnostics: 20 atlas namespace/query, four region API and two surface coordinate/face view diagnostics no longer present.",
+  "limits": [
+    "Whole application still fails to compile.",
+    "Remaining functional support/provenance/fixed-effects and morphometry-reader errors are retained; later downstream errors may remain hidden.",
+    "Passing complete imaging component probes are narrower acceptance.",
+    "No full native, scientific, cold-open or performance acceptance."
+  ]
+}

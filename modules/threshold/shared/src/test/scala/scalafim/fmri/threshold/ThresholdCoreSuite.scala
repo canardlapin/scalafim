@@ -3,7 +3,7 @@ package scalafim.fmri.threshold
 import gale.linalg.{DMat, Matrix}
 import image4s.geometry.GeometryError
 import image4s.geometry.Grid
-import scalafim.image.{Mask, SampleSpaces, SomeScalarVolume}
+import neuroim4s.image.{Mask, SampleSpaces, SomeScalarVolume}
 
 class ThresholdCoreSuite extends munit.FunSuite:
 

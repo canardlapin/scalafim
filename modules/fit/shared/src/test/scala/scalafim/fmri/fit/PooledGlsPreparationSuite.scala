@@ -9,7 +9,7 @@ import scalafim.fmri.hrf.*
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{ArCoefficientSpec, ArOptions, ArStructure, AutocorrelationConfig, FitConfig, FitEngine, FitPlan, FitStrategy, FmriModel, FmriModelBuilder, MissingDataPolicy, ModelBuildSpec}
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 import gale.linalg.Matrix
 
 import scala.concurrent.ExecutionContext.Implicits.global

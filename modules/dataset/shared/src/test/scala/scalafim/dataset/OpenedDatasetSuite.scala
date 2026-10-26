@@ -5,8 +5,9 @@ import cats.effect.unsafe.implicits.global
 import cats.syntax.all.*
 import gale.linalg.DMat
 import scalafim.fmri.hrf.design.SamplingFrame
-import scalafim.image.{PrimitiveBuffers, SampleSpaces, SomeSampleSpace}
+import neuroim4s.image.{SampleSpaces}
 import scalafim.response.*
+import locus4s.provenance.*
 import scalafim.response.laws.ResponseLawChecks
 
 import scala.concurrent.ExecutionContext.Implicits.{global as executionContext}
@@ -194,7 +195,7 @@ class OpenedDatasetSuite extends munit.FunSuite:
         .copyFromRowMajor[IO](
           SourceId.unsafe("mismatch-source"),
           wrongSchema,
-          PrimitiveBuffers.tabulate[Double](wrongTime.count * wrongSamples.count)(_.toDouble)
+          Array.tabulate[Double](wrongTime.count * wrongSamples.count)(_.toDouble)
         )
         .fold(error => fail(error.message), identity)
 
@@ -361,7 +362,7 @@ class OpenedDatasetSuite extends munit.FunSuite:
         .copyFromRowMajor[IO](
           SourceId.unsafe("surface-source"),
           actualSchema,
-          PrimitiveBuffers.tabulate[Double](actualSchema.time.count * actualSchema.samples.count)(_.toDouble)
+          Array.tabulate[Double](actualSchema.time.count * actualSchema.samples.count)(_.toDouble)
         )
         .fold(error => fail(error.message), identity)
 

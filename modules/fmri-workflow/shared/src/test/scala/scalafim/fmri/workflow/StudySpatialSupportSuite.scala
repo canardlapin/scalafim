@@ -2,9 +2,10 @@ package scalafim.fmri.workflow
 
 import scalafim.dataset.*
 import gale.linalg.DMat
-import scalafim.image.{SampleSpaces, SomeSampleSpace, Mask}
-import scalafim.image.SampleSpaces.*
-import scalafim.image.world.WorldSpace
+import image4s.SomeSampleSpace
+import neuroim4s.image.{SampleSpaces, Mask}
+import neuroim4s.image.SampleSpaces.*
+import neuroim4s.spaces.WorldSpace
 
 class StudySpatialSupportSuite extends munit.FunSuite:
   // Synthetic 2 mm crop; values are in canonical last-axis-fastest order.
@@ -37,7 +38,7 @@ class StudySpatialSupportSuite extends munit.FunSuite:
       sparse: Boolean = false) extends ResponseBlockSource:
     val shape = DatasetShape.unsafe(geometry, frames)
     val voxelDomain = if sparse then
-      VoxelDomain.fromMask(scalafim.image.Mask.fromIndices(geometry, Array(0)), shape).toOption.get
+      VoxelDomain.fromMask(neuroim4s.image.Mask.fromIndices(geometry, Array(0)), shape).toOption.get
     else VoxelDomain.fullUnsafe(shape)
     val metadata = DatasetMetadata.Empty
     val requests = scala.collection.mutable.ArrayBuffer.empty[Vector[Int]]
@@ -147,7 +148,7 @@ class StudySpatialSupportSuite extends munit.FunSuite:
   }
 
   test("identical geometry in a foreign frame is refused before opening any masks") {
-    def placed(world: scalafim.image.world.WorldSpace): SomeSampleSpace =
+    def placed(world: neuroim4s.spaces.WorldSpace): SomeSampleSpace =
       SampleSpaces.inWorld(SampleSpaces(Vector(3, 2, 1), spacing = Some(Vector(2.0, 2.0, 2.0)),
         origin = Some(Vector(-16.5, -12.5, 1.5))), world).toOption.get
     val first = placed(WorldSpace.declare("same label").toOption.get)

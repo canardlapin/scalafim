@@ -1,16 +1,16 @@
 package scalafim.connectivity
 
-import scalafim.locus.{DomainFactory, FiniteSpace, Point, Region, SpaceKey}
+import locus4s.{DomainRecord, DomainRegistry, FiniteSpace, Index, Region}
 
 trait NodeLocusDomain:
   type N
   val axis: NodeAxis
   val space: FiniteSpace[N]
 
-  final def pointFor(id: NodeId): Option[Point[N]] =
+  final def pointFor(id: NodeId): Option[Index[N]] =
     axis.indexOf(id).flatMap(space.indexOption)
 
-  final def nodeAt(point: Point[N]): NodeSpec =
+  final def nodeAt(point: Index[N]): NodeSpec =
     axis.nodes(point.value)
 
 object NodeLocusDomain:
@@ -18,11 +18,9 @@ object NodeLocusDomain:
       requestedAxis: NodeAxis
   ): NodeLocusDomain =
     val key =
-      SpaceKey.unsafe(
-        s"scalafim:connectivity:nodes:${axisIdentity(requestedAxis)}"
-      )
-    val resolution =
-      DomainFactory.unsafeRestore(key, requestedAxis.size)
+      s"scalafim:connectivity:nodes:${axisIdentity(requestedAxis)}"
+    val record = DomainRecord.parse(key, key, requestedAxis.size).fold(error => throw new IllegalArgumentException(error.message), identity)
+    val resolution = DomainRegistry.empty.restore(record).fold(error => throw new IllegalArgumentException(error.message), identity)
     new NodeLocusDomain:
       type N = resolution.S
       val axis: NodeAxis = requestedAxis
@@ -47,10 +45,10 @@ trait EdgeLocusDomain:
   val edgeSpace: EdgeSpace
   val space: FiniteSpace[E]
 
-  final def pointFor(index: EdgeSpaceIx): Point[E] =
+  final def pointFor(index: EdgeSpaceIx): Index[E] =
     space.indexOption(index.value).get
 
-  final def edgeAt(point: Point[E]): EdgeRef =
+  final def edgeAt(point: Index[E]): EdgeRef =
     edgeSpace.edge(point.value)
 
 object EdgeLocusDomain:
@@ -62,14 +60,12 @@ object EdgeLocusDomain:
         .map(_.locus.space.id.value)
         .getOrElse("square")
     val key =
-      SpaceKey.unsafe(
-        s"scalafim:connectivity:edges:" +
+      s"scalafim:connectivity:edges:" +
           s"${requestedSpace.topology.label}:" +
           s"${requestedSpace.order.label}:" +
           s"${requestedSpace.sourceAxis.locus.space.id.value}:$target"
-      )
-    val resolution =
-      DomainFactory.unsafeRestore(key, requestedSpace.size)
+    val record = DomainRecord.parse(key, key, requestedSpace.size).fold(error => throw new IllegalArgumentException(error.message), identity)
+    val resolution = DomainRegistry.empty.restore(record).fold(error => throw new IllegalArgumentException(error.message), identity)
     new EdgeLocusDomain:
       type E = resolution.S
       val edgeSpace: EdgeSpace = requestedSpace

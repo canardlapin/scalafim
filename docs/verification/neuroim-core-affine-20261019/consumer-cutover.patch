@@ -1,0 +1,271 @@
+diff --git a/build.sbt b/build.sbt
+index da9e4f97b..facbad6b9 100644
+--- a/build.sbt
++++ b/build.sbt
+@@ -170,11 +170,13 @@ lazy val reframe4sResampleJS  = ProjectRef(reframe4sBuild, "reframe4s-resampleJS
+ // neuroim4s-spaces owns the anatomical world identities (template, subject
+ // scanner-RAS and tkRAS, declared and unresolved worlds) and their frames. It
+ // pins the same spatial4s revision as image4s and reframe4s.
+-lazy val neuroim4sRevision = "3b7a8441e0fcdfd20428835f8eaec7688b73a9ef"
++lazy val neuroim4sRevision = "9780bcab6c061284a3c8864d9599b0534c71a97f"
+ lazy val neuroim4sBuild = {
+-  sys.props
+-    .get("scalafim.spatial4s.build")
+-    .foreach(System.setProperty("neuroim4s.spatial4s.build", _))
++  Seq("spatial4s", "image4s").foreach { provider =>
++    sys.props
++      .get(s"scalafim.$provider.build")
++      .foreach(System.setProperty(s"neuroim4s.$provider.build", _))
++  }
+   sys.props
+     .get("scalafim.neuroim4s.build")
+     .map(path => file(path).getCanonicalFile.toURI)
+@@ -182,6 +184,8 @@ lazy val neuroim4sBuild = {
+ }
+ lazy val neuroim4sSpacesJVM = ProjectRef(neuroim4sBuild, "spacesJVM")
+ lazy val neuroim4sSpacesJS  = ProjectRef(neuroim4sBuild, "spacesJS")
++lazy val neuroim4sCoreJVM = ProjectRef(neuroim4sBuild, "coreJVM")
++lazy val neuroim4sCoreJS  = ProjectRef(neuroim4sBuild, "coreJS")
+ 
+ // neuroatlas4s-core owns atlas identities, releases, labels, hierarchies, the
+ // standard catalog and the realized-assignment contract. It pins the same
+@@ -565,6 +569,7 @@ lazy val image =
+         image4sFilterJVM,
+         image4sNiftiJVM,
+         neuroim4sSpacesJVM,
++        neuroim4sCoreJVM,
+         reframe4sLieJVM,
+         reframe4sFieldJVM,
+         reframe4sResampleJVM
+@@ -578,6 +583,7 @@ lazy val image =
+         image4sLocusJS,
+         image4sFilterJS,
+         neuroim4sSpacesJS,
++        neuroim4sCoreJS,
+         reframe4sLieJS,
+         reframe4sFieldJS,
+         reframe4sResampleJS
+diff --git a/modules/dataset-zarr/jvm/src/main/scala/scalafim/dataset/zarr/BidsNiftiExporter.scala b/modules/dataset-zarr/jvm/src/main/scala/scalafim/dataset/zarr/BidsNiftiExporter.scala
+index 6b22d3035..d7174242f 100644
+--- a/modules/dataset-zarr/jvm/src/main/scala/scalafim/dataset/zarr/BidsNiftiExporter.scala
++++ b/modules/dataset-zarr/jvm/src/main/scala/scalafim/dataset/zarr/BidsNiftiExporter.scala
+@@ -13,7 +13,7 @@ import gale.linalg.DMat
+ import image4s.geometry.{Affine, D3}
+ import scalafim.archive.zarr.*
+ import bids4s.EntityKey
+-import scalafim.image.NeuroAffineSyntax.*
++import neuroim4s.image.NeuroAffineSyntax.*
+ import zarr4s.*
+ 
+ final case class BidsExportResult(
+diff --git a/modules/dataset-zarr/jvm/src/main/scala/scalafim/dataset/zarr/ZarrResponseBlockSource.scala b/modules/dataset-zarr/jvm/src/main/scala/scalafim/dataset/zarr/ZarrResponseBlockSource.scala
+index f5bf031c3..522d10a44 100644
+--- a/modules/dataset-zarr/jvm/src/main/scala/scalafim/dataset/zarr/ZarrResponseBlockSource.scala
++++ b/modules/dataset-zarr/jvm/src/main/scala/scalafim/dataset/zarr/ZarrResponseBlockSource.scala
+@@ -6,7 +6,7 @@ import image4s.geometry.{Affine, D3}
+ import scalafim.archive.zarr.OpenedCanonicalBold
+ import scalafim.dataset.*
+ import scalafim.image.{PrimitiveBuffers, SampleSpaces, SomeSampleSpace}
+-import scalafim.image.NeuroAffineSyntax.*
++import neuroim4s.image.NeuroAffineSyntax.*
+ import scalafim.image.SampleSpaces.*
+ import zarr4s.*
+ 
+diff --git a/modules/image-view/shared/src/main/scala/scalafim/image/view/ViewerScene.scala b/modules/image-view/shared/src/main/scala/scalafim/image/view/ViewerScene.scala
+index b9acdbd19..08f8f5582 100644
+--- a/modules/image-view/shared/src/main/scala/scalafim/image/view/ViewerScene.scala
++++ b/modules/image-view/shared/src/main/scala/scalafim/image/view/ViewerScene.scala
+@@ -5,7 +5,7 @@ import scalafim.image.SampleSpaces.*
+ import image4s.geometry.{ContinuousIndex, D3, Frame, GeometryError, Grid, Point as GeoPoint}
+ import intaglio.*
+ import scalafim.image.*
+-import scalafim.image.NeuroAffineSyntax.*
++import neuroim4s.image.NeuroAffineSyntax.*
+ import scala.collection.mutable
+ 
+ final case class ViewerState(
+diff --git a/modules/image/jvm/src/main/scala/scalafim/image/io/Nifti.scala b/modules/image/jvm/src/main/scala/scalafim/image/io/Nifti.scala
+index 1283cf350..61e81f0b1 100644
+--- a/modules/image/jvm/src/main/scala/scalafim/image/io/Nifti.scala
++++ b/modules/image/jvm/src/main/scala/scalafim/image/io/Nifti.scala
+@@ -31,7 +31,7 @@ import image4s.nifti.NiftiWriteOptions
+ import ravel.Rank
+ import ravel.AnyRank
+ import scalafim.image.*
+-import scalafim.image.NeuroAffineSyntax.*
++import neuroim4s.image.NeuroAffineSyntax.*
+ import neuroim4s.spaces.{SpaceError, SpaceEvidence, SpaceResolver, WorldSpace, XformCode}
+ 
+ import java.nio.ByteOrder
+diff --git a/modules/image/shared/src/main/scala/scalafim/image/NeuroAffineSyntax.scala b/modules/image/shared/src/main/scala/scalafim/image/NeuroAffineSyntax.scala
+deleted file mode 100644
+index 9bb112ad0..000000000
+--- a/modules/image/shared/src/main/scala/scalafim/image/NeuroAffineSyntax.scala
++++ /dev/null
+@@ -1,88 +0,0 @@
+-package scalafim.image
+-
+-import image4s.geometry.Affine
+-import image4s.geometry.D3
+-import image4s.geometry.GeometryError
+-
+-/** Neuroimaging calculations over image4s-owned spatial geometry.
+-  *
+-  * These extensions derive values from the provider affine. They do not retain
+-  * another matrix representation or reimplement inversion or composition.
+-  */
+-object NeuroAffineSyntax:
+-  extension (affine: Affine[D3])
+-    def neuroVoxelSizes: Vector[Double] =
+-      Vector.tabulate(3): column =>
+-        var row = 0
+-        var sum = 0.0
+-        while row < 3 do
+-          val value = affine.matrix(row, column)
+-          sum += value * value
+-          row += 1
+-        math.sqrt(sum)
+-
+-    def neuroObliquity: Vector[Double] =
+-      val sizes = neuroVoxelSizes
+-      require(
+-        sizes.forall(_ != 0.0),
+-        "cannot compute obliquity for zero-length voxel axes"
+-      )
+-      Vector.tabulate(3): row =>
+-        var column = 0
+-        var best = 0.0
+-        while column < 3 do
+-          val cosine = math.abs(affine.matrix(row, column) / sizes(column))
+-          if cosine > best then best = cosine
+-          column += 1
+-        math.acos(math.max(-1.0, math.min(1.0, best)))
+-
+-    def rescaledVoxelGeometry(
+-        shape: Vector[Int],
+-        voxelSizes: Vector[Double],
+-        newShape: Option[Vector[Int]] = None
+-    ): Either[GeometryError, Affine[D3]] =
+-      val outShape = newShape.getOrElse(shape)
+-      require(
+-        shape.length == 3 && voxelSizes.length == 3 && outShape.length == 3,
+-        "shape, voxelSizes, and newShape must contain three spatial values"
+-      )
+-      require(
+-        shape.forall(_ > 0) && outShape.forall(_ > 0),
+-        "shape and newShape must be positive"
+-      )
+-      require(
+-        voxelSizes.forall(value => value.isFinite && value > 0.0),
+-        "voxelSizes must be positive and finite"
+-      )
+-
+-      val currentSizes = neuroVoxelSizes
+-      require(
+-        currentSizes.forall(_ != 0.0),
+-        "cannot rescale affine with a zero voxel size"
+-      )
+-      val centerIn = shape.map(value => math.floor((value - 1).toDouble / 2.0))
+-      val centerOut =
+-        outShape.map(value => math.floor((value - 1).toDouble / 2.0))
+-      val linear = Vector.tabulate(9): flat =>
+-        val row = flat / 3
+-        val column = flat % 3
+-        affine.matrix(row, column) *
+-          (voxelSizes(column) / currentSizes(column))
+-      val shiftedCenter = Vector.tabulate(3): row =>
+-        var column = 0
+-        var sum = 0.0
+-        while column < 3 do
+-          sum += linear(row * 3 + column) * centerOut(column)
+-          column += 1
+-        sum
+-      affine(centerIn).flatMap: centroid =>
+-        val translation =
+-          Vector.tabulate(3)(axis => centroid(axis) - shiftedCenter(axis))
+-        Affine.fromRowMajor[D3](
+-          Vector(
+-            linear(0), linear(1), linear(2), translation(0),
+-            linear(3), linear(4), linear(5), translation(1),
+-            linear(6), linear(7), linear(8), translation(2),
+-            0.0, 0.0, 0.0, 1.0
+-          )
+-        )
+diff --git a/modules/image/shared/src/main/scala/scalafim/image/SampleSpaces.scala b/modules/image/shared/src/main/scala/scalafim/image/SampleSpaces.scala
+index 50f29f62a..a3de1dfcd 100644
+--- a/modules/image/shared/src/main/scala/scalafim/image/SampleSpaces.scala
++++ b/modules/image/shared/src/main/scala/scalafim/image/SampleSpaces.scala
+@@ -19,7 +19,7 @@ import image4s.geometry.GridId
+ import image4s.geometry.LengthUnit
+ import image4s.locus.GridDomain
+ import gale.linalg.DMat
+-import scalafim.image.NeuroAffineSyntax.*
++import neuroim4s.image.NeuroAffineSyntax.*
+ import neuroim4s.spaces.{FrameCatalog, WorldSpace}
+ 
+ enum SampleSpaceError:
+diff --git a/modules/image/shared/src/main/scala/scalafim/image/SliceGeometry.scala b/modules/image/shared/src/main/scala/scalafim/image/SliceGeometry.scala
+index 9c9560aae..07e751c91 100644
+--- a/modules/image/shared/src/main/scala/scalafim/image/SliceGeometry.scala
++++ b/modules/image/shared/src/main/scala/scalafim/image/SliceGeometry.scala
+@@ -2,7 +2,7 @@ package scalafim.image
+ 
+ import SampleSpaces.*
+ 
+-import scalafim.image.NeuroAffineSyntax.*
++import neuroim4s.image.NeuroAffineSyntax.*
+ 
+ import image4s.geometry.D3
+ import image4s.geometry.Frame
+diff --git a/modules/image/shared/src/main/scala/scalafim/image/Transforms.scala b/modules/image/shared/src/main/scala/scalafim/image/Transforms.scala
+index c8e34bea1..cb74b3eb4 100644
+--- a/modules/image/shared/src/main/scala/scalafim/image/Transforms.scala
++++ b/modules/image/shared/src/main/scala/scalafim/image/Transforms.scala
+@@ -16,7 +16,7 @@ import image4s.ops.Kernel as ImageKernel
+ import image4s.ops.Offset
+ import image4s.ops.OpError
+ import image4s.ops.Support
+-import scalafim.image.NeuroAffineSyntax.*
++import neuroim4s.image.NeuroAffineSyntax.*
+ import ravel.DType
+ import ravel.DType.given
+ import ravel.NDArray as RavelArray
+diff --git a/modules/image/shared/src/test/scala/scalafim/image/CoreSuite.scala b/modules/image/shared/src/test/scala/scalafim/image/CoreSuite.scala
+index 1bbdbc72a..fd1f3aea1 100644
+--- a/modules/image/shared/src/test/scala/scalafim/image/CoreSuite.scala
++++ b/modules/image/shared/src/test/scala/scalafim/image/CoreSuite.scala
+@@ -7,7 +7,7 @@ import image4s.NonSpatialAxes
+ import image4s.geometry.Affine
+ import image4s.geometry.D3
+ import ravel.{NDArray as RavelArray, Rank, Shape}
+-import scalafim.image.NeuroAffineSyntax.*
++import neuroim4s.image.NeuroAffineSyntax.*
+ import spire.std.double.given
+ import spire.std.int.given
+ 
+diff --git a/modules/image/shared/src/test/scala/scalafim/image/ProviderAffineContractSuite.scala b/modules/image/shared/src/test/scala/scalafim/image/ProviderAffineContractSuite.scala
+index f4f8e780c..630e98373 100644
+--- a/modules/image/shared/src/test/scala/scalafim/image/ProviderAffineContractSuite.scala
++++ b/modules/image/shared/src/test/scala/scalafim/image/ProviderAffineContractSuite.scala
+@@ -5,7 +5,7 @@ import image4s.geometry.Affine
+ import image4s.geometry.D3
+ import image4s.geometry.GeometryError
+ import munit.FunSuite
+-import scalafim.image.NeuroAffineSyntax.*
++import neuroim4s.image.NeuroAffineSyntax.*
+ 
+ class ProviderAffineContractSuite extends FunSuite:
+   private def right[A](value: Either[?, A]): A =
+diff --git a/modules/image/shared/src/test/scala/scalafim/image/SpaceUtilsSuite.scala b/modules/image/shared/src/test/scala/scalafim/image/SpaceUtilsSuite.scala
+index 1992c1db2..e285c4275 100644
+--- a/modules/image/shared/src/test/scala/scalafim/image/SpaceUtilsSuite.scala
++++ b/modules/image/shared/src/test/scala/scalafim/image/SpaceUtilsSuite.scala
+@@ -6,7 +6,7 @@ import gale.linalg.DMat
+ import image4s.geometry.Affine
+ import image4s.geometry.D3
+ import image4s.geometry.Point
+-import scalafim.image.NeuroAffineSyntax.*
++import neuroim4s.image.NeuroAffineSyntax.*
+ 
+ class SpaceUtilsSuite extends munit.FunSuite:
+ 

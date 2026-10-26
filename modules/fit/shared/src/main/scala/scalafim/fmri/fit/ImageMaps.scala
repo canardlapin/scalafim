@@ -9,7 +9,7 @@ import locus4s.DomainRegistry
 import locus4s.Selection
 import scalafim.dataset.DatasetShape
 import ravel.NDArray as RavelArray
-import scalafim.image.{SampleSpaces, SelectedSeries, SomeScalarSeries, SomeSelectedSeries}
+import neuroim4s.image.{SampleSpaces, SelectedSeries, SomeScalarSeries, SomeSelectedSeries}
 
 final case class FitImageMaps(
     names: Vector[String],
@@ -101,21 +101,20 @@ object FitImageMaps:
         rowsByMap(map)(sorted(outPosition)._2)
       }
     val spatial =
-      SampleSpaces
-        .requireSpatialD3(shape.space)
-        .fold(error => throw new IllegalArgumentException(error.message), identity)
+      SampleSpaces.requireVolumeD3(shape.space.typed.spatialOnly)
+        .fold(error => throw new IllegalArgumentException(error.message), value => value)
     val resolution =
       GridDomain
         .register(spatial.grid, s"$label selected voxels", DomainRegistry.empty)
-        .fold(error => throw new IllegalArgumentException(error.message), identity)
+        .fold(error => throw new IllegalArgumentException(error.message), value => value)
     val selection =
       Selection
         .fromOrdinals(resolution.value.space, sortedIndices)
-        .fold(error => throw new IllegalArgumentException(error.message), identity)
+        .fold(error => throw new IllegalArgumentException(error.message), value => value)
     val mapAxis =
       ImageAxis
         .create("map", nMaps, AxisKind.Time)
-        .fold(error => throw new IllegalArgumentException(error.message), identity)
+        .fold(error => throw new IllegalArgumentException(error.message), value => value)
     val selected =
       SelectedSeries
         .create(
@@ -125,7 +124,7 @@ object FitImageMaps:
           data,
           ImageMetadata(label)
         )
-        .fold(error => throw new IllegalArgumentException(error.message), identity)
+        .fold(error => throw new IllegalArgumentException(error.message), value => value)
     FitImageMaps(
       names = names,
       values = SomeSelectedSeries(selected)

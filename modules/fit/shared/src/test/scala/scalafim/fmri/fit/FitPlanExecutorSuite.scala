@@ -1,6 +1,6 @@
 package scalafim.fmri.fit
 
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
@@ -60,9 +60,9 @@ import scalafim.fmri.model.{
 import scalafim.response.{
   InMemoryResponseSource,
   ResponseSchemaId,
-  SourceId,
   UnitId
 }
+import locus4s.provenance.SourceId
 import gale.linalg.{DMat, DVec}
 
 class FitPlanExecutorSuite extends munit.FunSuite:

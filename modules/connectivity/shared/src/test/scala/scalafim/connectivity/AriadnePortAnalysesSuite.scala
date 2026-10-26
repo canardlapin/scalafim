@@ -138,7 +138,7 @@ class AriadnePortAnalysesSuite extends munit.FunSuite:
     val subjects = xs.zipWithIndex.map { case (x, index) =>
       val edgeVector = EdgeVector.from(space, Vector(0.15 + 0.12 * x, 0.05, -0.02)).toOption.get
       val matrix = ConnectivityMatrix.fromEdgeVector(edgeVector, measure = ConnectivityMeasure.correlation, diagonalPolicy = DiagonalPolicy.Unit).toOption.get
-      SubjectConnectivity(SubjectId.unsafe(s"sub-${index + 1}"), StaticConnectivity(matrix))
+      SubjectConnectivity(SubjectId(s"sub-${index + 1}").toOption.get, StaticConnectivity(matrix))
     }
     ConnectivitySet.from(subjects).toOption.get
 

@@ -1,0 +1,319 @@
+{
+  "schema": "scalafim-local-routing-qualification-v1",
+  "observed_at_utc": "2026-10-20T14:14:49.016527+00:00",
+  "status": "local_candidate_qualified_not_published",
+  "mote_issue": "eco-neuroim-routing",
+  "repositories": {
+    "scalafim": {
+      "path": "/Users/bbuchsbaum/code/scala/scalafim-eco-routing-20261020",
+      "shipping_source_commit": "405c024988d6542181e567fe1d80e05bb6a677ba",
+      "qualified_code_commit": "36f5ad0e20d9ba5c22f90a1ffa73ba22fe33a6eb",
+      "accepted_branch_unchanged": "eco/u3-topology-20261019",
+      "accepted_head": "e98cc987041c3ea013c3637ba3f48cb7e24877a3"
+    },
+    "graph4s": {
+      "path": "/Users/bbuchsbaum/code/scala/graph4s-eco-routing-20261020",
+      "commit": "856e6fb770cf5f4c5512b0607d8c3733e75e7460",
+      "tracking_and_live_main_observed": "6a72b58b564933234768f025e67228736ef2f7c5",
+      "published": false
+    },
+    "neuroim4s": {
+      "path": "/Users/bbuchsbaum/code/scala/neuroim4s-eco-routing-20261020",
+      "commit": "7ed49f12b1a90e18ea5ed67d48343e98a7b9547b",
+      "tracking_and_live_main_observed": "018a9f2e80db4f2d2945c7eba867835ab9144135",
+      "published": false
+    }
+  },
+  "gale_revision": "779ed3d8169cdd9f4eb9ab10b1ca9defadc27715",
+  "tests_passed": 759,
+  "affected_tests_only": true,
+  "compile_all_platforms_and_examples": true,
+  "raw_log_root": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/neuroim-routing-20261020",
+  "evidence": [
+    {
+      "log": "graph-routes-02.log",
+      "sha256": "c02906fabe5e0a269ff412a61d592a9937bc266d6e194bc4d32681c2907fe34e",
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-20T13:59:11.124827+00:00",
+        "finished_utc": "2026-10-20T13:59:32.394005+00:00",
+        "duration_seconds": 21.268742,
+        "command": [
+          "sbt",
+          "-batch",
+          "-J-Xmx4g",
+          "-Dsbt.supershell=false",
+          "-Dsbt.log.noformat=true",
+          "-Dsbt.global.base=/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+          "algorithmsJVM/test",
+          "algorithmsJS/test"
+        ],
+        "cwd": "/Users/bbuchsbaum/code/scala/graph4s-eco-routing-20261020",
+        "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/neuroim-routing-20261020/graph-routes-02.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 600.0,
+        "log_bytes": 3797
+      },
+      "test_summaries": [
+        {
+          "total": 18,
+          "failed": 0,
+          "errors": 0,
+          "passed": 18
+        },
+        {
+          "total": 18,
+          "failed": 0,
+          "errors": 0,
+          "passed": 18
+        }
+      ]
+    },
+    {
+      "log": "producer-final-01.log",
+      "sha256": "da6d3fa73958eff7d082ff4b04d66cec6f8552c9596f673ac82a4fdae3788868",
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-20T14:05:00.910363+00:00",
+        "finished_utc": "2026-10-20T14:05:44.887499+00:00",
+        "duration_seconds": 43.976628,
+        "command": [
+          "sbt",
+          "-batch",
+          "-J-Xmx4g",
+          "-Dsbt.supershell=false",
+          "-Dsbt.log.noformat=true",
+          "-Dsbt.global.base=/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+          "-Dneuroim4s.graph4s.build=/Users/bbuchsbaum/code/scala/graph4s-eco-routing-20261020",
+          "routingJVM/test",
+          "routingJS/test",
+          "routingIoJVM/test"
+        ],
+        "cwd": "/Users/bbuchsbaum/code/scala/neuroim4s-eco-routing-20261020",
+        "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/neuroim-routing-20261020/producer-final-01.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 900.0,
+        "log_bytes": 11909
+      },
+      "test_summaries": [
+        {
+          "total": 14,
+          "failed": 0,
+          "errors": 0,
+          "passed": 14
+        },
+        {
+          "total": 14,
+          "failed": 0,
+          "errors": 0,
+          "passed": 14
+        },
+        {
+          "total": 4,
+          "failed": 0,
+          "errors": 0,
+          "passed": 4
+        }
+      ]
+    },
+    {
+      "log": "consumer-downstream-jvm-01.log",
+      "sha256": "1b7c1272d903ca48d3659e7c116e0b582e89d252687f2861454637deee630f08",
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-20T14:06:06.617989+00:00",
+        "finished_utc": "2026-10-20T14:08:57.067151+00:00",
+        "duration_seconds": 170.44759,
+        "command": [
+          "sbt",
+          "-batch",
+          "-J-Xmx4g",
+          "-Dsbt.supershell=false",
+          "-Dsbt.log.noformat=true",
+          "-Dsbt.global.base=/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+          "-Dscalafim.neuroim4s.build=/Users/bbuchsbaum/code/scala/neuroim4s-eco-routing-20261020",
+          "-Dscalafim.graph4s.build=/Users/bbuchsbaum/code/scala/graph4s-eco-routing-20261020",
+          "spatialJVM/test",
+          "atlasJVM/test",
+          "mvpaSpatialJVM/test",
+          "atlasExamplesJVM/test",
+          "workflowExamplesJVM/test",
+          "workflowExamplesJVM/runMain scalafim.examples.workflows.runAtlasMvpaWorkflow"
+        ],
+        "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-routing-20261020",
+        "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/neuroim-routing-20261020/consumer-downstream-jvm-01.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 1200.0,
+        "log_bytes": 47969
+      },
+      "test_summaries": [
+        {
+          "total": 231,
+          "failed": 0,
+          "errors": 0,
+          "passed": 231
+        },
+        {
+          "total": 120,
+          "failed": 0,
+          "errors": 0,
+          "passed": 120
+        },
+        {
+          "total": 25,
+          "failed": 0,
+          "errors": 0,
+          "passed": 25
+        },
+        {
+          "total": 5,
+          "failed": 0,
+          "errors": 0,
+          "passed": 5
+        },
+        {
+          "total": 3,
+          "failed": 0,
+          "errors": 0,
+          "passed": 3
+        }
+      ]
+    },
+    {
+      "log": "consumer-downstream-js-01.log",
+      "sha256": "c58f9da764a79c14c6fe3fcb2baac7009f16cb97f94d045d5a461891d6e265c0",
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-20T14:09:35.431536+00:00",
+        "finished_utc": "2026-10-20T14:11:45.839010+00:00",
+        "duration_seconds": 130.406332,
+        "command": [
+          "sbt",
+          "-batch",
+          "-J-Xmx4g",
+          "-Dsbt.supershell=false",
+          "-Dsbt.log.noformat=true",
+          "-Dsbt.global.base=/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+          "-Dscalafim.neuroim4s.build=/Users/bbuchsbaum/code/scala/neuroim4s-eco-routing-20261020",
+          "-Dscalafim.graph4s.build=/Users/bbuchsbaum/code/scala/graph4s-eco-routing-20261020",
+          "spatialJS/test",
+          "atlasJS/test",
+          "mvpaSpatialJS/test",
+          "workflowExamplesJS/test",
+          "scalafimCompileAll",
+          "examplesCompile"
+        ],
+        "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-routing-20261020",
+        "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/neuroim-routing-20261020/consumer-downstream-js-01.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 1200.0,
+        "log_bytes": 46059
+      },
+      "test_summaries": [
+        {
+          "total": 206,
+          "failed": 0,
+          "errors": 0,
+          "passed": 206
+        },
+        {
+          "total": 74,
+          "failed": 0,
+          "errors": 0,
+          "passed": 74
+        },
+        {
+          "total": 25,
+          "failed": 0,
+          "errors": 0,
+          "passed": 25
+        },
+        {
+          "total": 2,
+          "failed": 0,
+          "errors": 0,
+          "passed": 2
+        }
+      ]
+    },
+    {
+      "log": "build-cleanup-01.log",
+      "sha256": "f7f4b2c085262cb452dc07a30657e2ecd0c8ab04dead7ab3245a167faeb663ba",
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-20T14:13:16.093429+00:00",
+        "finished_utc": "2026-10-20T14:13:45.758765+00:00",
+        "duration_seconds": 29.665897,
+        "command": [
+          "sbt",
+          "-batch",
+          "-J-Xmx4g",
+          "-Dsbt.supershell=false",
+          "-Dsbt.log.noformat=true",
+          "-Dsbt.global.base=/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+          "-Dscalafim.neuroim4s.build=/Users/bbuchsbaum/code/scala/neuroim4s-eco-routing-20261020",
+          "-Dscalafim.graph4s.build=/Users/bbuchsbaum/code/scala/graph4s-eco-routing-20261020",
+          "spatialJVM/compile",
+          "spatialJS/compile"
+        ],
+        "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-routing-20261020",
+        "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/neuroim-routing-20261020/build-cleanup-01.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 600.0,
+        "log_bytes": 8796
+      },
+      "test_summaries": []
+    }
+  ],
+  "adverse_logs_retained": [
+    "producer-routing-02.log.meta.json",
+    "producer-routing-03.log.meta.json",
+    "producer-routing-04.log.meta.json",
+    "producer-routing-05.log.meta.json",
+    "producer-routing-06.log.meta.json"
+  ],
+  "production_scala_loc_delta": {
+    "scalafim": -662,
+    "neuroim4s": 1194,
+    "graph4s": 94,
+    "ecosystem": 626
+  },
+  "additional_deleted_meta_build_scala_lines": 274,
+  "caveats": [
+    "Qualification used explicit exact clean source checkout overrides; default remote pins await approved publication and fresh qualification.",
+    "No independent review, hosted CI, new native visual qualification, all-repository test run or optional timing-budget assertion is claimed.",
+    "The active volume contract excludes surface/hybrid/latent/value transforms; mixed integration remains downstream with named destinations.",
+    "The field NIfTI adapter refuses non-volume geometry at preparation.",
+    "ScalaFIM production shrinks, but this interim extraction does not yet satisfy an ecosystem-wide source or module-count reduction.",
+    "Existing upstream Intaglio unused-doc-setting lint warnings, Java 25 runtime and SLF4J diagnostics remain; no changed-source Scala compiler warnings."
+  ],
+  "next_action": "Review exact local provider candidates; obtain separate publication approval, publish graph4s before neuroim4s, then verify fresh remote pins before accepting the routing cutover.",
+  "verified_recovery_bundles": [
+    {
+      "path": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/neuroim-routing-20261020/graph4s-routing.bundle",
+      "sha256": "5b5424dfac38189f7e94bbcd0b585d2a0d68a9f343b1fe713e91a5c52c7c4ded",
+      "bytes": 4513
+    },
+    {
+      "path": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/neuroim-routing-20261020/neuroim4s-routing.bundle",
+      "sha256": "10284292da520f32d454824aa2a974bf0ea3d98add39c1105c3bae4e8e2af491",
+      "bytes": 25627
+    }
+  ],
+  "mote_status": "review"
+}

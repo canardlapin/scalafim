@@ -4,8 +4,8 @@ import gale.linalg.DMat
 import multivar.core.{MultivarError, SemanticError, SemanticSpace, SpaceEvidence}
 import scalafim.dataset.RunId
 import scalafim.fmri.fit.{ResponseBlock, RunIndex, TrainingRunScope}
-import scalafim.fmri.mvpa.{AxisDescriptor, AxisDigest, AxisRef, Observations}
-import scalafim.fmri.mvpa.analysis.*
+import mvpa4s.{AxisDescriptor, AxisDigest, AxisRef, Observations}
+import mvpa4s.analysis.*
 
 enum CanonicalArtifactError:
   case Input(detail: String)

@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-16T11:54:00.482467+00:00",
+  "finished_utc": "2026-10-16T11:55:04.736150+00:00",
+  "duration_seconds": 64.253068,
+  "command": [
+    "python3",
+    "tools/build/sbt-warm",
+    "imageViewJVM/testOnly *ViewerCursorSuite *LayerAlignmentSuite",
+    "imageViewJS/testOnly *ViewerCursorSuite *LayerAlignmentSuite",
+    "surfaceViewRasterJVM/testOnly *SurfaceRasterizerSuite",
+    "surfaceViewRasterJS/testOnly *SurfaceRasterizerSuite",
+    "mvpaJVM/testOnly *VoxelFamilyRandomizationSuite",
+    "mvpaJS/testOnly *VoxelFamilyRandomizationSuite"
+  ],
+  "cwd": "/Users/bbuchsbaum/code/scala/scalafim",
+  "log": "/tmp/scalafim-unification-u0-20261016/display-and-family.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 1800.0,
+  "log_bytes": 10669
+}

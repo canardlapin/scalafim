@@ -1,0 +1,344 @@
+{
+  "status": "mesh-published-and-public-pin-qualified-atlas-override-pending",
+  "captured_utc": "2026-10-20T16:48:54.217386+00:00",
+  "issue": "eco-u3-kernels",
+  "slice": "spatial lookup and sphere geometry",
+  "qualified_scalafim_source": "4c357723979a63e151ca2e9b02f493c140b8c119",
+  "mesh4s_candidate": "b9e0553b85113d52fc758747d62ddc0fa343e033",
+  "mesh4s_published_main_observed": "53973bf8f764ed280b639fa36df469eb1891c642",
+  "neuroatlas4s_local_override": "7cfe1369c0c098ab7539d6a4d60646b80eb08d00",
+  "test_passes": 1185,
+  "test_skips": 2,
+  "compile_all_jvm_js": "passed",
+  "compiler_warnings": 0,
+  "checks": [
+    {
+      "log": "provider-geometry-03.log",
+      "sha256": "61c7b95c1296d7f46cb98cdf68f6d618906ced84d0ab0cecae5cb8b280275438",
+      "exit_code": 0,
+      "test_groups": [
+        {
+          "passed": 35,
+          "skipped": 0
+        },
+        {
+          "passed": 31,
+          "skipped": 0
+        }
+      ],
+      "argv": [
+        "sbt",
+        "-batch",
+        "-J-Xmx4g",
+        "-Dsbt.supershell=false",
+        "-Dsbt.log.noformat=true",
+        "-Dsbt.global.base=/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+        "scalafmtAll",
+        "mesh4s-geometryJVM/test",
+        "mesh4s-geometryJS/test",
+        "scalafmtCheckAll",
+        "dependencyPins"
+      ]
+    },
+    {
+      "log": "qualified-consumer-02.log",
+      "sha256": "4301930176f07f12c66c1d1be567178791cb2ecbf79cb34af745191929df5d07",
+      "exit_code": 0,
+      "test_groups": [
+        {
+          "passed": 325,
+          "skipped": 0
+        },
+        {
+          "passed": 282,
+          "skipped": 2
+        },
+        {
+          "passed": 256,
+          "skipped": 0
+        },
+        {
+          "passed": 256,
+          "skipped": 0
+        }
+      ],
+      "argv": [
+        "sbt",
+        "-batch",
+        "-J-Xmx4g",
+        "-Dsbt.supershell=false",
+        "-Dsbt.log.noformat=true",
+        "-Dsbt.global.base=/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+        "-Dscalafim.neuroatlas4s.build=/Users/bbuchsbaum/code/scala/neuroatlas4s-eco-volume-20261020",
+        "-Dscalafim.mesh4s.build=/Users/bbuchsbaum/code/scala/mesh4s-eco-kernels-20261020",
+        "surfaceJVM/test",
+        "surfaceJS/test",
+        "surfaceViewJVM/test",
+        "surfaceViewJS/test",
+        "scalafimCompileAll"
+      ]
+    }
+  ],
+  "loaded_source_builds": [
+    {
+      "name": "ravel",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/03b7f0d36fcba51e6ed8/ravel",
+      "sha": "195d71027423d5bda1c53ef1baa17e07670fe290",
+      "status": ""
+    },
+    {
+      "name": "intaglio",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/135badde2a1fe78cfcb7/intaglio",
+      "sha": "d553c327824f9916b1c0a055226c6c5e8f77bc59",
+      "status": ""
+    },
+    {
+      "name": "gale",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/1acafa978adeaec8bfcf/gale",
+      "sha": "779ed3d8169cdd9f4eb9ab10b1ca9defadc27715",
+      "status": ""
+    },
+    {
+      "name": "zarr4s",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/34c0071f90095ef07887/zarr4s",
+      "sha": "2a5ba963b151b62c739d1bf5a19d49202bb6ff29",
+      "status": ""
+    },
+    {
+      "name": "resample4s",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/3f5d01c7e6069e74a205/resample4s",
+      "sha": "6bc4172a966c92f1b06811eac64ac2bada9fef9b",
+      "status": ""
+    },
+    {
+      "name": "multivar",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/6e1c7e90d885ae794319/multivar",
+      "sha": "7afdeea290fdcc80b81a4126aa303f93a5348c0e",
+      "status": ""
+    },
+    {
+      "name": "bids4s",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/77e7bdc71bddb8077fcd/bids4s",
+      "sha": "a33678390614a91fadbdef13f22970e78c26e091",
+      "status": ""
+    },
+    {
+      "name": "spatial4s",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/784ef883a6e00dffd47c/spatial4s",
+      "sha": "77037a7e6ced044b92d0a70b713c0a32a94f680d",
+      "status": ""
+    },
+    {
+      "name": "image4s",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/7ed5bf16f075c3452340/image4s",
+      "sha": "aef5e223169f0831c942694c4b109ab20d152217",
+      "status": ""
+    },
+    {
+      "name": "neuroim4s",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/96c50b025d799c245ede/neuroim4s",
+      "sha": "7ed49f12b1a90e18ea5ed67d48343e98a7b9547b",
+      "status": ""
+    },
+    {
+      "name": "graph4s",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/ae0fc8f94feb05e0d662/graph4s",
+      "sha": "856e6fb770cf5f4c5512b0607d8c3733e75e7460",
+      "status": ""
+    },
+    {
+      "name": "mvpa4s",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/b9182975c3d7d363f190/mvpa4s",
+      "sha": "b8259ab7eb00b4ad48cf26e3f5da49f398eae58a",
+      "status": ""
+    },
+    {
+      "name": "locus4s",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/c42ffad74301778951e7/locus4s",
+      "sha": "e32b0aeba5c4d19c457b2329272b95b26c061943",
+      "status": ""
+    },
+    {
+      "name": "alder",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/c76252a048c916057029/alder",
+      "sha": "7618c715002b3912f856c4d44468ae173fce4dec",
+      "status": ""
+    },
+    {
+      "name": "reframe4s",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/c7e7842ecb7d5871d028/reframe4s",
+      "sha": "7ec7feff96d4057a86196b5e86d592688b7c7f84",
+      "status": ""
+    },
+    {
+      "name": "linops4s",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/cfabf5f1e5e2fb8fb176/linops4s",
+      "sha": "fec77db060b130b3c609a43d07ff0bfb31088aae",
+      "status": ""
+    },
+    {
+      "name": "mesh4s-eco-kernels-20261020",
+      "path": "/Users/bbuchsbaum/code/scala/mesh4s-eco-kernels-20261020",
+      "sha": "b9e0553b85113d52fc758747d62ddc0fa343e033",
+      "status": ""
+    },
+    {
+      "name": "neuroatlas4s-eco-volume-20261020",
+      "path": "/Users/bbuchsbaum/code/scala/neuroatlas4s-eco-volume-20261020",
+      "sha": "7cfe1369c0c098ab7539d6a4d60646b80eb08d00",
+      "status": ""
+    },
+    {
+      "name": "scalafim-eco-mesh-kernels-20261020",
+      "path": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020",
+      "sha": "4c357723979a63e151ca2e9b02f493c140b8c119",
+      "status": ""
+    }
+  ],
+  "bundle": {
+    "name": "mesh4s-geometry-kernels.bundle",
+    "sha256": "a19081ec149235b393fb5ecb683cd4def57213a30cb6b55a1ffc6a8e45dd5023",
+    "requires": "53973bf8f764ed280b639fa36df469eb1891c642",
+    "contains": "b9e0553b85113d52fc758747d62ddc0fa343e033"
+  },
+  "raw_evidence": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/mesh-kernels-20261020",
+  "limits": [
+    "Atlas source override still required; the public mesh4s pin is qualified, but the all-default-provider graph is not.",
+    "Two pre-existing JS placement/performance tests skipped.",
+    "No hosted CI, new native visual acceptance, or lookup performance/allocation claim.",
+    "Generic geodesic extraction and overall U3/eco acceptance remain open."
+  ],
+  "mesh4s_publication": {
+    "time_utc": "2026-10-20T17:01:33.195414+00:00",
+    "authorization": "User: approved and keep pushing",
+    "candidate": "b9e0553b85113d52fc758747d62ddc0fa343e033",
+    "local_head": "b9e0553b85113d52fc758747d62ddc0fa343e033",
+    "local_main": "b9e0553b85113d52fc758747d62ddc0fa343e033",
+    "tracking_main": "b9e0553b85113d52fc758747d62ddc0fa343e033",
+    "remote_main": "b9e0553b85113d52fc758747d62ddc0fa343e033",
+    "divergence": "0\t0",
+    "worktree_clean": true,
+    "transport_remote": "git@github-canardlapin:canardlapin/mesh4s.git",
+    "identity": {
+      "user.name": "canardlapin",
+      "user.email": "307091466+canardlapin@users.noreply.github.com",
+      "github.account": "canardlapin"
+    }
+  },
+  "public_mesh_pin_gate": {
+    "qualified_scalafim_source": "95fdcbe8e5e7dcfe5ce14c9b7be4f5978f2caedf",
+    "log": "published-mesh-consumer-03.log",
+    "exit_code": 0,
+    "sha256": "7ead518ddf25c77a412161bd267a18d2ca29863e230f2777f99bd27a3e4eb476",
+    "passed": 607,
+    "skipped": 2,
+    "command": [
+      "sbt",
+      "-batch",
+      "-J-Xmx4g",
+      "-Dsbt.supershell=false",
+      "-Dsbt.log.noformat=true",
+      "-Dsbt.global.base=/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+      "-Dscalafim.neuroatlas4s.build=/Users/bbuchsbaum/code/scala/neuroatlas4s-eco-volume-20261020",
+      "surfaceJVM/test",
+      "surfaceJS/test"
+    ],
+    "loaded_source_builds": [
+      {
+        "name": "ravel",
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/03b7f0d36fcba51e6ed8/ravel",
+        "sha": "195d71027423d5bda1c53ef1baa17e07670fe290"
+      },
+      {
+        "name": "intaglio",
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/135badde2a1fe78cfcb7/intaglio",
+        "sha": "d553c327824f9916b1c0a055226c6c5e8f77bc59"
+      },
+      {
+        "name": "gale",
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/1acafa978adeaec8bfcf/gale",
+        "sha": "779ed3d8169cdd9f4eb9ab10b1ca9defadc27715"
+      },
+      {
+        "name": "zarr4s",
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/34c0071f90095ef07887/zarr4s",
+        "sha": "2a5ba963b151b62c739d1bf5a19d49202bb6ff29"
+      },
+      {
+        "name": "resample4s",
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/3f5d01c7e6069e74a205/resample4s",
+        "sha": "6bc4172a966c92f1b06811eac64ac2bada9fef9b"
+      },
+      {
+        "name": "multivar",
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/6e1c7e90d885ae794319/multivar",
+        "sha": "7afdeea290fdcc80b81a4126aa303f93a5348c0e"
+      },
+      {
+        "name": "bids4s",
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/77e7bdc71bddb8077fcd/bids4s",
+        "sha": "a33678390614a91fadbdef13f22970e78c26e091"
+      },
+      {
+        "name": "spatial4s",
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/784ef883a6e00dffd47c/spatial4s",
+        "sha": "77037a7e6ced044b92d0a70b713c0a32a94f680d"
+      },
+      {
+        "name": "image4s",
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/7ed5bf16f075c3452340/image4s",
+        "sha": "aef5e223169f0831c942694c4b109ab20d152217"
+      },
+      {
+        "name": "mesh4s",
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/86f1c63c989457747731/mesh4s",
+        "sha": "b9e0553b85113d52fc758747d62ddc0fa343e033"
+      },
+      {
+        "name": "neuroim4s",
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/96c50b025d799c245ede/neuroim4s",
+        "sha": "7ed49f12b1a90e18ea5ed67d48343e98a7b9547b"
+      },
+      {
+        "name": "graph4s",
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/ae0fc8f94feb05e0d662/graph4s",
+        "sha": "856e6fb770cf5f4c5512b0607d8c3733e75e7460"
+      },
+      {
+        "name": "mvpa4s",
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/b9182975c3d7d363f190/mvpa4s",
+        "sha": "b8259ab7eb00b4ad48cf26e3f5da49f398eae58a"
+      },
+      {
+        "name": "locus4s",
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/c42ffad74301778951e7/locus4s",
+        "sha": "e32b0aeba5c4d19c457b2329272b95b26c061943"
+      },
+      {
+        "name": "alder",
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/c76252a048c916057029/alder",
+        "sha": "7618c715002b3912f856c4d44468ae173fce4dec"
+      },
+      {
+        "name": "reframe4s",
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/c7e7842ecb7d5871d028/reframe4s",
+        "sha": "7ec7feff96d4057a86196b5e86d592688b7c7f84"
+      },
+      {
+        "name": "linops4s",
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/cfabf5f1e5e2fb8fb176/linops4s",
+        "sha": "fec77db060b130b3c609a43d07ff0bfb31088aae"
+      },
+      {
+        "name": "neuroatlas4s-eco-volume-20261020",
+        "path": "/Users/bbuchsbaum/code/scala/neuroatlas4s-eco-volume-20261020",
+        "sha": "7cfe1369c0c098ab7539d6a4d60646b80eb08d00"
+      },
+      {
+        "name": "scalafim-eco-mesh-kernels-20261020",
+        "path": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020",
+        "sha": "95fdcbe8e5e7dcfe5ce14c9b7be4f5978f2caedf"
+      }
+    ]
+  }
+}

@@ -1,11 +1,13 @@
 package scalafim.estimates.io
 
+import image4s.nifti.NiftiHeader
+
+import java.nio.ByteOrder
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
 import java.nio.file.StandardOpenOption.READ
 import scalafim.estimates.*
-import scalafim.image.SampleSpaces.*
-import scalafim.image.io.{Nifti, NiftiHeader}
+import neuroim4s.image.SampleSpaces.*
 
 private[io] final case class NiftiInput(
     representation: NiftiRepresentation,
@@ -24,17 +26,20 @@ private[io] final class NiftiEstimateSource(
   private var closed = false
 
   private def scalar(channel: FileChannel, header: NiftiHeader, index: Long, buffer: ByteBuffer): Double =
-    val size = header.bitpix / 8
+    val size = header.datatype.bitsPerValue / 8
     buffer.clear()
     buffer.limit(size)
-    buffer.order(header.byteOrder)
-    var position = header.voxOffset.toLong + index * size
+    buffer.order((header.byteOrder match
+      case image4s.nifti.NiftiByteOrder.LittleEndian => ByteOrder.LITTLE_ENDIAN
+      case image4s.nifti.NiftiByteOrder.BigEndian => ByteOrder.BIG_ENDIAN
+    ))
+    var position = header.voxelOffset.toLong + index * size
     while buffer.hasRemaining do
       val read = channel.read(buffer, position)
       if read <= 0 then throw new java.io.EOFException("truncated NIfTI payload")
       position += read
     buffer.flip()
-    val value = header.datatype match
+    val value = header.datatype.code match
       case 2 => (buffer.get() & 0xff).toDouble
       case 16 => buffer.getFloat().toDouble
       case 64 => buffer.getDouble()
@@ -103,15 +108,15 @@ private[io] object NiftiEstimateSource:
   private[io] def validateHeader(unit: EstimateUnit, product: ProductDescriptor, header: NiftiHeader, validity: Boolean): Either[EstimateError, Unit] =
     val expected = unit.domain.dimensions ++ Vector(product.targets.width.toInt)
     val dtype = if validity then 2 else if product.precision == NumericPrecision.Float32 then 16 else 64
-    if header.native.spatialUnit != image4s.nifti.NiftiSpatialUnit.Millimeter || header.native.storage != image4s.nifti.NiftiStorage.SingleFile then
+    if header.spatialUnit != image4s.nifti.NiftiSpatialUnit.Millimeter || header.storage != image4s.nifti.NiftiStorage.SingleFile then
       Left(EstimateError.Unsupported("local representation requires single-file NIfTI in millimetres"))
-    else if header.dims != expected then Left(EstimateError.Integrity("NIfTI dimensions differ from declared logical axes"))
-    else if header.datatype != dtype then Left(EstimateError.Integrity("NIfTI dtype differs from declared precision"))
+    else if header.dimensions != expected then Left(EstimateError.Integrity("NIfTI dimensions differ from declared logical axes"))
+    else if header.datatype.code != dtype then Left(EstimateError.Integrity("NIfTI dtype differs from declared precision"))
     else if validity && (header.slope != 1.0 || header.intercept != 0.0) then Left(EstimateError.Integrity("validity must use unscaled uint8 codes"))
     else if header.sformCode != 1 || header.sform.isEmpty || unit.domain.worldFrame != "scanner" then
       Left(EstimateError.Unsupported("reader requires the qualified scanner-frame sform binding"))
     else
-      val wanted = unit.domain.space.affineD3.toOption.get
+      val wanted = unit.domain.space.requireD3.map(_.grid.indexToFrame).toOption.get
       val actual = header.sform.get
       val dims = unit.domain.dimensions
       val corners = for x <- Vector(0, dims(0) - 1); y <- Vector(0, dims(1) - 1); z <- Vector(0, dims(2) - 1) yield Vector(x.toDouble, y.toDouble, z.toDouble, 1.0)
@@ -137,16 +142,16 @@ private[io] object NiftiEstimateSource:
             for
               _ <- store.objects.verify(store.verified(representation.values)).left.map(store.fromStore)
               _ <- store.objects.verify(store.verified(representation.validity)).left.map(store.fromStore)
-              dataHeader <- Nifti.readHeader(store.root.resolve(representation.values.path)).left.map(e => EstimateError.Integrity(e.message))
-              validityHeader <- Nifti.readHeader(store.root.resolve(representation.validity.path)).left.map(e => EstimateError.Integrity(e.message))
+              dataHeader <- image4s.nifti.Nifti.readHeader(store.root.resolve(representation.values.path)).left.map(e => EstimateError.Integrity(e.message))
+              validityHeader <- image4s.nifti.Nifti.readHeader(store.root.resolve(representation.validity.path)).left.map(e => EstimateError.Integrity(e.message))
               _ <- if representation.precision == descriptor.precision && representation.volumeOrder == descriptor.targets.estimands &&
                        representation.pairOrder == descriptor.targets.pairs.map((a, b) => EstimandPair(a, b)) &&
                        dataHeader.slope == representation.slope && dataHeader.intercept == representation.intercept then Right(())
                    else Left(EstimateError.Integrity("physical encoding differs from declared precision, scaling or volume mapping"))
               _ <- validateHeader(unit, descriptor, dataHeader, false)
               _ <- validateHeader(unit, descriptor, validityHeader, true)
-              _ <- if representation.values.bytes >= dataHeader.voxOffset.toLong + unit.domain.sampleCount.toLong * descriptor.targets.width * (dataHeader.bitpix / 8) &&
-                       representation.validity.bytes >= validityHeader.voxOffset.toLong + unit.domain.sampleCount.toLong * descriptor.targets.width then Right(())
+              _ <- if representation.values.bytes >= dataHeader.voxelOffset.toLong + unit.domain.sampleCount.toLong * descriptor.targets.width * (dataHeader.datatype.bitsPerValue / 8) &&
+                       representation.validity.bytes >= validityHeader.voxelOffset.toLong + unit.domain.sampleCount.toLong * descriptor.targets.width then Right(())
                    else Left(EstimateError.Integrity("NIfTI file is shorter than its declared logical payload"))
               _ <- store.protect:
                 val data = FileChannel.open(store.root.resolve(representation.values.path), READ)

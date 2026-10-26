@@ -1,12 +1,14 @@
 package scalafim.dataset
 
+import image4s.SomeSampleSpace
+
 import image4s.geometry.GeometryError
 import munit.FunSuite
-import scalafim.image.{Mask, PrimitiveBuffers, SampleSpaces, SomeSampleSpace}
+import neuroim4s.image.{Mask, SampleSpaces}
 
 class ResponseBlockSourceSuite extends FunSuite:
 
-  private val fixtureWorld = scalafim.image.world.WorldSpace.declare("dataset fixture shared world")
+  private val fixtureWorld = neuroim4s.spaces.WorldSpace.declare("dataset fixture shared world")
     .fold(error => fail(error.message), identity)
 
   private def fixtureSpace(
@@ -113,7 +115,7 @@ class ResponseBlockSourceSuite extends FunSuite:
         selection: ResolvedDataSelection
     ): Either[DatasetError, FmriSeries] =
       reads = reads :+ (selection.timepoints -> selection.voxels)
-      val values = PrimitiveBuffers.ofSize[Double](selection.nTimepoints * selection.nVoxels)
+      val values = Array.ofDim[Double](selection.nTimepoints * selection.nVoxels)
       var row = 0
       while row < selection.nTimepoints do
         var column = 0

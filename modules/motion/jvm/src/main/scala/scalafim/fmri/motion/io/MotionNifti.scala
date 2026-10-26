@@ -1,6 +1,7 @@
 package scalafim.fmri.motion.io
 
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.NeuroAffineSyntax.*
+import neuroim4s.image.SampleSpaces.*
 
 import image4s.geometry.Affine
 import image4s.geometry.D3
@@ -8,9 +9,9 @@ import image4s.nifti.NiftiDatatype
 import image4s.nifti.NiftiTemporalUnit
 import image4s.nifti.NiftiWriteOptions
 import scalafim.fmri.motion.*
-import scalafim.image.io.Nifti
-import scalafim.image.world.SpaceEvidence
-import scalafim.image.*
+import neuroim4s.image.io.Nifti
+import neuroim4s.spaces.SpaceEvidence
+import neuroim4s.image.*
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path}
@@ -21,7 +22,7 @@ object MotionNifti:
     else
       try
         for
-          header <- Nifti
+          header <- image4s.nifti.Nifti
             .readHeader(path)
             .left
             .map(error => MotionIoError.InvalidInput(path, error.message))
@@ -31,9 +32,9 @@ object MotionNifti:
             .map(error => MotionIoError.InvalidInput(path, error.message))
           metadata <- sidecarMetadata(
             defaultSidecar(path),
-            header.dims,
-            header.pixdim.take(3),
-            header.preferredAffine
+            header.dimensions,
+            header.pixelDimensions.take(3),
+            header.sform.orElse(header.qform)
           )
         yield MotionNiftiRun(
           decoded.image,
@@ -104,8 +105,7 @@ object MotionNifti:
       run: SomeScalarSeries[Double]
   ): Either[MotionIoError, SomeScalarSeries[Double]] =
     for
-      sampleSpace <- SampleSpaces
-        .requireD3(run.space)
+      sampleSpace <- run.space.requireD3
         .left
         .map(error => MotionIoError.WriteFailed(path, error.message))
       native <- NeuroSeries
@@ -138,8 +138,8 @@ object MotionNifti:
     metadata match
       case None => Right(())
       case Some(value) =>
-        val runDims = run.space.dims.take(4)
-        val runSpacing = run.space.spacing.take(3)
+        val runDims = run.space.logicalShape.take(4)
+        val runSpacing = run.grid.indexToFrame.neuroVoxelSizes.take(3)
         val dimensionsMatch = value.dims == runDims
         val spacingMatches = sameValues(value.voxelSize, runSpacing)
         val affineMatches = value.affine.forall: affine =>

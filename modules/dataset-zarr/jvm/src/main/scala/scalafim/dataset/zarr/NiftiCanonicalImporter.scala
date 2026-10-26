@@ -1,5 +1,7 @@
 package scalafim.dataset.zarr
 
+import image4s.nifti.NiftiHeader
+
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.channels.FileChannel
@@ -14,7 +16,7 @@ import scalafim.archive.zarr.*
 import scalafim.dataset.DatasetError
 import scalafim.dataset.io.NiftiStagingCache
 import image4s.geometry.{Affine, D3}
-import scalafim.image.io.{Nifti, NiftiHeader}
+import neuroim4s.image.io.{Nifti}
 import zarr4s.*
 
 final case class NiftiImportResult(
@@ -24,6 +26,11 @@ final case class NiftiImportResult(
 )
 
 object NiftiCanonicalImporter:
+  private[zarr] def javaByteOrder(order: image4s.nifti.NiftiByteOrder): ByteOrder =
+    order match
+      case image4s.nifti.NiftiByteOrder.LittleEndian => ByteOrder.LITTLE_ENDIAN
+      case image4s.nifti.NiftiByteOrder.BigEndian => ByteOrder.BIG_ENDIAN
+
   def publish(
       source: Path,
       bidsRelativePath: String,
@@ -80,18 +87,17 @@ object NiftiCanonicalImporter:
 
   private def readHeader(path: Path): Either[NeuroArchiveZarrError, NiftiHeader] =
     try
-      Nifti
-        .readHeader(path)
+      image4s.nifti.Nifti.readHeader(path)
         .left
         .map(error => NeuroArchiveZarrError.PublicationFailure(error.message))
     catch case NonFatal(error) => Left(NeuroArchiveZarrError.PublicationFailure(error.getMessage))
 
   private def canonicalShape(header: NiftiHeader): Either[NeuroArchiveZarrError, Shape] =
-    if header.dims.length < 3 || header.dims.length > 4 then
+    if header.dimensions.length < 3 || header.dimensions.length > 4 then
       Left(NeuroArchiveZarrError.ManifestArrayMismatch("NIfTI input must be 3D or 4D"))
     else
-      val time = if header.dims.length == 4 then header.dims(3).toLong else 1L
-      Shape(time, header.dims(2).toLong, header.dims(1).toLong, header.dims(0).toLong)
+      val time = if header.dimensions.length == 4 then header.dimensions(3).toLong else 1L
+      Shape(time, header.dimensions(2).toLong, header.dimensions(1).toLong, header.dimensions(0).toLong)
         .left.map(NeuroArchiveZarrError.Kernel.apply)
 
   private def compileDescriptor(
@@ -141,7 +147,7 @@ object NiftiCanonicalImporter:
       spatial <- Shape(shape.axis(1), shape.axis(2), shape.axis(3))
         .left.map(NeuroArchiveZarrError.Kernel.apply)
       geometry <- VoxelGeometry(spatial, affine)
-      repetition <- repetitionTimeSeconds(dataPath, header.byteOrder)
+      repetition <- repetitionTimeSeconds(dataPath, javaByteOrder(header.byteOrder))
       revision = ContentRevision.unsafe(Sha256.digestUtf8(
         s"${bids.acquisitionId.value}\u0000${sourceHash.value}\u0000${logicalHash.value}\u0000${header.slope}\u0000${header.intercept}\u0000${affine.toVector.mkString(",")}"
       ).value)
@@ -158,15 +164,15 @@ object NiftiCanonicalImporter:
       )
     yield manifest
 
-  private def selectedAffine(header: NiftiHeader): Affine[D3] = header.preferredAffine.getOrElse:
+  private def selectedAffine(header: NiftiHeader): Affine[D3] = header.sform.orElse(header.qform).getOrElse:
     Affine
       .fromRowMajor[D3](Vector(
-        header.pixdim(0), 0.0, 0.0, 0.0,
-        0.0, header.pixdim(1), 0.0, 0.0,
-        0.0, 0.0, header.pixdim(2), 0.0,
+        header.pixelDimensions(0), 0.0, 0.0, 0.0,
+        0.0, header.pixelDimensions(1), 0.0, 0.0,
+        0.0, 0.0, header.pixelDimensions(2), 0.0,
         0.0, 0.0, 0.0, 1.0
       ))
-      .fold(error => throw new IllegalArgumentException(error.message), identity)
+      .fold(error => throw new IllegalArgumentException(error.message), value => value)
 
   private def repetitionTimeSeconds(
       path: Path,
@@ -223,10 +229,10 @@ object NiftiCanonicalImporter:
           buffer.clear()
           var read = 0L
           while buffer.hasRemaining do
-            val found = channel.read(buffer, header.voxOffset.toLong + element * scalar.byteWidth + read)
+            val found = channel.read(buffer, header.voxelOffset.toLong + element * scalar.byteWidth + read)
             if found < 0 then throw IllegalArgumentException("truncated NIfTI payload")
             read += found.toLong
-          if header.byteOrder == ByteOrder.LITTLE_ENDIAN || scalar.byteWidth == 1 then digest.update(bytes)
+          if javaByteOrder(header.byteOrder) == ByteOrder.LITTLE_ENDIAN || scalar.byteWidth == 1 then digest.update(bytes)
           else
             var index = bytes.length - 1
             while index >= 0 do
@@ -250,9 +256,9 @@ private enum NiftiScalar(val code: Int, val bitpix: Int, val zarrName: String):
 
 private object NiftiScalar:
   def fromHeader(header: NiftiHeader): Either[NeuroArchiveZarrError, NiftiScalar] =
-    NiftiScalar.values.find(value => value.code == header.datatype && value.bitpix == header.bitpix)
+    NiftiScalar.values.find(value => value.code == header.datatype.code && value.bitpix == header.datatype.bitsPerValue)
       .toRight(NeuroArchiveZarrError.PublicationFailure(
-        s"unsupported NIfTI datatype ${header.datatype} with bitpix ${header.bitpix}"
+        s"unsupported NIfTI datatype ${header.datatype.code} with bitpix ${header.datatype.bitsPerValue}"
       ))
 
 private enum ImportLayout:
@@ -311,7 +317,7 @@ private final class NiftiChunkProvider(
       storedShape: Shape
   )(put: (Int, ByteBuffer) => Unit): Unit =
     val cursor = new Array[Long](4)
-    val scalarBytes = ByteBuffer.allocate(scalar.byteWidth).order(header.byteOrder)
+    val scalarBytes = ByteBuffer.allocate(scalar.byteWidth).order(NiftiCanonicalImporter.javaByteOrder(header.byteOrder))
     Using.resource(FileChannel.open(path, READ)): channel =>
       val count = storedShape.elementCount.fold(error => throw IllegalArgumentException(error.message), identity)
       var output = 0
@@ -328,7 +334,7 @@ private final class NiftiChunkProvider(
           scalarBytes.clear()
           var read = 0L
           while scalarBytes.hasRemaining do
-            val found = channel.read(scalarBytes, header.voxOffset.toLong + linear * scalar.byteWidth + read)
+            val found = channel.read(scalarBytes, header.voxelOffset.toLong + linear * scalar.byteWidth + read)
             if found < 0 then throw IllegalArgumentException("truncated NIfTI payload")
             read += found.toLong
           put(output, scalarBytes)

@@ -1,11 +1,12 @@
 package scalafim.fmri.motion
 
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.NeuroAffineSyntax.*
+import neuroim4s.image.SampleSpaces.*
 
 import ravel.NDArray
 import ravel.Rank
 import ravel.Shape
-import scalafim.image.*
+import neuroim4s.image.*
 
 object MotionApplier:
   def apply(
@@ -18,7 +19,7 @@ object MotionApplier:
       control.interpolation match
         case Interpolation.Linear =>
           for
-            offsets <- control.acquisitionTiming.normalizedSliceOffsets(run.space.spatialDims(2))
+            offsets <- control.acquisitionTiming.normalizedSliceOffsets(run.space.grid.shape(2))
             corrected <-
               if offsets.forall(_ == 0.0) then Right(applyLinear(run, trace, control))
               else applyLinearPacketAware(run, trace, control, offsets)
@@ -29,14 +30,14 @@ object MotionApplier:
       trace: MotionTrace,
       control: ApplyControl
   ): SomeScalarSeries[Double] =
-    val dims = run.space.spatialDims
+    val dims = run.space.grid.shape
     val nx = dims(0)
     val ny = dims(1)
     val nz = dims(2)
     val nt = run.nVolumes
-    val px = run.space.spacing(0)
-    val py = run.space.spacing(1)
-    val pz = run.space.spacing(2)
+    val px = run.grid.indexToFrame.neuroVoxelSizes(0)
+    val py = run.grid.indexToFrame.neuroVoxelSizes(1)
+    val pz = run.grid.indexToFrame.neuroVoxelSizes(2)
     val zeroPad = control.padMode == PadMode.Zero || control.zpad > 0
 
     val out =
@@ -94,14 +95,14 @@ object MotionApplier:
       control: ApplyControl,
       normalizedOffsets: Vector[Double]
   ): Either[MotionError, SomeScalarSeries[Double]] =
-    val dims = run.space.spatialDims
+    val dims = run.space.grid.shape
     val nx = dims(0)
     val ny = dims(1)
     val nz = dims(2)
     val nt = run.nVolumes
-    val px = run.space.spacing(0)
-    val py = run.space.spacing(1)
-    val pz = run.space.spacing(2)
+    val px = run.grid.indexToFrame.neuroVoxelSizes(0)
+    val py = run.grid.indexToFrame.neuroVoxelSizes(1)
+    val pz = run.grid.indexToFrame.neuroVoxelSizes(2)
     val zeroPad = control.padMode == PadMode.Zero || control.zpad > 0
     val spline = PoseSpline.fromTrace(trace)
 

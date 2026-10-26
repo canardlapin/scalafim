@@ -1,0 +1,33 @@
+{
+  "qualified_source": "92154d81c39b6a384be195dde0e933ed0dff29ca",
+  "compile_all": {
+    "source": "92154d81c39b6a384be195dde0e933ed0dff29ca",
+    "status": "Pass",
+    "receipt": "scalafim-eco-u6-compile-55.log.gz"
+  },
+  "campaign_kind": "Three segments, both failed runs retained",
+  "segments": [
+    {
+      "source": "31a42a69004c6282e01ad939c370f249fdf5e604",
+      "batches": 17
+    },
+    {
+      "source": "616860a2e14eb42b800462cd3d2f4fe4203f641a",
+      "batches": 8
+    },
+    {
+      "source": "92154d81c39b6a384be195dde0e933ed0dff29ca",
+      "batches": 12
+    }
+  ],
+  "source_deltas": {
+    "31a42_to_616860": "Root imaging test alias+two callers renamed; standalone owner proof repaired outside Root build and separately executed atf0.",
+    "616860_to_92154d": "Only JVM MotionBids9wildcard defaults+globdoc and17assertionlines in existing MotionIoSuite case. Providerpins/strictloader/math unchanged; fresh compile-all and fullmotionJVM/JS executed at921."
+  },
+  "standalone": {
+    "executed_source": "f0b67d349ec6f444969749845b15d3e58d8996bb",
+    "byte_identical_tool_at_qualified_source": true,
+    "receipt": "standalone-receipt-45.json"
+  },
+  "qualification": "Earlier25successful batch input closures unaffected by Root-only MotionBids delta. Count17+8+12 exactly; no single-run or single-source full-suite claim."
+}

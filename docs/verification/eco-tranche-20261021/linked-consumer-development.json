@@ -1,0 +1,102 @@
+{
+  "sourceCommit": "dcc0892bd882908abde8d747ee6a4fefb9e1c750",
+  "rootProvider": "bf84f9d8c897d274cb1bde9811b71b574b677ec6",
+  "atlasProvider": "07e3d24d58d196c82c24429aefa7b7d65a671a34",
+  "sourceCleanAfter": true,
+  "review": {
+    "reviewer": "volume_view_astra_review",
+    "verdict": "APPROVE",
+    "boundRevision": "dcc0892bd882908abde8d747ee6a4fefb9e1c750",
+    "scope": "Guard before IO cancellation and state replacement, inspection install path, complete Cartesian response-cell witness, direct atlas query ownership, canonical source paths. Earlier declaration/factory separations and byte digest reviewed separately.",
+    "limitations": "Source approval is not runtime or whole application acceptance."
+  },
+  "counterexample": {
+    "execution": {
+      "schema_version": 1,
+      "started_utc": "2026-10-21T05:17:59.353287+00:00",
+      "finished_utc": "2026-10-21T05:21:44.208335+00:00",
+      "duration_seconds": 224.853253,
+      "command": [
+        "env",
+        "TMPDIR=/Volumes/My Passport for Mac/e01tmp",
+        "sbt",
+        "-batch",
+        "-J-Xmx4g",
+        "-J-Djava.io.tmpdir=/Volumes/My Passport for Mac/e01tmp",
+        "-Dsbt.supershell=false",
+        "-Dsbt.log.noformat=true",
+        "-Dsbt.global.base=/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+        "-Dimaging.providers=/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/qualified-expanded-providers",
+        "set Compile / unmanagedSources ~= (_.filterNot(_.getName == \"AtlasCursorQuery.scala\"))",
+        "Test/runMain plsneuro.desktop.LinkedSpatialProbe"
+      ],
+      "cwd": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/plsneuro-imaging-consumer/tools/imaging-consumer",
+      "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/pls-linked-world-red-02.log",
+      "exit_code": 1,
+      "child_returncode": 1,
+      "reason": "exited",
+      "detail": null,
+      "timeout_seconds": 900.0,
+      "log_bytes": 541406
+    },
+    "sha256": "162b19a4e667a986b572a30dbee7c50da5125f0b0e67466b2e9d9281592fbf7f"
+  },
+  "counterexampleAssertion": "Equal numeric grids in different worlds were admitted to linked selection",
+  "counterexampleLimits": "AtlasCursorQuery temporarily filtered for independent development reproduction only; retained CSS warnings forbid visual-quality claims. Final green closure has no source exclusion.",
+  "green": {
+    "execution": {
+      "schema_version": 1,
+      "started_utc": "2026-10-21T05:24:39.627164+00:00",
+      "finished_utc": "2026-10-21T05:29:59.191286+00:00",
+      "duration_seconds": 319.564381,
+      "command": [
+        "env",
+        "TMPDIR=/Volumes/My Passport for Mac/e01tmp",
+        "sbt",
+        "-batch",
+        "-J-Xmx4g",
+        "-J-Djava.io.tmpdir=/Volumes/My Passport for Mac/e01tmp",
+        "-Dsbt.supershell=false",
+        "-Dsbt.log.noformat=true",
+        "-Dsbt.global.base=/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+        "-Dimaging.providers=/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/qualified-linked-providers",
+        "Test/runMain plsneuro.adapters.AtlasCursorQueryProbe",
+        "Test/runMain plsneuro.adapters.SurfaceFingerprintProbe",
+        "Test/runMain plsneuro.desktop.LinkedSpatialProbe"
+      ],
+      "cwd": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/plsneuro-imaging-consumer/tools/imaging-consumer",
+      "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/pls-linked-world-green-02.log",
+      "exit_code": 0,
+      "child_returncode": 0,
+      "reason": "exited",
+      "detail": null,
+      "timeout_seconds": 1200.0,
+      "log_bytes": 17430
+    },
+    "sha256": "4bda7f16092d171c4587d99653e9ab01cf9150027e7282105a3b8322bb98eca3"
+  },
+  "executedAssertions": [
+    "PASS: atlas membership, native voxel-boundary affine oracle, deterministic ties and grid/source identity",
+    "SurfaceFingerprintProbe PASS",
+    "LinkedSpatialProbe PASS"
+  ],
+  "checkedBehavior": [
+    "Real atlas cursor adapter with boundary provider and sheared affine oracle",
+    "Persisted surface-v1 literal byte goldens, signed zero, affine and vertex permutation sensitivity",
+    "Real JavaFX cursor callback and exact complete 3 participants x2 conditions x2 FIR-time cells",
+    "Foreign-world refusal preserves current selection and responses",
+    "Hover/scroll do not commit; masked voxel clears stale extraction",
+    "Physical probe, connected cluster, actual trellis rendering",
+    "Checked inspection save/reopen and corrupt/altered-source refusal",
+    "Native worker and toolkit shutdown in finally"
+  ],
+  "pending": [
+    "Clean committed source with fresh provider/global outputs: session2950, pls-linked-fresh-dcc0892-01.log",
+    "Whole-application refreshed compile: session58464, pls-main-fresh-compile-04.log"
+  ],
+  "limits": [
+    "This green run uses existing component outputs, not fresh final qualification.",
+    "No full application, native cold-open performance or scientific inference acceptance.",
+    "I1 display/integration motes remain open."
+  ]
+}

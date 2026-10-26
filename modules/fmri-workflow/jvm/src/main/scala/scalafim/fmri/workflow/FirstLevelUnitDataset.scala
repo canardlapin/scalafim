@@ -2,7 +2,7 @@ package scalafim.fmri.workflow
 
 import bids4s.{BidsTable, ConfoundSelectionConfig}
 import scalafim.dataset.*
-import scalafim.image.world.SpaceEvidence
+import neuroim4s.spaces.SpaceEvidence
 import scalafim.dataset.io.NiftiStagingCache
 import scalafim.fmri.model.{FitPlan, FmriModelBuilder, ModelBuildSpec}
 

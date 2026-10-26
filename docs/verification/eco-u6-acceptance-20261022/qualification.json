@@ -1,0 +1,101 @@
+{
+  "schema": "scalafim.eco-u6-qualification.v1",
+  "status": "Pass",
+  "scope": "Local modularization acceptance; publication, native/browser and scientific boundaries explicit",
+  "qualified_source": "92154d81c39b6a384be195dde0e933ed0dff29ca",
+  "topic_branch": "eco/u5-surface-20261021",
+  "created_utc": "2026-10-22T09:15:26.021064+00:00",
+  "compile_all": {
+    "source_commit": "92154d81c39b6a384be195dde0e933ed0dff29ca",
+    "raw_log_sha256": "4253fcefc0501841da8bfb8a410fcfa1b4e18c7531f30e2d3a114e10de314bed",
+    "meta": {
+      "schema_version": 1,
+      "started_utc": "2026-10-22T08:12:30.534028+00:00",
+      "finished_utc": "2026-10-22T08:20:09.038308+00:00",
+      "duration_seconds": 458.502907,
+      "command": [
+        "sbt",
+        "-Djava.awt.headless=true",
+        "-Dsbt.boot.directory=/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/acceptance-cache-25/boot",
+        "-Dsbt.global.base=/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/acceptance-cache-25/global",
+        "-Dsbt.ivy.home=/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/acceptance-cache-25/ivy",
+        "-Dsbt.supershell=false",
+        "scalafimCompileAll"
+      ],
+      "cwd": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/acceptance-clone-25",
+      "log": "/tmp/scalafim-eco-u6-compile-55.log",
+      "exit_code": 0,
+      "child_returncode": 0,
+      "reason": "exited",
+      "detail": null,
+      "timeout_seconds": 7200.0,
+      "log_bytes": 18542
+    },
+    "input_receipt_sha256": "7889e6e999a56ab3cbfd2b818889668a474464aa5e7c69f81734d72c7c771a12"
+  },
+  "bounded_regression": {
+    "kind": "segmented17+8+12",
+    "batches": 37,
+    "positive_behavioral_summaries": 140,
+    "success_markers": 144,
+    "passed": 11868,
+    "skipped": 18,
+    "ignored": 5,
+    "receipt": "campaign-receipt-57.json",
+    "receipt_sha256": "3b8462a7e8a175ed1d20d928fee8e591fd3e45bb64c33bcd02436fdbcfbdc310"
+  },
+  "seven_families": {
+    "status": "Pass",
+    "receipt": "seven-families.json",
+    "receipt_sha256": "489c6073f70b2e22d7a490a3dbaa365fd63cbecfdece36a1493975128fe4ca6a"
+  },
+  "independent_consumers": {
+    "passed": 71,
+    "skipped": 0,
+    "classpath_scope": "27Compile sections; public API/test-internals also source-reviewed",
+    "provider_source_owners": 15,
+    "qualified_private_files": 120,
+    "receipt": "independent-receipt-40.json",
+    "receipt_sha256": "4854420b5ca77ebb5e2c6a1faee537da708ff9b1c9655291b0cc06688f277358"
+  },
+  "standalone": {
+    "status": "Pass",
+    "scope": "Synthetic JVM NIfTI4D/ITK/Java2D app,41Compile/runtime entries",
+    "receipt": "standalone-receipt-45.json",
+    "receipt_sha256": "e532372269fa079af7ae9a9518db7ff48111fa8bef6cbd5511c2b0578bf7fe99"
+  },
+  "adverse_evidence": [
+    "focused25 compile-only private-constructor refusal",
+    "focused28 fixture admission/centroid oracle failures",
+    "independent26 default1GiB heap exhaustion after20passes",
+    "standalone42 existential owner proof compilation refusal",
+    "full34 alias collision after17completed batches",
+    "resume51 MotionIoSuite1failure after8completed batches",
+    "conservative20GiB preflight refusals and gzip random-seek verifier interruption"
+  ],
+  "limits": "carried-forward-limits.json; historical-display-review.md; declared-nonexecutions.json",
+  "final_review": {
+    "status": "Approve",
+    "candidate_commit": "92d6f27f97516a1466575b8cad9cca83c407e8c8",
+    "qualified_source": "92154d81c39b6a384be195dde0e933ed0dff29ca",
+    "reviewer": "Independent read-only lean_expert review",
+    "reviewed_campaign_sha256": "3b8462a7e8a175ed1d20d928fee8e591fd3e45bb64c33bcd02436fdbcfbdc310",
+    "verdict": "Bounded local modularization acceptance; no blocking findings",
+    "recorded_utc": "2026-10-22T09:23:18.482333+00:00"
+  },
+  "publication": {
+    "source_topic_branch_published": true,
+    "main_merged": false,
+    "hosted_ci": "See separately refreshed hosting-observation.json; no hosted success inferred from local gates."
+  },
+  "scientific_observations": "scientific-observations.json; observed below-target diagnostics retained, no flags/tolerances weakened.",
+  "tracker_closure": {
+    "receipt": "tracker-closure.json",
+    "task_closed": 36,
+    "task_total": 36,
+    "milestone_closed": 9,
+    "milestone_total": 9,
+    "epic_status": "closed",
+    "scope": "Enumerated eco epic; separately tagged follow-ups remain recorded."
+  }
+}

@@ -1,0 +1,108 @@
+{
+  "schema": "scalafim.i1-acceptance.v1",
+  "recorded": "2026-10-21T15:06:39.565424+00:00",
+  "status": "ACCEPTED: independent approval to close eco-neuroim-integrations and eco-neuroim",
+  "task": "eco-neuroim-integrations",
+  "milestone": "eco-neuroim",
+  "rootEvidenceParent": "ddc81ef07cf3400795b787ad30bfd5e6281c0c5b",
+  "rootProduction": "896dda088b26fbaa2aedecc8cdedcfd6a9ea2c38",
+  "plsProduction": "5f7bee9521d5b03fff9546488a12f6d00881b4d9",
+  "plsProbeSource": "27792846f99ee64ccd286698be77e93a55465c79",
+  "acceptanceMatrix": [
+    {
+      "criterion": "Dataset to design/fit/contrasts/group and archive/image semantics on JVM/JS",
+      "evidence": [
+        "full-repository-qualification-10.json",
+        "first-level-actual-consumer.json",
+        "first-level-access-study-recovery.json",
+        "support-and-roles-recovery.json",
+        "provenance-recovery.json",
+        "selected-tables-recovery.json"
+      ],
+      "finding": "Complete22batch110task headless regression campaign exit0. Actual BIDS beta/FIR/contrasts/group/persistence witness and typed access/identity/order regressions pass."
+    },
+    {
+      "criterion": "Every retained motion/threshold/latent adapter expresses functional policy; known external callers/build aliases use public providers",
+      "evidence": [
+        "i1-final-ownership-audit.json",
+        "i1-caller-evidence.json",
+        "transitive-caller-qualification-13.json",
+        "i1-caller-review-13.json",
+        "native-runtime-qualification-10.json"
+      ],
+      "finding": "772active production files scanned;27direct PLSprovider files accounted within32boundaries, meaningful transitives audited and4distinct witnesses pass. Complete217PLSproduction sources compile. Provider ProjectRefs/aliases explicit."
+    },
+    {
+      "criterion": "No implementation copy or permanent image/transform/view facade remains",
+      "evidence": [
+        "i1-final-ownership-audit.json",
+        "display-acceptance.json"
+      ],
+      "finding": "All6retired local source families gone; no retired namespace in active production roots. Mixed spatial remnants explicitly retained until named later cutovers; not claimed U5/A1/U6 complete."
+    },
+    {
+      "criterion": "Independent provider-only image IO to typed world transform to slice display",
+      "evidence": [
+        "independent-composition.json"
+      ],
+      "finding": "Clean independent committedbb412b148 witness uses neuroim21df641 with no ScalaFIM/surface dependency; literal values/pixels and actual111to311cursor transition pass."
+    },
+    {
+      "criterion": "Native representation, canonical ordering, affine/scaling, bounded IO and scoped lifetimes survive",
+      "evidence": [
+        "layout-io-qualification.json",
+        "first-level-actual-consumer.json",
+        "nifti-staging-recovery.json",
+        "fresh-linked-qualification.json",
+        "transitive-caller-qualification-13.json",
+        "native-runtime-qualification-10.json"
+      ],
+      "finding": "Provider/consumer semantics and refusal/lifetime checks pass. ActualStudy/native surface/ViewerScene handoffs execute on verified frozen runtime. No whole-buffer duplication or hidden dependency admission introduced by this closure."
+    },
+    {
+      "criterion": "Required compile/fullcampaign and independent review",
+      "evidence": [
+        "full-repository-qualification-10.json",
+        "surface-consumer-contract-recovery.json",
+        "i1-bounded-evidence-review.json",
+        "i1-caller-review-13.json"
+      ],
+      "finding": "CompileAll passed;110headless tasks passed; separate65JavaFXtests/nativeprobes passed. Final independent I1closure review APPROVE at61ff7d8a3."
+    }
+  ],
+  "totals": {
+    "headlessPassed": 10670,
+    "headlessSkipped": 8,
+    "headlessIgnored": 5,
+    "headlessFailed": 0,
+    "headlessErrors": 0,
+    "nativeSurfaceModuleTests": 65,
+    "focusedTransitiveProbes": 4
+  },
+  "preservedLimitations": [
+    "Named09fullwarm publication24.339ms fails20ms; frozen10passes6.676042ms, does not erase failure or qualify broad latency.",
+    "LWU93%/81%admission vs95%reportedtarget and spikeunmetconfigurations retained in fullcampaignlog; no new statistical/scientificcalibration admission.",
+    "Fiveopt-inGLSstudies ignored and8tests skipped; no invented execution.",
+    "NamedJavaFX24patchedMeshUtil underverifiedlauncher only; defaultScalaFIMJavaFX21unchanged; affine renderer refused; no unpatched/device matrix.",
+    "LooseclassresourcefontURLfailure retained, exactbytes/no-spacefrozenruntimepasses; no general font fix claimed.",
+    "BroaderPLSadoption bd-01M52AQ9JQS51XFMB17X4BDQJX and retainedatlasperformance bd-01M24EQFARZKYMZ71BJP91C9XS remain separate.",
+    "Publication/hostedCI/canonicalmainlanding/U4/U5/A1/U6 acceptance remain outside this closure."
+  ],
+  "receiptHashes": {
+    "transitive-caller-qualification-13.json": "1a652368c94dc7a0324ad49801b6364021d11512b753d7d4041a5b3cd632760b",
+    "i1-final-ownership-audit.json": "ccd2d6e4a1b24495b31767bb4610a9399aacd0177a997565f5723b661a68ef1e",
+    "native-runtime-qualification-10.json": "46d755538bd566811f0bb3fd789d3d5503c3c574ad8a1dcad29f7256355f622a",
+    "full-repository-qualification-10.json": "b665ec7cbaf837c7c66f080ff21bb8dec4bd3fd5203565ad52bab7493bc76ca7",
+    "independent-composition.json": "715d885a197d9b9a3b6ef9cab1f3e7cc2e909b32cae500d2559294db379f195d",
+    "i1-caller-evidence.json": "def6ce5725fc2e77530dcbe0dbd10b20eb040c88d383047d362d1e79cf47ea9c"
+  },
+  "acceptedUtc": "2026-10-21T15:09:01.463465+00:00",
+  "review": {
+    "reviewer": "volume_view_astra_review",
+    "verdict": "APPROVE closure",
+    "candidate": "61ff7d8a3342fdbf7402d8acb6ce7689ef790b5b",
+    "production": "896dda088b26fbaa2aedecc8cdedcfd6a9ea2c38",
+    "verified": "22prescribed batches/110nonemptytasks, log/gzip/hash equivalence, same original PID exit0 via recorded observer, source/tests/build/tools equivalence, ownership/deletion/composition/caller/native/lifecycle evidence; no remaining I1finding.",
+    "limitsPreserved": true
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "observed_utc": "2026-10-23T10:45:41.598078+00:00",
+  "status": "Pass",
+  "scope": "Existing published source-pin coherence and preparation guard; synthetic git transport exercises the real unmodified prepare script, not provider compilation.",
+  "gale_revision": "779ed3d8169cdd9f4eb9ab10b1ca9defadc27715",
+  "alder_revision": "7618c715002b3912f856c4d44468ae173fce4dec",
+  "mvpa_source": "c27469484bf760c34cd896dabe4fe1c384a83b45",
+  "scalafim_source": "22defff67ea436afc1a68a018acb9aa2a1ad0d06",
+  "prepare_script_sha256": "fb1da5bbfefb8e85579f97ab1f1dd69a85cbf4550a2b732eac43f8b03cda79b2",
+  "cases": [
+    {
+      "case": "matching",
+      "exit_code": 0,
+      "publish_script_invocations": 2,
+      "stderr": ""
+    },
+    {
+      "case": "alder-mismatch",
+      "exit_code": 1,
+      "publish_script_invocations": 0,
+      "stderr": "Gale revision mismatch: mvpa4s=779ed3d8169cdd9f4eb9ab10b1ca9defadc27715 Alder=0000000000000000000000000000000000000000\n"
+    },
+    {
+      "case": "multivar-mismatch",
+      "exit_code": 1,
+      "publish_script_invocations": 0,
+      "stderr": "Gale revision mismatch: mvpa4s=779ed3d8169cdd9f4eb9ab10b1ca9defadc27715 Multivar=0000000000000000000000000000000000000000\n"
+    }
+  ],
+  "existing_runtime_acceptance": "../eco-u6-acceptance-20261022/qualification.json and independent-receipt-40.json qualify the unchanged coherent pins with completed JVM/JS gates; no new build claimed.",
+  "main_state": "Alder pin is origin/main; ScalaFIM and mvpa4s adoption pins are on published eco branches. ScalaFIM main remains separate."
+}

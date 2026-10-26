@@ -1,27 +1,20 @@
 package scalafim.fmri.threshold
 
-import scalafim.image.{
-  Indexing,
-  Mask,
-  SampleSpaces,
-  SomeMaskVolume,
-  SomeSampleSpace,
-  SomeScalarVolume,
-  GridDomain
-}
-import scalafim.image.SampleSpaces.*
-import scalafim.image.SomeNeuroVolume.*
+import image4s.SomeSampleSpace
+import image4s.locus.GridDomain
+
+import neuroim4s.image.{Indexing, Mask, SampleSpaces, SomeMaskVolume, SomeScalarVolume}
+import neuroim4s.image.SampleSpaces.*
+import neuroim4s.image.SomeNeuroVolume.*
 import image4s.geometry.D3
 import image4s.geometry.Frame
 import image4s.geometry.Grid
-import scalafim.locus.{
-  DomainFactory,
+import locus4s.{
   FiniteDomain,
   Injection,
   Region,
   Selection,
-  TotalMap,
-  mapping
+  TotalMap
 }
 import locus4s.DomainRegistry
 
@@ -68,7 +61,7 @@ sealed abstract class MaskedField private[threshold] (
       val idx = maskSpaceIndices(i)
       if idx < 0 || idx >= size then return Left(ThresholdError.IndexOutOfBounds(idx, size))
       val active = activeSpace.indexOption(idx).get
-      out(i) = activeToFull.mapping(active).value
+      out(i) = activeToFull.toTotalMap(active).value
       i += 1
     Right(out)
 
@@ -116,7 +109,7 @@ object MaskedField:
       case Right(_) =>
         ()
 
-    val dims = stat.space.spatialDims
+    val dims = stat.space.grid.shape
     val n = dims.product
 
     val valueBuilder = Array.newBuilder[Double]
@@ -145,7 +138,7 @@ object MaskedField:
     else
       Right(
         make(
-          stat.space.spatialSpace,
+          stat.space.typed.spatialOnly,
           mask,
           values,
           indexBuilder.result(),
@@ -165,9 +158,8 @@ object MaskedField:
     z: Array[Int]
   ): MaskedField =
     val spatial =
-      SampleSpaces
-        .requireSpatialD3(space)
-        .fold(error => throw new IllegalArgumentException(error.message), identity)
+      space.requireD3.map(_.spatialOnly)
+        .fold(error => throw new IllegalArgumentException(error.message), value => value)
     val packedFullDomain =
       GridDomain
         .register(
@@ -182,7 +174,8 @@ object MaskedField:
     // A derived selection-position domain: it means nothing except relative to
     // `full`, and `injection` below is what relates the two. Ephemeral, so no
     // key proportional to the mask has to be built or retained.
-    val activeDomain = DomainFactory.unsafeEphemeral("threshold-active", data.length)
+    val activeDomain = FiniteDomain.ephemeral("threshold-active", data.length)
+      .fold(error => throw new IllegalArgumentException(error.message), value => value)
     type Active = activeDomain.S
     val active: FiniteDomain[Active] = activeDomain.value
     val selected =
@@ -192,7 +185,7 @@ object MaskedField:
         .get
     val injection =
       Injection
-        .validate(
+        .fromTotalMap(
           TotalMap
             .fromTargetOrdinals(
               active,

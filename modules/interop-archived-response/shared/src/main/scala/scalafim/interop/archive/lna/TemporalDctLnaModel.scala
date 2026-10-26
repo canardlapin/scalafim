@@ -22,7 +22,7 @@ import scalafim.archive.lna.{
   TemporalDctParams
 }
 import gale.linalg.DMat
-import scalafim.image.SomeSampleSpace
+import image4s.SomeSampleSpace
 import scalafim.interop.archive.RepresentationEnvelope
 import scalafim.latent.{
   DctNorm,
@@ -327,7 +327,7 @@ private object TemporalDctLnaModel:
 
   private def addReference(
       fields: scala.collection.mutable.Builder[String, Vector[String]],
-      reference: scalafim.response.DomainReference
+      reference: locus4s.provenance.DomainReference
   ): Unit =
     fields += reference.namespace.value
     fields += reference.value

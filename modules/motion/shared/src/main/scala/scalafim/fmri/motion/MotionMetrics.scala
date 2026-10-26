@@ -1,10 +1,10 @@
 package scalafim.fmri.motion
 
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.SampleSpaces.*
 
 import image4s.geometry.Affine
 import image4s.geometry.D3
-import scalafim.image.*
+import neuroim4s.image.*
 
 final case class DisplacementSummary(
     median: Double,
@@ -72,7 +72,7 @@ object MotionMetrics:
       policy: DvarsPolicy = DvarsPolicy.Raw
   ): Either[MotionError, Vector[DvarsMetric]] =
     validateMask(run, mask).map { maskVol =>
-      val dims = run.space.spatialDims
+      val dims = run.space.grid.shape
       val nt = run.nVolumes
       val values = Array.fill(nt)(Double.NaN)
       var t = 1
@@ -165,13 +165,13 @@ object MotionMetrics:
   ): Vector[Double] =
     val mat = motion.toAffine
     val ref = reference.map(_.toAffine)
-    val n = mask.space.spatialDims.product
+    val n = mask.space.grid.shape.product
     val out = Vector.newBuilder[Double]
     var lin = 0
     while lin < n do
       if mask.valueAtCanonicalOrdinal(lin) then
-        val grid = mask.space.indexToGrid3D(lin).map(_.toDouble)
-        val point = mask.space.indexToCoord(grid)
+        val grid = Indexing.indexToGrid3D(mask.grid.shape, lin).map(_.toDouble)
+        val point = mask.grid.indexToFrame(grid).fold(error => throw new IllegalArgumentException(error.message), value => value)
         val mapped = apply3(mat, point)
         val target = ref.map(apply3(_, point)).getOrElse(point)
         out += distance(mapped, target)
@@ -201,8 +201,8 @@ object MotionMetrics:
     mask match
       case None => Right(None)
       case Some(m) =>
-        if m.space.spatialDims != run.space.spatialDims then
-          Left(MotionError.ShapeMismatch("mask", run.space.spatialDims, m.space.spatialDims))
+        if m.space.grid.shape != run.space.grid.shape then
+          Left(MotionError.ShapeMismatch("mask", run.space.grid.shape, m.space.grid.shape))
         else Right(mask)
 
   private[motion] def robustClip3xMedian(values: Array[Double]): Array[Double] =

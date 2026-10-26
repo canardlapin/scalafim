@@ -319,7 +319,7 @@ private[laws] object FglsVoxelwiseStudy:
       spec: VoxelwiseArSpec
   ): Either[String, VoxelwiseArFit] =
     import scalafim.dataset.{DatasetId, FmriDataset, InMemoryDatasetBackend}
-    import scalafim.image.SampleSpaces
+    import neuroim4s.image.SampleSpaces
     import scalafim.fmri.design.baseline.{BaselineBasis, BaselineModel, BaselineSpec, Intercept}
     import scalafim.fmri.design.event.EventModel
     import scalafim.fmri.hrf.design.SamplingFrame

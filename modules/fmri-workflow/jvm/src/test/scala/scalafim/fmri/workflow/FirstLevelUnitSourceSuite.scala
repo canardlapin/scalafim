@@ -1,14 +1,15 @@
 package scalafim.fmri.workflow
 
+import image4s.SomeSampleSpace
+
 import gale.linalg.DMat
 import munit.FunSuite
 import image4s.geometry.GeometryError
 import scalafim.dataset.*
-import scalafim.image.{Mask, PrimitiveBuffers, SampleSpaces, SomeSampleSpace, SomeNeuroSeries, SomeNeuroVolume}
-import scalafim.image.{SomeScalarSeries, SomeScalarVolume}
-import scalafim.image.SampleSpaces.addDim
-import scalafim.image.io.Nifti
-import scalafim.image.world.{SpaceEvidence, WorldSpace}
+import neuroim4s.image.{Mask, SampleSpaces, SomeNeuroSeries, SomeNeuroVolume}
+import neuroim4s.image.{SomeScalarSeries, SomeScalarVolume}
+import neuroim4s.image.io.Nifti
+import neuroim4s.spaces.{SpaceEvidence, WorldSpace}
 
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
@@ -127,15 +128,15 @@ class FirstLevelUnitSourceSuite extends FunSuite:
     )
 
   private def writeBold(path: Path, space: SomeSampleSpace, offset: Double): Path =
-    val values = PrimitiveBuffers.fromArray(Array.tabulate(8)(index => offset + index.toDouble))
-    val seriesSpace = space.addDim(ProviderAxes.time(2))
+    val values = (Array.tabulate(8)(index => offset + index.toDouble)).clone()
+    val seriesSpace = space.typed.appendNonSpatial(ProviderAxes.time(2)).fold(error => throw new IllegalArgumentException(error.message), value => value)
     Nifti
       .writeSeries(path, SomeScalarSeries.unsafeCopyFromCanonicalArray(values, seriesSpace, "bold"))
       .fold(error => fail(error.message), _ => path)
 
   private def writeMask(path: Path, space: SomeSampleSpace, values: Array[Double]): Path =
     Nifti
-      .writeVolume(path, SomeScalarVolume.unsafeCopyFromCanonicalArray(PrimitiveBuffers.fromArray(values), space, "mask"))
+      .writeVolume(path, SomeScalarVolume.unsafeCopyFromCanonicalArray((values).clone(), space, "mask"))
       .fold(error => fail(error.message), _ => path)
 
   private def withFixture[A](body: Path => A): A =

@@ -1,23 +1,25 @@
 package scalafim.fmri.motion
 
+import image4s.SomeSampleSpace
+
 import scalafim.fmri.motion.fixtures.VolreggerFixtures
-import scalafim.image.*
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.*
+import neuroim4s.image.SampleSpaces.*
 
 class VolreggerParitySuite extends munit.FunSuite:
 
   private val fixture = VolreggerFixtures.coreFixture
 
   private def run1x1x1(values: Vector[Double]): SomeScalarSeries[Double] =
-    val data = PrimitiveBuffers.tabulate[Double](values.length)(values)
-    SomeScalarSeries.unsafeCopyFromCanonicalArray(data, SampleSpaces(Vector(1, 1, 1)).addDim(ProviderAxes.time(values.length)), "volregger-fixture")
+    val data = Array.tabulate[Double](values.length)(values)
+    SomeScalarSeries.unsafeCopyFromCanonicalArray(data, SampleSpaces(Vector(1, 1, 1)).typed.appendNonSpatial(ProviderAxes.time(values.length)).fold(error => throw new IllegalArgumentException(error.message), value => value), "volregger-fixture")
 
   private def lineRun(values: Vector[Double]): SomeScalarSeries[Double] =
-    val data = PrimitiveBuffers.tabulate[Double](values.length)(values)
-    SomeScalarSeries.unsafeCopyFromCanonicalArray(data, SampleSpaces(Vector(values.length, 1, 1)).addDim(ProviderAxes.time(1)), "volregger-apply-fixture")
+    val data = Array.tabulate[Double](values.length)(values)
+    SomeScalarSeries.unsafeCopyFromCanonicalArray(data, SampleSpaces(Vector(values.length, 1, 1)).typed.appendNonSpatial(ProviderAxes.time(1)).fold(error => throw new IllegalArgumentException(error.message), value => value), "volregger-apply-fixture")
 
   private def allMask(space: SomeSampleSpace): SomeMaskVolume =
-    SomeMaskVolume.unsafeCopyFromCanonicalArray(PrimitiveBuffers.fillConst[Boolean](space.spatialDims.product, true), space.spatialSpace, "all-mask")
+    SomeMaskVolume.unsafeCopyFromCanonicalArray(Array.fill[Boolean](space.grid.shape.product)(true), space.typed.spatialOnly, "all-mask")
 
   private def identityEstimatorRun(): SomeScalarSeries[Double] =
     val dims = fixture.doubles("estimator_identity_dims").map(_.toInt)
@@ -28,8 +30,8 @@ class VolreggerParitySuite extends munit.FunSuite:
     val nxyz = nx * ny * nz
     val frame = Array.fill(nxyz)(0.0)
     val space = SampleSpaces(Vector(nx, ny, nz))
-    frame(space.gridToIndex3D(nx / 2, ny / 2, nz / 2)) = 5.0
-    val data = PrimitiveBuffers.ofSize[Double](nxyz * nt)
+    frame(neuroim4s.image.Indexing.gridToIndex3D(space.grid.shape, nx / 2, ny / 2, nz / 2)) = 5.0
+    val data = Array.ofDim[Double](nxyz * nt)
     var i = 0
     while i < nxyz do
       var t = 0
@@ -37,7 +39,7 @@ class VolreggerParitySuite extends munit.FunSuite:
         data(i * nt + t) = frame(i)
         t += 1
       i += 1
-    SomeScalarSeries.unsafeCopyFromCanonicalArray(data, space.addDim(ProviderAxes.time(nt)), "volregger-estimator-fixture")
+    SomeScalarSeries.unsafeCopyFromCanonicalArray(data, space.typed.appendNonSpatial(ProviderAxes.time(nt)).fold(error => throw new IllegalArgumentException(error.message), value => value), "volregger-estimator-fixture")
 
   private def baseValueAt(x: Double, y: Double, z: Double): Double =
     val dx = x - 3.0
@@ -62,37 +64,37 @@ class VolreggerParitySuite extends munit.FunSuite:
     val space = SampleSpaces(Vector(nx, ny, nz))
     val fixed =
       Array.tabulate(nxyz) { lin =>
-        val voxel = space.indexToVoxel3D(lin)
+        val voxel = neuroim4s.image.Indexing.indexToGrid(neuroim4s.image.SpatialDims.unsafeFromVector(space.grid.shape), lin)
         baseValueAt(voxel.x.toDouble, voxel.y.toDouble, voxel.z.toDouble)
       }
     val moving =
       Array.tabulate(nxyz) { lin =>
-        val voxel = space.indexToVoxel3D(lin)
+        val voxel = neuroim4s.image.Indexing.indexToGrid(neuroim4s.image.SpatialDims.unsafeFromVector(space.grid.shape), lin)
         val srcI = math.min(nx - 1, voxel.x + 1)
-        fixed(space.gridToIndex3D(srcI, voxel.y, voxel.z))
+        fixed(neuroim4s.image.Indexing.gridToIndex3D(space.grid.shape, srcI, voxel.y, voxel.z))
       }
-    val data = PrimitiveBuffers.ofSize[Double](nxyz * nt)
+    val data = Array.ofDim[Double](nxyz * nt)
     var i = 0
     while i < nxyz do
       data(i * nt) = fixed(i)
       data(i * nt + 1) = moving(i)
       i += 1
-    SomeScalarSeries.unsafeCopyFromCanonicalArray(data, space.addDim(ProviderAxes.time(nt)), "volregger-translation-fixture")
+    SomeScalarSeries.unsafeCopyFromCanonicalArray(data, space.typed.appendNonSpatial(ProviderAxes.time(nt)).fold(error => throw new IllegalArgumentException(error.message), value => value), "volregger-translation-fixture")
 
   private def translationEstimatorMask(space: SomeSampleSpace): SomeMaskVolume =
-    val dims = space.spatialDims
+    val dims = space.grid.shape
     val nx = dims(0)
     val ny = dims(1)
     val nz = dims(2)
     val nxyz = nx * ny * nz
     val data =
-      PrimitiveBuffers.tabulate[Boolean](nxyz) { lin =>
-        val voxel = space.indexToVoxel3D(lin)
+      Array.tabulate[Boolean](nxyz) { lin =>
+        val voxel = neuroim4s.image.Indexing.indexToGrid(neuroim4s.image.SpatialDims.unsafeFromVector(space.grid.shape), lin)
         voxel.x >= 1 && voxel.x < nx - 1 &&
           voxel.y >= 1 && voxel.y < ny - 1 &&
           voxel.z >= 1 && voxel.z < nz - 1
       }
-    SomeMaskVolume.unsafeCopyFromCanonicalArray(data, space.spatialSpace, "volregger-translation-mask")
+    SomeMaskVolume.unsafeCopyFromCanonicalArray(data, space.typed.spatialOnly, "volregger-translation-mask")
 
   private def poseFrom(values: Vector[Double]): RigidPose =
     assertEquals(values.length, 6)
@@ -221,7 +223,7 @@ class VolreggerParitySuite extends munit.FunSuite:
 
   test("identity estimator fixture matches generated volregger zero-motion contract") {
     val run = identityEstimatorRun()
-    val nxyz = run.space.spatialDims.product
+    val nxyz = run.space.grid.shape.product
     val pyramid =
       PyramidControl
         .make(
@@ -265,7 +267,7 @@ class VolreggerParitySuite extends munit.FunSuite:
 
   test("translation estimator fixture matches generated volregger recovery contract") {
     val run = translationEstimatorRun()
-    val nxyz = run.space.spatialDims.product
+    val nxyz = run.space.grid.shape.product
     val pyramid =
       PyramidControl
         .make(

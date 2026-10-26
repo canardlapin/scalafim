@@ -1,11 +1,18 @@
 package scalafim.spatial.io
 
-import scalafim.image.world.{SpaceEvidence, SubjectId, WorldSpace}
+import neurosurf4s.routing.*
+import neurosurf4s.routing.io.*
 
-import scalafim.image.io.Nifti
-import scalafim.image.{SampleSpaces, PrimitiveBuffers, SomeSampleSpace, SomeScalarSeries}
+import neuroim4s.spatial.io.NiftiVolumeSourceStats
+
+import image4s.SomeSampleSpace
+
+import neuroim4s.spaces.{SpaceEvidence, SubjectId, WorldSpace}
+
+import neuroim4s.image.io.Nifti
+import neuroim4s.image.{SampleSpaces, SomeScalarSeries}
 import scalafim.spatial.{ProviderAffines, ProviderAxes}
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.SampleSpaces.*
 import scalafim.spatial.*
 
 import java.nio.file.{Files, Path}
@@ -80,18 +87,16 @@ class SpatialLazyExternalScenarioSuite extends munit.FunSuite:
     val sourceBefore = source.stats
 
     val values =
-      PrimitiveBuffers.fromArray(
-        Array(
+      (Array(
           0.0, 10.0, 20.0,
           1.0, 11.0, 21.0,
           2.0, 12.0, 22.0,
           3.0, 13.0, 23.0,
           4.0, 14.0, 24.0,
           5.0, 15.0, 25.0
-        )
-      )
+        )).clone()
     Nifti
-      .writeSeries(path, SomeScalarSeries.unsafeCopyFromCanonicalArray(values, space.addDim(ProviderAxes.time(3)), "bold"))
+      .writeSeries(path, SomeScalarSeries.unsafeCopyFromCanonicalArray(values, space.typed.appendNonSpatial(ProviderAxes.time(3)).fold(error => throw new IllegalArgumentException(error.message), value => value), "bold"))
       .fold(error => fail(error.message), _ => ())
 
     val runtime = LazyFieldRuntime(summon[SpatialGraph])
@@ -110,7 +115,7 @@ class SpatialLazyExternalScenarioSuite extends munit.FunSuite:
       Vector(
         SpatialScenario.fact(
           "construction and explanation perform no IO",
-          before.phase == FieldExplanationPhase.Descriptive && sourceBefore == NiftiFieldSourceStats(0L, 0L, 0L, 0L, 0L, 0L),
+          before.phase == FieldExplanationPhase.Descriptive && sourceBefore == NiftiVolumeSourceStats(0L, 0L, 0L, 0L, 0L, 0L),
           s"phase=${before.phase} sourceStats=$sourceBefore"
         ),
         SpatialScenario.vector("external values", first.copyData.toVector, expected, 1e-12),

@@ -14,7 +14,7 @@ bash tools/ci/first-level-gate.sh
 
 It validates the scenario manifest and checked-in parity receipts without
 external Python packages, then runs the scenario testkit, AR, HRF, HRF laws,
-design, model, fit, and generated first-level laws on both the JVM and
+design, merged model/fit, and generated first-level laws on both the JVM and
 Scala.js. It also checks the formatting of the non-published
 `first-level-laws` assurance module.
 
@@ -40,12 +40,11 @@ benchmark receipt matches every benchmark and admission-policy source hash.
 | `arJVM` | 78.84% | 65.29% | 75% / 62% |
 | `hrfJVM` | 72.77% | 63.21% | 70% / 60% |
 | `designJVM` | 72.84% | 61.20% | 70% / 58% |
-| `modelJVM` | 61.53% | 56.00% | 58% / 52% |
 | `fitJVM` | 77.31% | 64.86% | 75% / 62% |
 
 ## Compiler and source policy
 
-Production and test sources in `ar`, `hrf`, `design`, `model`, `fit`, and
+Production and test sources in `ar`, `hrf`, `design`, `fit`, and
 `first-level-laws` compile with deprecation, feature, unchecked, unused-symbol,
 and value-discard diagnostics promoted to errors. There are no warning
 exceptions in this court. `scalafimCompileAll` includes these strict projects, but the

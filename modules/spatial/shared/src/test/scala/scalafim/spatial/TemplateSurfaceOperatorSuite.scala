@@ -1,9 +1,13 @@
 package scalafim.spatial
 
-import scalafim.image.{Mask, PrimitiveBuffers, SampleSpaces}
-import scalafim.image.SampleSpaces.*
-import scalafim.image.world.{SubjectId, TemplateName}
-import scalafim.surface.*
+import neurosurf4s.routing.*
+
+import neuroim4s.spatial.SamplingPolicy
+
+import neuroim4s.image.{Mask, SampleSpaces}
+import neuroim4s.image.SampleSpaces.*
+import neuroim4s.spaces.{SubjectId, TemplateName}
+import neurosurf4s.surface.*
 
 class TemplateSurfaceOperatorSuite extends munit.FunSuite:
   private def ok[E, A](result: Either[E, A]): A =
@@ -89,8 +93,7 @@ class TemplateSurfaceOperatorSuite extends munit.FunSuite:
     val input = DoubleMatrix.fromRows(Vector.tabulate(10242)(i => Vector(math.sin(i * 0.013), 2.0 + math.cos(i * 0.071))))
     val first = ok(plan.resample(Array.tabulate(10242)(i => math.sin(i * 0.013))) )
     val second = ok(plan.resample(Array.tabulate(10242)(i => 2.0 + math.cos(i * 0.071))) )
-    val runtime = CachedFieldRuntime(InMemoryOperatorCache.empty)
-    val observed = ok(runtime.data(ok(runtime.view(Field.fromMatrix(source.id, input, "two columns"), operator))))
+    val observed = ok(operator.forward(input))
     rows.indices.foreach: outputRow =>
       assertEqualsDouble(observed(outputRow, 0), first(rows(outputRow)), 1e-10)
       assertEqualsDouble(observed(outputRow, 1), second(rows(outputRow)), 1e-10)
@@ -111,7 +114,7 @@ class TemplateSurfaceOperatorSuite extends munit.FunSuite:
     val refused = Morphism.between(id, source, wrong, MorphismKind.SurfaceToSurface, RouteTag.Anatomical, inverse = Inverse.AdjointOnly, coordinateMap = CoordinateMap.surfaceResampling(binding))
     assertEquals(refused.left.toOption, Some(SpatialError.SurfaceMappingGeometryMismatch(id)))
 
-  test("repeated binding admission retains frozen weights and rejects later endpoint topology mutation"):
+  test("binding retains frozen weights across copy mutation and rejects reordered endpoints"):
     val mesh = TriangleMesh.fromArrays(sourceMesh.coordinates.clone(), sourceMesh.faceIndices.clone())
     val sourceGeometry = SurfaceGeometry(mesh, Hemisphere.Left, SurfaceKind.White)
     val targetGeometry = SurfaceGeometry(targetMesh, Hemisphere.Left, SurfaceKind.Inflated)
@@ -123,17 +126,23 @@ class TemplateSurfaceOperatorSuite extends munit.FunSuite:
     val graph = ok(SpatialGraph.build(Vector(source, target), Vector(edge)))
     ok(OperatorCompiler.compile(graph, CompileRequest(source.id, target.id, roi = Some(Vector(19, 3)))))
     assert(binding.normalizedCsr eq frozen)
-    val first = mesh.faceIndices(0)
-    mesh.faceIndices(0) = mesh.faceIndices(1)
-    mesh.faceIndices(1) = first
-    binding.validateEndpoints match
-      case Left(SpatialError.InvalidMixedPullback(reason)) => assert(reason.contains("ordered template topology"), reason)
+    val copiedFaces = mesh.faceIndices.toArray
+    var corner = 0
+    while corner < 3 do
+      val first = copiedFaces(corner)
+      copiedFaces(corner) = copiedFaces(3 + corner)
+      copiedFaces(3 + corner) = first
+      corner += 1
+    assertEquals(binding.validateEndpoints, Right(()))
+    assert(SpatialGraph.build(Vector(source, target), Vector(edge)).isRight)
+    val reordered = SurfaceGeometry(TriangleMesh.fromArrays(mesh.coordinates.toArray, copiedFaces), Hemisphere.Left, SurfaceKind.White)
+    SurfaceResamplingBinding.checked(plan, reordered, targetGeometry) match
+      case Left(SurfaceResamplingBindingError.Endpoint(SurfaceError.InvalidTopology(reason))) => assert(reason.contains("ordered template topology"), reason)
       case other => fail(s"expected typed endpoint topology rejection, got $other")
-    assert(SpatialGraph.build(Vector(source, target), Vector(edge)).isLeft)
 
   test("masked volume ribbon followed by weighted template resampling matches staged native resampling and reports bounded coverage"):
     val volumeSpace = SampleSpaces(Vector(6, 6, 6))
-    val mask = Mask.fromIndices(volumeSpace, PrimitiveBuffers.fromArray(Array.tabulate(216)(identity).filter(_ % 2 == 0)), "checkerboard")
+    val mask = Mask.fromIndices(volumeSpace, (Array.tabulate(216)(identity).filter(_ % 2 == 0)).clone(), "checkerboard")
     val root = ok(Domain.build(ok(DomainId("volume-root")), SpaceRef.Volume(ok(SubjectId("sub-template").asSpatial), None, ok(Modality("bold"))), ok(SamplingGeometry.volume(volumeSpace, Some(mask)))))
     def display(mesh: TriangleMesh, kind: SurfaceKind, isPial: Boolean = false): SurfaceGeometry =
       val coordinates = mesh.coordinates.clone()

@@ -104,7 +104,7 @@ class FixedEffectsEstimatesSuite extends munit.FunSuite:
   test("public selected run combination preserves mixed-TR R estimates and native exclusions") {
     import scalafim.fmri.fit.fixtures.MixedTrFixedEffectsRFixture as R
     import scalafim.dataset.{DatasetEvents, DatasetId, FmriDataset, InMemoryDatasetBackend}
-    import scalafim.image.SampleSpaces
+    import neuroim4s.image.SampleSpaces
     import scalafim.fmri.fit.GaleTestMatrix
     import scalafim.fmri.design.baseline.Intercept
     import scalafim.fmri.hrf.*

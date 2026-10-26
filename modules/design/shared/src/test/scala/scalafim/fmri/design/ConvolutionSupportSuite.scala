@@ -89,7 +89,7 @@ class ConvolutionSupportSuite extends munit.FunSuite:
     val modelA = EventModel.build(Vector(a), frame)
     val modelB = EventModel.build(Vector(b), frame)
     assertNotEquals(modelA.designSchema.fingerprint, modelB.designSchema.fingerprint)
-    assert(modelB.designSchema.audit.policyReceipts.exists(_.name == "convolution"))
+    assert(modelB.designSchema.audit.convolutionReceipts.nonEmpty)
 
   test("in-place matrix or event-amplitude mutations invalidate a captured recipe"):
     def compiled = EventTerm(Vector(Event.variable(Vector(2.0), "amplitude")), Vector(0.s))

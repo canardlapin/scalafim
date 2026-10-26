@@ -4,7 +4,7 @@ import gale.linalg.DMat
 import munit.FunSuite
 import scalafim.dataset.RunId
 import scalafim.fmri.fit.{LeastSquaresSeparate, LssTrialDesign, ResponseBlock, TrialEstimability}
-import scalafim.fmri.mvpa.{FeatureIndex, PatternCopyBudget}
+import mvpa4s.{FeatureIndex, PatternCopyBudget}
 
 class RunTrialReadoutSuite extends FunSuite:
   private def right[A](value: Either[?, A]): A =

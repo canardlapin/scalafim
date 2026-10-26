@@ -1,0 +1,443 @@
+{
+  "schema": "scalafim.eco-u4-focused-qualification.v1",
+  "recorded": "2026-10-21T17:08:41.013677+00:00",
+  "source": {
+    "provider": "fe9ce3272fce97c4c3b400b373db2a2336c24a7d",
+    "rootReviewed": "8998f93be048df27d0bb7e2126bd589a4a59ae30",
+    "preMove": "694c711c91d1b09ddbb31d08345796e8c544b1c7"
+  },
+  "status": "PASS focused source-composite checks; published-pin and milestone qualification pending",
+  "providerFull": {
+    "passed": 1226,
+    "skipped": 10,
+    "nonemptyTestTasks": 8,
+    "consumerProjects": "consumerJVM/JS compiled public API examples; no behavior tests there. example.LocusConsumerSuite executes within both locus test tasks."
+  },
+  "ledger": [
+    {
+      "log": "scalafim-eco-u4-identity-before-20261021.log.gz",
+      "rawSha256": "311f4aa021ffddeb593514359c9a276d933e1369b7950bb24f61a1e4e5edc1e7",
+      "rawBytes": 12204,
+      "execution": {
+        "schema_version": 1,
+        "started_utc": "2026-10-21T16:34:39.026385+00:00",
+        "finished_utc": "2026-10-21T16:36:16.315294+00:00",
+        "duration_seconds": 97.28812,
+        "command": [
+          "python3",
+          "tools/build/sbt-warm",
+          "mvpaSpatialJVM/testOnly *SpatialIdentityGoldenSuite",
+          "mvpaSpatialJS/testOnly *SpatialIdentityGoldenSuite"
+        ],
+        "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020",
+        "log": "/tmp/scalafim-eco-u4-identity-before-20261021.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 900.0,
+        "log_bytes": 12204
+      },
+      "summaries": [
+        {
+          "Total": 1,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 1
+        },
+        {
+          "Total": 1,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 1
+        }
+      ]
+    },
+    {
+      "log": "scalafim-eco-u4-locus-focused-01.log.gz",
+      "rawSha256": "d2c9dca1dc2ae25d88cddc39e27d111e54575ede24d73c33eb6ad06e5643130b",
+      "rawBytes": 9963,
+      "execution": {
+        "schema_version": 1,
+        "started_utc": "2026-10-21T16:37:40.174790+00:00",
+        "finished_utc": "2026-10-21T16:37:56.989072+00:00",
+        "duration_seconds": 16.813864,
+        "command": [
+          "python3",
+          "tools/build/sbt-warm",
+          "--",
+          "-Dscalafim.mvpa4s.build=/Users/bbuchsbaum/code/scala/mvpa4s",
+          "{file:/Users/bbuchsbaum/code/scala/mvpa4s/}locusJVM/test",
+          "{file:/Users/bbuchsbaum/code/scala/mvpa4s/}locusJS/test",
+          "mvpaSpatialJVM/test",
+          "mvpaSpatialJS/test",
+          "atlasExamplesJVM/test",
+          "workflowExamplesJVM/test",
+          "workflowExamplesJS/test"
+        ],
+        "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020",
+        "log": "/tmp/scalafim-eco-u4-locus-focused-01.log",
+        "exit_code": 1,
+        "child_returncode": 1,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 1800.0,
+        "log_bytes": 9963
+      },
+      "summaries": []
+    },
+    {
+      "log": "scalafim-eco-u4-locus-focused-02.log.gz",
+      "rawSha256": "d6a108a2605df027d0cc02334f4a71418ec8f98095e3cea6bf8c16ccfde30a95",
+      "rawBytes": 26062,
+      "execution": {
+        "schema_version": 1,
+        "started_utc": "2026-10-21T16:38:32.624792+00:00",
+        "finished_utc": "2026-10-21T16:44:44.839972+00:00",
+        "duration_seconds": 372.212529,
+        "command": [
+          "python3",
+          "tools/build/sbt-warm",
+          "{file:/Users/bbuchsbaum/code/scala/mvpa4s/}locusJVM/test",
+          "{file:/Users/bbuchsbaum/code/scala/mvpa4s/}locusJS/test",
+          "mvpaSpatialJVM/test",
+          "mvpaSpatialJS/test",
+          "atlasExamplesJVM/test",
+          "workflowExamplesJVM/test",
+          "workflowExamplesJS/test"
+        ],
+        "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020",
+        "log": "/tmp/scalafim-eco-u4-locus-focused-02.log",
+        "exit_code": 1,
+        "child_returncode": 1,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 1800.0,
+        "log_bytes": 26062
+      },
+      "summaries": [
+        {
+          "Total": 17,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 17
+        },
+        {
+          "Total": 17,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 17
+        },
+        {
+          "Total": 14,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 14
+        },
+        {
+          "Total": 14,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 14
+        },
+        {
+          "Total": 5,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 5
+        }
+      ]
+    },
+    {
+      "log": "scalafim-eco-u4-locus-consumers-03.log.gz",
+      "rawSha256": "ef1e50d9d3303efbb30fc10aa5f32bdc5b617f2d6655bee2b6f2c0c0ddf297f1",
+      "rawBytes": 15615,
+      "execution": {
+        "schema_version": 1,
+        "started_utc": "2026-10-21T16:46:31.515057+00:00",
+        "finished_utc": "2026-10-21T16:52:47.951082+00:00",
+        "duration_seconds": 376.433115,
+        "command": [
+          "python3",
+          "tools/build/sbt-warm",
+          "mvpaSpatialJVM/test",
+          "mvpaSpatialJS/test",
+          "workflowExamplesJVM/test",
+          "workflowExamplesJS/test"
+        ],
+        "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020",
+        "log": "/tmp/scalafim-eco-u4-locus-consumers-03.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 1800.0,
+        "log_bytes": 15615
+      },
+      "summaries": [
+        {
+          "Total": 15,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 15
+        },
+        {
+          "Total": 15,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 15
+        },
+        {
+          "Total": 3,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 3
+        },
+        {
+          "Total": 2,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 2
+        }
+      ]
+    },
+    {
+      "log": "scalafim-eco-u4-integration-focused-04.log.gz",
+      "rawSha256": "747f4ec9a4a37da4dc4dfda5fce9910eecf0511c702fa5624c53495a8690e5cc",
+      "rawBytes": 7614,
+      "execution": {
+        "schema_version": 1,
+        "started_utc": "2026-10-21T16:57:31.454936+00:00",
+        "finished_utc": "2026-10-21T16:58:17.960275+00:00",
+        "duration_seconds": 46.504504,
+        "command": [
+          "python3",
+          "tools/build/sbt-warm",
+          "{file:/Users/bbuchsbaum/code/scala/mvpa4s/}coreJVM/testOnly *HeldOutSubjectPredictionSuite",
+          "{file:/Users/bbuchsbaum/code/scala/mvpa4s/}coreJS/testOnly *HeldOutSubjectPredictionSuite",
+          "{file:/Users/bbuchsbaum/code/scala/mvpa4s/}predictiveJVM/testOnly *SoftLdaSuite *AlderSoftLdaSuite",
+          "{file:/Users/bbuchsbaum/code/scala/mvpa4s/}predictiveJS/testOnly *SoftLdaSuite *AlderSoftLdaSuite",
+          "mvpaFitJVM/testOnly *BetaFreeRsaAcceptanceSuite",
+          "mvpaFitJS/testOnly *BetaFreeRsaAcceptanceSuite",
+          "mvpaDatasetJVM/testOnly *DatasetObservationEvidenceSuite *GroupArchiveHandoffScenarioSuite",
+          "mvpaDatasetJS/testOnly *DatasetObservationEvidenceSuite *GroupArchiveHandoffScenarioSuite",
+          "mvpaArtifactsJVM/testOnly *PatternPredictionArchiveSuite"
+        ],
+        "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020",
+        "log": "/tmp/scalafim-eco-u4-integration-focused-04.log",
+        "exit_code": 1,
+        "child_returncode": 1,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 2400.0,
+        "log_bytes": 7614
+      },
+      "summaries": [
+        {
+          "Total": 13,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 13
+        },
+        {
+          "Total": 13,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 13
+        },
+        {
+          "Total": 7,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 7
+        },
+        {
+          "Total": 7,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 7
+        }
+      ]
+    },
+    {
+      "log": "scalafim-eco-u4-integration-focused-05.log.gz",
+      "rawSha256": "fd250f028126f7533ebc67a2757e8715ce7a0d526dc35cefe650d9440ae74778",
+      "rawBytes": 13046,
+      "execution": {
+        "schema_version": 1,
+        "started_utc": "2026-10-21T16:58:42.663459+00:00",
+        "finished_utc": "2026-10-21T17:00:05.797639+00:00",
+        "duration_seconds": 83.133236,
+        "command": [
+          "python3",
+          "tools/build/sbt-warm",
+          "reload",
+          "mvpaFitJVM/testOnly *BetaFreeRsaAcceptanceSuite",
+          "mvpaFitJS/testOnly *BetaFreeRsaAcceptanceSuite",
+          "mvpaDatasetJVM/testOnly *DatasetObservationEvidenceSuite *GroupArchiveHandoffScenarioSuite",
+          "mvpaDatasetJS/testOnly *DatasetObservationEvidenceSuite *GroupArchiveHandoffScenarioSuite",
+          "mvpaArtifactsJVM/testOnly *PatternPredictionArchiveSuite"
+        ],
+        "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020",
+        "log": "/tmp/scalafim-eco-u4-integration-focused-05.log",
+        "exit_code": 1,
+        "child_returncode": 1,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 2400.0,
+        "log_bytes": 13046
+      },
+      "summaries": [
+        {
+          "Total": 1,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 1
+        },
+        {
+          "Total": 1,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 1
+        }
+      ]
+    },
+    {
+      "log": "scalafim-eco-u4-integration-focused-06.log.gz",
+      "rawSha256": "c3ef1b82d94074542adbcf881f160792335dfb2ee86caab7d18db5973e91fc5f",
+      "rawBytes": 5826,
+      "execution": {
+        "schema_version": 1,
+        "started_utc": "2026-10-21T17:01:29.992181+00:00",
+        "finished_utc": "2026-10-21T17:02:02.217509+00:00",
+        "duration_seconds": 32.224867,
+        "command": [
+          "python3",
+          "tools/build/sbt-warm",
+          "mvpaDatasetJVM/testOnly *DatasetObservationEvidenceSuite *GroupArchiveHandoffScenarioSuite",
+          "mvpaDatasetJS/testOnly *DatasetObservationEvidenceSuite *GroupArchiveHandoffScenarioSuite",
+          "mvpaArtifactsJVM/testOnly *PatternPredictionArchiveSuite"
+        ],
+        "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020",
+        "log": "/tmp/scalafim-eco-u4-integration-focused-06.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 1800.0,
+        "log_bytes": 5826
+      },
+      "summaries": [
+        {
+          "Total": 10,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 10
+        },
+        {
+          "Total": 10,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 10
+        },
+        {
+          "Total": 2,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 2
+        }
+      ]
+    },
+    {
+      "log": "scalafim-eco-u4-provider-full-07.log.gz",
+      "rawSha256": "4d709af728861caebb7fbf8f876fe5829802741191175b163685d3cfae5237e5",
+      "rawBytes": 121113,
+      "execution": {
+        "schema_version": 1,
+        "started_utc": "2026-10-21T17:03:44.417902+00:00",
+        "finished_utc": "2026-10-21T17:04:09.455518+00:00",
+        "duration_seconds": 25.037217,
+        "command": [
+          "python3",
+          "tools/build/sbt-warm",
+          "mvpa4sCoreTestAll",
+          "mvpa4sPredictiveTestAll",
+          "mvpa4sLocusTestAll"
+        ],
+        "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020",
+        "log": "/tmp/scalafim-eco-u4-provider-full-07.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 2400.0,
+        "log_bytes": 121113
+      },
+      "summaries": [
+        {
+          "Total": 495,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 490,
+          "Skipped": 5
+        },
+        {
+          "Total": 495,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 490,
+          "Skipped": 5
+        },
+        {
+          "Total": 3,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 3
+        },
+        {
+          "Total": 3,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 3
+        },
+        {
+          "Total": 103,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 103
+        },
+        {
+          "Total": 103,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 103
+        },
+        {
+          "Total": 17,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 17
+        },
+        {
+          "Total": 17,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 17
+        }
+      ]
+    }
+  ],
+  "retainedFailures": {
+    "locus-focused-01": "sbt-warm -D argument treated as a command; explicit JAVA_TOOL_OPTIONS corrected provider override",
+    "locus-focused-02": "missed workflow example import; corrected and both workflow platforms pass in03",
+    "integration-focused-04": "new test dependency settings not reloaded; explicit reload05",
+    "integration-focused-05": "SemanticError test adapter used MeasurementError constructor; fixed and affected scenarios pass06"
+  },
+  "limits": [
+    "Source composition does not prove immutable published-pin or hosted CI behavior.",
+    "Ten opt-in core study/probe cases skipped across both platforms; no calibration claim.",
+    "Actual group/archive scenario preserves known-variance, joint-inference and numerical-export refusals. Shared envelope is attempted-fit metadata, not numerical group serialization.",
+    "JVM archive write/reopen qualification supplies no JS filesystem claim.",
+    "Existing adverse scientific/native/performance receipts remain applicable."
+  ]
+}

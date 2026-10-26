@@ -1,0 +1,914 @@
+[
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/target",
+    "verified": {
+      "sha256": "cf6bb363390f39e53822b7c75b43e2c6fbbed6fe6bfc01eb3842939250a99771",
+      "files": 6
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/project/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/project/target",
+    "verified": {
+      "sha256": "5dda6f35bcaef44af96fbd6bd069bab0937e268718a494a55def8b5dc95f852a",
+      "files": 100
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/mvpa-dataset/js/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/mvpa-dataset/js/target",
+    "verified": {
+      "sha256": "d8e31343972eb410ab53b02c0406d31c76813c412e3d94d2c495c4d058d46467",
+      "files": 302
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/mvpa-dataset/jvm/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/mvpa-dataset/jvm/target",
+    "verified": {
+      "sha256": "f7d50bf3717e5951129094fd392770569d3462ef5e4728fac1a3664456c90c30",
+      "files": 188
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/surface-view-three/js/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/surface-view-three/js/target",
+    "verified": {
+      "sha256": "dbbcbd18a3d38cca0130a3dcf7353128b177049f1f31a54300340bd07394ca7c",
+      "files": 401
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/archive-lna/js/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/archive-lna/js/target",
+    "verified": {
+      "sha256": "21ffd878345f0283c64cec62f2304603a82d74dc834f2d1b1ccf2b20742bd357",
+      "files": 452
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/archive-lna/jvm/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/archive-lna/jvm/target",
+    "verified": {
+      "sha256": "6836550627654fc40b0f6a0885360a22b53df76c448a5b39c4c25c2181b99ebf",
+      "files": 287
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/dataset-zarr/js/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/dataset-zarr/js/target",
+    "verified": {
+      "sha256": "281efdad733e575c2767034cb04a3e5eb612a79b3151b024364711cdb74bd947",
+      "files": 62
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/dataset-zarr/jvm/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/dataset-zarr/jvm/target",
+    "verified": {
+      "sha256": "a6cb493456abac1f6a10b6c63f8cf954651cb3b4910a8a6bbee3734a1494f740",
+      "files": 87
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/image-view-java2d/jvm/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/image-view-java2d/jvm/target",
+    "verified": {
+      "sha256": "ddeab5edb44b16de75788e4fedb979a250948e29107cc3de62b56d1eaf064936",
+      "files": 44
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/latent/js/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/latent/js/target",
+    "verified": {
+      "sha256": "e0d4f2c05b17659403f7812af41c0324afa7db88e85c68860c70eb272337a8a0",
+      "files": 794
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/latent/jvm/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/latent/jvm/target",
+    "verified": {
+      "sha256": "ca10f80a5f67779de1c726b2ad077ce6e1116c48eceba392e1b8584b38564621",
+      "files": 455
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/mvpa-foundation-spike/js/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/mvpa-foundation-spike/js/target",
+    "verified": {
+      "sha256": "3ef9b64816f9aac3b0f9cd7d944c5fea68e3fb3b9b47257d2b72678b17082b35",
+      "files": 30
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/mvpa-foundation-spike/jvm/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/mvpa-foundation-spike/jvm/target",
+    "verified": {
+      "sha256": "2cfd6526b4ed4c6ba152e1534b94800fa5f395797dc4274fd604f71163b26afd",
+      "files": 30
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/image-view/js/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/image-view/js/target",
+    "verified": {
+      "sha256": "c3cb0790c94a9b1d52aff6e4cb183d952f02966fc80829fbf248c27d50110951",
+      "files": 507
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/image-view/jvm/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/image-view/jvm/target",
+    "verified": {
+      "sha256": "0def6fac2e4a3b98684f6528336c44b0907ce6a353b9ca1da616fc96ec5c41b9",
+      "files": 292
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/spatial/js/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/spatial/js/target",
+    "verified": {
+      "sha256": "88bb45df44f9766b3192d35882d2306d53687ab58a49674ff602b09eb19c4c50",
+      "files": 1847
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/spatial/jvm/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/spatial/jvm/target",
+    "verified": {
+      "sha256": "742cdc68566d5fda836857f9800033c958a6dc38ccdec447ee60c2e02862d807",
+      "files": 1229
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/interop-archived-response/js/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/interop-archived-response/js/target",
+    "verified": {
+      "sha256": "e419aeef6871a604ef6d4bf0953da7e7e47e87a542f1ec681f51bc8b6fcf2fc5",
+      "files": 592
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/interop-archived-response/jvm/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/interop-archived-response/jvm/target",
+    "verified": {
+      "sha256": "d2f735c00f83c0bd056c28586864fca16fb3b83f182c1f8860e2e192f2e0ea39",
+      "files": 441
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/atlas/js/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/atlas/js/target",
+    "verified": {
+      "sha256": "daf1eef1f6e4f777c3e916db9d4434650473ddac56b2a8f2ef0fc1f70badf299",
+      "files": 285
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/atlas/jvm/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/atlas/jvm/target",
+    "verified": {
+      "sha256": "dd607b4430ac2c7bca54148bc0cce559c05df97c4099f7da9347771fdc0717e9",
+      "files": 251
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/image-view-canvas/js/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/image-view-canvas/js/target",
+    "verified": {
+      "sha256": "236a40c8af734b43ebbbb8c2a3b3faea2dac3695ea4659a9d5476ae540dbd9d0",
+      "files": 100
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/fmri-workflow/js/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/fmri-workflow/js/target",
+    "verified": {
+      "sha256": "49b393fcd53ba04947a46fb8dbe11465369faae5b7c16c06e0adac6038d05718",
+      "files": 568
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/fmri-workflow/jvm/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/fmri-workflow/jvm/target",
+    "verified": {
+      "sha256": "9b4d1ebe7160002c3d02465cb91d0f3babc59865a9b4623932b92fc4c9bded01",
+      "files": 386
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/surface-view-raster/js/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/surface-view-raster/js/target",
+    "verified": {
+      "sha256": "632305b84e52ce763a0167dd3f95a2e913d6f2a6fe5101d071a333b29b4e79b0",
+      "files": 152
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/surface-view-raster/jvm/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/surface-view-raster/jvm/target",
+    "verified": {
+      "sha256": "2863f1a9ec6978f4330cb18f192a2725378a99a79562e81709bff867b7575fce",
+      "files": 104
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/provider-spike/js/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/provider-spike/js/target",
+    "verified": {
+      "sha256": "5bc22602ff78f3fc12ef08f022230ffaa32c3803b223be0f29bec7f678f831a2",
+      "files": 36
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/provider-spike/jvm/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/provider-spike/jvm/target",
+    "verified": {
+      "sha256": "0a4c475e8455e06a94baa159272703bb0bb2a5b5c0aa2900c88655e103f15887",
+      "files": 34
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/mvpa-pipeline/js/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/mvpa-pipeline/js/target",
+    "verified": {
+      "sha256": "c48ad015240a57a5f763f015cf9daf44cf265eb4d1ffd07a2de1c98dab861fd7",
+      "files": 38
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/mvpa-pipeline/jvm/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/mvpa-pipeline/jvm/target",
+    "verified": {
+      "sha256": "97254640ea24cbf8702bbf365dc2bc9b1a1551f553f6b708a6449e76ed557afa",
+      "files": 35
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/model/js/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/model/js/target",
+    "verified": {
+      "sha256": "0cd4c99cff5a4396fbe8e3afb090d230e9766e7da8c0ed6e5b194293760f8c21",
+      "files": 843
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/model/jvm/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/model/jvm/target",
+    "verified": {
+      "sha256": "973e7632a9923b525a51bbd543909559b95497a8a5375853ec17dd52e5effd7c",
+      "files": 491
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/ar/js/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/ar/js/target",
+    "verified": {
+      "sha256": "546882bf934471b0980a3d5c41706ae7c2167cb0ddb63817aeb064d2c678d214",
+      "files": 520
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/ar/jvm/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/ar/jvm/target",
+    "verified": {
+      "sha256": "cdc7b94d3b06a69cedba712ebe3fa8fc616459bc65656733e53270d21b518d65",
+      "files": 306
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/first-level-laws/js/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/first-level-laws/js/target",
+    "verified": {
+      "sha256": "c3e8c4cfcf9d202135d03b11ec21e2905c45384dff5a6268310da3f14117c90d",
+      "files": 46
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/first-level-laws/jvm/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/first-level-laws/jvm/target",
+    "verified": {
+      "sha256": "c9ae986a53e512c8cd25d4fed5ec5d49b189638a8920da11fbc74c85c39bad5f",
+      "files": 40
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/mvpa-fit/js/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/mvpa-fit/js/target",
+    "verified": {
+      "sha256": "f8861aaa7d9dfcb9a104fc85e86395b93675ebe066646cb239371e07b6a5911b",
+      "files": 502
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/mvpa-fit/jvm/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/mvpa-fit/jvm/target",
+    "verified": {
+      "sha256": "87f8e89ff3e29428cec03e451ee40534c6cc4ee719e0b7823cdd9f8da04f4333",
+      "files": 301
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/phrf-comparison/js/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/phrf-comparison/js/target",
+    "verified": {
+      "sha256": "d2bc23dcc38d517b604d268a2a6ea00f958e85f116625996aad4e1e832270a09",
+      "files": 1765
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/phrf-comparison/jvm/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/phrf-comparison/jvm/target",
+    "verified": {
+      "sha256": "9774c9964d6fc4fe64414668539f1b6a6ed30b644630a10516dd0642e957447c",
+      "files": 1423
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/threshold/js/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/threshold/js/target",
+    "verified": {
+      "sha256": "954b1f1ec77356539b808ba90da82e6c8647f3903c50a485540ec4b61917422a",
+      "files": 511
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/threshold/jvm/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/threshold/jvm/target",
+    "verified": {
+      "sha256": "cd9d7ab23e32b7240631d33cdeba70c7b55d7e46c3042d2e3323940e4b07b414",
+      "files": 326
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/mvpa-group/js/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/mvpa-group/js/target",
+    "verified": {
+      "sha256": "780d48a6dc1f23c017a0e91a8a1e39f288a40f1c92e62d1bb321bb598327b365",
+      "files": 214
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/mvpa-group/jvm/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/mvpa-group/jvm/target",
+    "verified": {
+      "sha256": "eefc3cff8b131881cce99494ab1f88e02b119f8be1cf3f26eb9486c20cc1538a",
+      "files": 135
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/image-view-javafx/jvm/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/image-view-javafx/jvm/target",
+    "verified": {
+      "sha256": "034544137e469e6faf4c490655f3943ade9fe9cd4e9c16ba9dd86ca6a405988b",
+      "files": 44
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/motion/js/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/motion/js/target",
+    "verified": {
+      "sha256": "8066b77935edfe937f0e94d099758c5eb319ace7458ae2596d2ff7dfa62a1a03",
+      "files": 650
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/motion/jvm/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/motion/jvm/target",
+    "verified": {
+      "sha256": "47d2a206a2898e8418c7fd0b27e1eb263cbf088564a506e8ecd63d0985c58158",
+      "files": 517
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/surface/js/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/surface/js/target",
+    "verified": {
+      "sha256": "2bf4b41c96ea542cf542da155f1b7e9e3c8aeaddcc254d6be6dbc27578bdc1df",
+      "files": 2235
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/surface/jvm/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/surface/jvm/target",
+    "verified": {
+      "sha256": "cc0f0b4779eb0ca3eb3fcf0d5fad76cbec4837b7c5ebb9b0e2c666ed10716f55",
+      "files": 1384
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/mvpa-spatial/js/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/mvpa-spatial/js/target",
+    "verified": {
+      "sha256": "cf977c6fb341805e9e3a38e727d6754a83f21da0f876c642fd3219b8963af81b",
+      "files": 281
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/mvpa-spatial/jvm/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/mvpa-spatial/jvm/target",
+    "verified": {
+      "sha256": "51b0b4d12c2cdbf331f76916f2054b436ccdcee37e3ab5986064cde5fd5ede2d",
+      "files": 197
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/surface-test-fixtures/js/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/surface-test-fixtures/js/target",
+    "verified": {
+      "sha256": "6dad35a566cfe25258fce8869a3d68b958bb5bce0b1067b3ac20762681137526",
+      "files": 36
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/surface-test-fixtures/jvm/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/surface-test-fixtures/jvm/target",
+    "verified": {
+      "sha256": "51e47728e117b59cee7488ef031d917b5eeb1923cfd67de462d25a7f94149a76",
+      "files": 71
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/locus-data/js/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/locus-data/js/target",
+    "verified": {
+      "sha256": "ee369181d7983e26735f7fc6799f30d17724b15cca5b84c9acfb83a37e7befa7",
+      "files": 106
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/locus-data/jvm/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/locus-data/jvm/target",
+    "verified": {
+      "sha256": "44f8eeeb4a51f334b9eef0ed5cd5b2baf8e6e40d9cae6b5ac5ef2b5267fee5f2",
+      "files": 80
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/surface-view-connectivity/js/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/surface-view-connectivity/js/target",
+    "verified": {
+      "sha256": "9e2f31a78116e6fe7325876929ffe7db76c36f0c5d17a859d1a3aace397d16bb",
+      "files": 62
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/surface-view-connectivity/jvm/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/surface-view-connectivity/jvm/target",
+    "verified": {
+      "sha256": "ed18cc5a343e6237b00ee28f705b6110636535520a94b2e4dd4165fb46572e54",
+      "files": 48
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/dataset/js/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/dataset/js/target",
+    "verified": {
+      "sha256": "568d042811b977264a545d1cbaf2a0a7275cb5e81c13494ecf3e9c201aeacc92",
+      "files": 904
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/dataset/jvm/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/dataset/jvm/target",
+    "verified": {
+      "sha256": "af4ea7de3eb855c94bedf589dafb33341f3008c6ee7bdeb2580d6d6e09194edb",
+      "files": 589
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/mvpa-artifacts/js/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/mvpa-artifacts/js/target",
+    "verified": {
+      "sha256": "35caeaa6f7ca2c503ce30fc2acd0ecf873a84d8d7af86bc75acaa1e367bf0656",
+      "files": 107
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/mvpa-artifacts/jvm/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/mvpa-artifacts/jvm/target",
+    "verified": {
+      "sha256": "0a774874bbfca5e3557c0dd2ea158ac550c913f37d9a6fdd2ad91094b0b9cbf4",
+      "files": 101
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/estimates/js/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/estimates/js/target",
+    "verified": {
+      "sha256": "e981c3db7917e2d3b82b40e18c4f9a7e1bd733207956ee062d2cbbcba9db5579",
+      "files": 512
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/estimates/jvm/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/estimates/jvm/target",
+    "verified": {
+      "sha256": "770b45a4a31fc0692a9f423ed017a85ef0f7a44be373d61a595173b3bbf70912",
+      "files": 305
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/group/js/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/group/js/target",
+    "verified": {
+      "sha256": "b6650c89b65575bf6ff3a63246948e5be1c45026542d15fef2719fb414fefaec",
+      "files": 694
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/group/jvm/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/group/jvm/target",
+    "verified": {
+      "sha256": "2d7def737f50b5b93576c70c64ffe484fb232576db375b5c2d3f2adc03fb7ef3",
+      "files": 427
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/estimates-io/js/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/estimates-io/js/target",
+    "verified": {
+      "sha256": "6b7b2238080c7c2c1d781bd89e3b8b77f2eb7a94302649fcfed52aa85014d5b0",
+      "files": 272
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/estimates-io/jvm/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/estimates-io/jvm/target",
+    "verified": {
+      "sha256": "91094bf3ff922b971756026c4d0d5bfb6225930b2bee2dae9f9a311ccec3b70f",
+      "files": 169
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/connectivity/js/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/connectivity/js/target",
+    "verified": {
+      "sha256": "7f19b6750947fc532ea93d5efce7dd7b55ae84e8f7aca7abd43a9a159b01b090",
+      "files": 728
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/connectivity/jvm/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/connectivity/jvm/target",
+    "verified": {
+      "sha256": "509b025554fd532ee01c83d47c7d07ec76a89f5c32f775498adfbf9800c64b05",
+      "files": 424
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/fit/js/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/fit/js/target",
+    "verified": {
+      "sha256": "742647e1d42042a539251f07f299dde12b5637d6aba262b27068a4bbf80b0241",
+      "files": 4912
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/fit/jvm/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/fit/jvm/target",
+    "verified": {
+      "sha256": "9be85ad2564a7f860563f0922652ed998050ed53084193071657e74c4b8b013c",
+      "files": 3019
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/archive/js/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/archive/js/target",
+    "verified": {
+      "sha256": "6c620ebedaae1e1edc52c7f2b4953ba62feacbab708adad24c4f8f58c078ba8c",
+      "files": 512
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/archive/jvm/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/archive/jvm/target",
+    "verified": {
+      "sha256": "2c0f655825f8a568b33ae67db30822749bdac750a81371b25b3c940d09fe763d",
+      "files": 334
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/response/js/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/response/js/target",
+    "verified": {
+      "sha256": "ebdf6b17ff74a8f59125c4350fae908a9abf519fdf0727e3c8395d07361f9ac1",
+      "files": 562
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/response/jvm/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/response/jvm/target",
+    "verified": {
+      "sha256": "e3031b2449c6d8230260e03bfd9f0a4a3546c589392f8f47374004c537562149",
+      "files": 333
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/surface-view-javafx/jvm/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/surface-view-javafx/jvm/target",
+    "verified": {
+      "sha256": "e5b29b5a03b4b3eed277f9f4642ee4d42407b27ea93c868b7a0416c3870ce9f5",
+      "files": 265
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/scenario-testkit/js/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/scenario-testkit/js/target",
+    "verified": {
+      "sha256": "e5a04b9d45126d7ed2fae061f86b0be0d8f8aaf837f2108dcf323f838a2c60eb",
+      "files": 117
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/scenario-testkit/jvm/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/scenario-testkit/jvm/target",
+    "verified": {
+      "sha256": "cacdf58eb027fa6c143517d8154608ef77f09b30d666414d46af1bceb1fcc3a9",
+      "files": 84
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/response-laws/js/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/response-laws/js/target",
+    "verified": {
+      "sha256": "b5ffe87b561590760615b716be4d97aeef37eeb188a0373ec6f648906a794726",
+      "files": 85
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/response-laws/jvm/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/response-laws/jvm/target",
+    "verified": {
+      "sha256": "d2b2537136f40c789084c1a2f121e1e2f3fae8be0dbe463dbaff8265612062e7",
+      "files": 61
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/archive-zarr/js/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/archive-zarr/js/target",
+    "verified": {
+      "sha256": "8a17ce53f50525feeb77f58a9dcb350bff5061b0631f24676b7a25fab740f966",
+      "files": 270
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/archive-zarr/jvm/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/archive-zarr/jvm/target",
+    "verified": {
+      "sha256": "dcd7b56f889853ac2dd30dead7be45ea20c61d8735b7597249a904f39b87775e",
+      "files": 171
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/surface-view/js/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/surface-view/js/target",
+    "verified": {
+      "sha256": "ff0347e27e4a133144cb7a820354c273e00a1d06c00481f40729df2bb42a5c97",
+      "files": 2896
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/surface-view/jvm/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/surface-view/jvm/target",
+    "verified": {
+      "sha256": "5ffdb7ddd366102d40b1758f9350353ea60f0b84b71d3b5af2d8e483c095ab87",
+      "files": 1691
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/pipeline/js/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/pipeline/js/target",
+    "verified": {
+      "sha256": "3d57dbd941b75bf2837757713759fbcd1c343d75a2e1cfdd046b71aadf1d32ec",
+      "files": 289
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/pipeline/jvm/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/pipeline/jvm/target",
+    "verified": {
+      "sha256": "cfad3d2fc7be6591819f9adc668e5603ed0ebe1ca2da3bd15d91b5ddb5d18f64",
+      "files": 178
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/design/js/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/design/js/target",
+    "verified": {
+      "sha256": "d7a8f691597933d8a1b19471431767d94dfc93ccb2ae2141dd5cf189362413cd",
+      "files": 3365
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/design/jvm/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/design/jvm/target",
+    "verified": {
+      "sha256": "a27ea20340937d7807f2b457342080a50d72c1eb7ade5f9c226e27accc4f6b6b",
+      "files": 1866
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/hrf/js/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/hrf/js/target",
+    "verified": {
+      "sha256": "01c7c2e93f2f7b9180db8d07388c760545f528eb238ab705866aacf312cc8442",
+      "files": 1485
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/modules/hrf/jvm/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/modules/hrf/jvm/target",
+    "verified": {
+      "sha256": "03d79f965ebff7ec3f014978a10041ee3afd0febdf80974e77f4120aed25e0cf",
+      "files": 827
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/examples/workflows-jvm/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/examples/workflows-jvm/target",
+    "verified": {
+      "sha256": "4fce7fe0b3296233a3458c6e825d2b94d8c14f33197306ecaa7759d26657429f",
+      "files": 74
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/examples/surface-view/js/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/examples/surface-view/js/target",
+    "verified": {
+      "sha256": "223132a478d7a5504254531b241cd20d4e663c1b95aa87354e985ba149cce824",
+      "files": 208
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/examples/surface-view/jvm/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/examples/surface-view/jvm/target",
+    "verified": {
+      "sha256": "9458555e16f24e37814985bfa762e0371aeb005afa60fa6d8e9c4a99ab27c9af",
+      "files": 123
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020/project/project/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/scalafim-eco-mesh-kernels-20261020/project/project/target",
+    "verified": {
+      "sha256": "4bb695e803d8aaf87a06ef1f5d34f7097468700874834908377947e6730b8236",
+      "files": 18
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/neuroim4s-eco-distances-20261020/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/neuroim4s-eco-distances-20261020/target",
+    "verified": {
+      "sha256": "be7a96fcbec027cb4ae234635399d8b935ad64788b0afb5c567e2b80d12d4936",
+      "files": 48
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/neuroim4s-eco-distances-20261020/project/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/neuroim4s-eco-distances-20261020/project/target",
+    "verified": {
+      "sha256": "43ebf772b766edecff29aa33d854c64b70f7cd4fcb379ed686cae4db0b9837d0",
+      "files": 75
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/neuroim4s-eco-distances-20261020/modules/neuroim4s-routing/js/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/neuroim4s-eco-distances-20261020/modules/neuroim4s-routing/js/target",
+    "verified": {
+      "sha256": "250c6c32bfb73d812124c06b3c4b6e773857d2a3aed3073258e0da99ec13ca9a",
+      "files": 394
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/neuroim4s-eco-distances-20261020/modules/neuroim4s-routing/jvm/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/neuroim4s-eco-distances-20261020/modules/neuroim4s-routing/jvm/target",
+    "verified": {
+      "sha256": "aa0b3da6278daf1e34ecd7b756d6c2a1b1a7563e3a38bb5ee0ad521a80d1fa57",
+      "files": 246
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/neuroim4s-eco-distances-20261020/modules/neuroim4s-transform-io/jvm/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/neuroim4s-eco-distances-20261020/modules/neuroim4s-transform-io/jvm/target",
+    "verified": {
+      "sha256": "310f57a1fbc01082d05370e3c661c1d52a566363a8057af4a0faaf240b3bb67a",
+      "files": 52
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/neuroim4s-eco-distances-20261020/modules/neuroim4s-view-java2d/jvm/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/neuroim4s-eco-distances-20261020/modules/neuroim4s-view-java2d/jvm/target",
+    "verified": {
+      "sha256": "c6431f631449a15b6840a02f9aba9e9dfdd6709c6fc682a3265f2e4f067952fc",
+      "files": 80
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/neuroim4s-eco-distances-20261020/modules/neuroim4s-view-canvas/js/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/neuroim4s-eco-distances-20261020/modules/neuroim4s-view-canvas/js/target",
+    "verified": {
+      "sha256": "a724d55bb8b135fb1495bc85e23e9d0fbb6475ba4bfc715249cad174a41cc19a",
+      "files": 178
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/neuroim4s-eco-distances-20261020/modules/neuroim4s-core/js/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/neuroim4s-eco-distances-20261020/modules/neuroim4s-core/js/target",
+    "verified": {
+      "sha256": "18b75bf180b6da4d385696f1e0dca4e5a3474c85b9cbe23425736a153fafa682",
+      "files": 1420
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/neuroim4s-eco-distances-20261020/modules/neuroim4s-core/jvm/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/neuroim4s-eco-distances-20261020/modules/neuroim4s-core/jvm/target",
+    "verified": {
+      "sha256": "dee0f2d44b07647857978f41f71a461a801b392672240522c32c2f9028170d6c",
+      "files": 958
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/neuroim4s-eco-distances-20261020/modules/neuroim4s-io/jvm/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/neuroim4s-eco-distances-20261020/modules/neuroim4s-io/jvm/target",
+    "verified": {
+      "sha256": "10492107c10ef74b77a013f8edf17b3d59f1d0696f350d811bd22241d245ff58",
+      "files": 127
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/neuroim4s-eco-distances-20261020/modules/neuroim4s-spaces/js/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/neuroim4s-eco-distances-20261020/modules/neuroim4s-spaces/js/target",
+    "verified": {
+      "sha256": "ba55b92a069f50353088762c725cfa340121447557107058ea0fa88eec8d63f4",
+      "files": 177
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/neuroim4s-eco-distances-20261020/modules/neuroim4s-spaces/jvm/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/neuroim4s-eco-distances-20261020/modules/neuroim4s-spaces/jvm/target",
+    "verified": {
+      "sha256": "177d7eefb9a0c535d1cc522bea3506724994a6a40a0b961f6f029956cbebb3d7",
+      "files": 119
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/neuroim4s-eco-distances-20261020/modules/neuroim4s-view-javafx/jvm/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/neuroim4s-eco-distances-20261020/modules/neuroim4s-view-javafx/jvm/target",
+    "verified": {
+      "sha256": "c40ceb2299b354869b60e4a71a61c82606a53ef8e866e09195dfd100998299b8",
+      "files": 100
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/neuroim4s-eco-distances-20261020/modules/neuroim4s-transform/js/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/neuroim4s-eco-distances-20261020/modules/neuroim4s-transform/js/target",
+    "verified": {
+      "sha256": "bb2ebc457d43c9b8e5c8febda8040684666766d4a086bc77da7051733097a389",
+      "files": 1469
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/neuroim4s-eco-distances-20261020/modules/neuroim4s-transform/jvm/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/neuroim4s-eco-distances-20261020/modules/neuroim4s-transform/jvm/target",
+    "verified": {
+      "sha256": "6b2734293d750cc21b7aa5a646d7f83617f1f32d341f184235287ee6fa7265ba",
+      "files": 1109
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/neuroim4s-eco-distances-20261020/modules/neuroim4s-routing-io/jvm/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/neuroim4s-eco-distances-20261020/modules/neuroim4s-routing-io/jvm/target",
+    "verified": {
+      "sha256": "8608c07ec7765599a2a72cdded5f495b260df0a70902674244108d9d4dc35e5b",
+      "files": 54
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/neuroim4s-eco-distances-20261020/modules/neuroim4s-view/js/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/neuroim4s-eco-distances-20261020/modules/neuroim4s-view/js/target",
+    "verified": {
+      "sha256": "8caf1b44195943a16a9e36905f7677870e95a65285f1c6f72703d15b418b6eda",
+      "files": 614
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/neuroim4s-eco-distances-20261020/modules/neuroim4s-view/jvm/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/neuroim4s-eco-distances-20261020/modules/neuroim4s-view/jvm/target",
+    "verified": {
+      "sha256": "e0a6b73aaa76f033f5bfe226a8656642e76064f5dc85005d5198f6b63934c8c2",
+      "files": 372
+    }
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/neuroim4s-eco-distances-20261020/project/project/target",
+    "target": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/owned-targets/neuroim4s-eco-distances-20261020/project/project/target",
+    "verified": {
+      "sha256": "6924e58859b3168aa50a7fd82d1c837972203b164cc0294af708f1115a6e0f39",
+      "files": 9
+    }
+  }
+]

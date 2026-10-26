@@ -1,0 +1,38 @@
+{
+  "status": "qualified bounded numerical correction; not response-support acceptance",
+  "sourceCommit": "802630321ff7d712d553666fe961c0535e5540ba",
+  "production": "Finite signed StimulusEvent onsets; nonnegative finite durations; retain aligned schedule rows; no false signed-onset exclusions.",
+  "red": {
+    "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/signed-onset-design-red-current.log",
+    "sha256": "a1a56ebc3229dd20d7e61b9f301c275d5e19ec467fed4434dd09d3456bb38d9f",
+    "metadata": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/signed-onset-design-red-current.log.meta.json",
+    "exitCode": 1,
+    "durationSeconds": 3.621935
+  },
+  "green": [
+    {
+      "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/signed-onset-hrf-jvm-js.log",
+      "sha256": "aae24d2efb8abbc4343378f2bf60095af502897870f1ff2a12011580538fb5eb",
+      "metadata": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/signed-onset-hrf-jvm-js.log.meta.json",
+      "exitCode": 0,
+      "durationSeconds": 31.81308,
+      "jvmTests": 402,
+      "jsTests": 402
+    },
+    {
+      "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/signed-onset-design-jvm-js.log",
+      "sha256": "5f4c33a2561cab77c7692f43ce9d9a0b902bf06ad64e430e71cf6b36772d286b",
+      "metadata": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/signed-onset-design-jvm-js.log.meta.json",
+      "exitCode": 0,
+      "durationSeconds": 35.374352,
+      "jvmTests": 569,
+      "jsTests": 568
+    }
+  ],
+  "independentReview": {
+    "reviewer": "volume_view_astra_review",
+    "verdict": "APPROVE",
+    "scope": "Seven-file signed correction, finite validation, independent FIR and sustained overlap literals, run-translation witness, existing positive-onset R parity and source/identity guarantees."
+  },
+  "identityBoundary": "Existing v2/v3 encodings untouched. Actual negative-onset matrices/audits may legitimately change from previously incorrect results; no compatibility promise for those results."
+}

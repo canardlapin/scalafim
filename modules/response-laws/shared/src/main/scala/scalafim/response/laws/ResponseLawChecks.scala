@@ -6,8 +6,6 @@ import cats.syntax.all.*
 import scalafim.response.{
   DecodeConsistency,
   OpenedLayout,
-  Provenance,
-  ProvenanceId,
   ReadCapabilities,
   ReadError,
   ReadResult,
@@ -16,6 +14,10 @@ import scalafim.response.{
   ResponseBlock,
   ResponseSource,
   SelectionAxes
+}
+import locus4s.provenance.{
+  Provenance,
+  ProvenanceId
 }
 
 enum ResponseLawFailure:

@@ -1,10 +1,14 @@
 package scalafim.spatial
 
-import scalafim.image.world.SubjectId
+import neurosurf4s.routing.*
+
+import neuroim4s.spatial.SamplingPolicy
+
+import neuroim4s.spaces.SubjectId
 
 import image4s.geometry.{Affine, D3}
-import scalafim.image.{SampleSpaces, SomeSampleSpace}
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.{SampleSpaces}
+import neuroim4s.image.SampleSpaces.*
 
 class FieldRuntimeSuite extends munit.FunSuite:
 
@@ -203,3 +207,25 @@ class FieldRuntimeSuite extends munit.FunSuite:
     assertEquals(field.describe.label, "archive-run")
     assert(!field.data.isMaterialized)
     assertEquals(runtime.data(field).left.toOption, Some(SpatialError.FieldDataUnavailable("archive-run")))
+
+  test("operator and field provenance record whether the route used inverses"):
+    val source = domain("inv-source", Vector(3, 1, 1))
+    val target = domain("inv-target", Vector(3, 1, 1))
+    val forward = affine("inv-source-to-target", source, target, translation(1.0, 0.0, 0.0))
+    val routed = graph(Vector(source, target), Vector(forward))
+
+    val direct = value(OperatorCompiler.compile(routed, CompileRequest(source.id, target.id, sampling = SamplingPolicy.Nearest)))
+    assert(!direct.provenance.usedInverses)
+    assert(!FieldTransform.from(direct).usedInverses)
+
+    val reverse =
+      value(
+        OperatorCompiler.compile(
+          routed,
+          CompileRequest(target.id, source.id, sampling = SamplingPolicy.Nearest, allowInverses = true)
+        )
+      )
+    assert(reverse.path.usedInverses)
+    assert(reverse.provenance.usedInverses)
+    assert(FieldTransform.from(reverse).usedInverses)
+    assertEquals(reverse.provenance.path.map(_.value), Vector("inv-source-to-target:inverse"))

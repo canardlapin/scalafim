@@ -8,8 +8,8 @@ import multivar.core.{SemanticSpace, ValueId, ValueIdentity}
 import scalafim.dataset.SubjectId
 import scalafim.estimates.{DfRole, PoolingScope}
 import scalafim.fmri.group.*
-import scalafim.fmri.mvpa.{AxisDescriptor, AxisDigest, AxisRef, Column}
-import scalafim.fmri.mvpa.pattern.*
+import mvpa4s.{AxisDescriptor, AxisDigest, AxisRef, Column}
+import mvpa4s.pattern.*
 
 enum SubjectGroupError:
   case Invalid(detail: String)

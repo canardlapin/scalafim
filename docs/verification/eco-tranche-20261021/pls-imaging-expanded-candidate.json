@@ -1,0 +1,116 @@
+{
+  "status": "Working-byte development evidence; fresh committed qualification pending",
+  "gates": [
+    {
+      "name": "pls-coherent-expanded-02",
+      "logSha256": "af9cbef14971228c8ee7c67baaaa4f0ce9fe5fb6a1021255244638c620ee794f",
+      "execution": {
+        "schema_version": 1,
+        "started_utc": "2026-10-21T04:29:47.727547+00:00",
+        "finished_utc": "2026-10-21T04:31:07.417377+00:00",
+        "duration_seconds": 79.689818,
+        "command": [
+          "env",
+          "TMPDIR=/Volumes/My Passport for Mac/e01tmp",
+          "sbt",
+          "-batch",
+          "-J-Xmx4g",
+          "-J-Djava.io.tmpdir=/Volumes/My Passport for Mac/e01tmp",
+          "-Dsbt.supershell=false",
+          "-Dsbt.log.noformat=true",
+          "-Dsbt.global.base=/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+          "-Dimaging.providers=/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/integration-providers",
+          "Test/runMain plsneuro.adapters.ResultGeometryConsumerProbe",
+          "Test/runMain plsneuro.desktop.StandaloneVolumeProbe",
+          "Test/runMain plsneuro.desktop.ImagingConsumerProbe"
+        ],
+        "cwd": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/plsneuro-imaging-consumer/tools/imaging-consumer",
+        "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/pls-coherent-expanded-02.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 900.0,
+        "log_bytes": 14807
+      }
+    },
+    {
+      "name": "pls-main-provider-prepare-02",
+      "logSha256": "7b2ff20f39bcf50184a40aa3c8279ce7356485f5625b8c114d7dcd6aa552cd08",
+      "execution": {
+        "schema_version": 1,
+        "started_utc": "2026-10-21T04:33:47.625536+00:00",
+        "finished_utc": "2026-10-21T04:33:52.553349+00:00",
+        "duration_seconds": 4.927562,
+        "command": [
+          "python3",
+          "tools/prepare-provider-probe.py",
+          "--source-root",
+          "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/main-provider-sources",
+          "--destination",
+          "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/main-imaging-providers",
+          "--apply-candidate-patches"
+        ],
+        "cwd": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/plsneuro-imaging-consumer",
+        "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/pls-main-provider-prepare-02.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 900.0,
+        "log_bytes": 549
+      }
+    },
+    {
+      "name": "pls-preparation-tests-02",
+      "logSha256": "14e693ad9fbf4019a7a2dfd193f7888bf499267a159be32238137d2a91469ad5",
+      "execution": {
+        "schema_version": 1,
+        "started_utc": "2026-10-21T04:34:26.791314+00:00",
+        "finished_utc": "2026-10-21T04:34:49.759506+00:00",
+        "duration_seconds": 22.968053,
+        "command": [
+          "python3",
+          "-m",
+          "unittest",
+          "discover",
+          "-s",
+          "tools",
+          "-p",
+          "test_provider_preparation.py",
+          "-v"
+        ],
+        "cwd": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/plsneuro-imaging-consumer",
+        "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/pls-preparation-tests-02.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 180.0,
+        "log_bytes": 2222
+      }
+    }
+  ],
+  "review": {
+    "geometry": "APPROVE: checked shape/space/ordered selection factory, delegating group callers, explicit legacy/canonical scatter and native standalone probe; no correctness blockers",
+    "geometryProbeSha256": "fd340d3f3c27268de7abe3ddaca5a67b5b9bbba3715402db690ee0b4cd7f21db",
+    "standaloneProbeSha256": "b329dd25f817f3ae6a82833289d39901640a2103eefe4c991f2775b7941f7a98",
+    "providerWiring": "APPROVE after replacing formatting-dependent override guard; actual private provider preparation passed",
+    "providerFiveFileDigest": "7ed0c961396641939485ed12734e54ea1078fff46f77764d6c1518c4cff47ce0",
+    "digestEncoding": "sorted relative path NUL file bytes NUL"
+  },
+  "limits": [
+    "Native grayscale diversity proves loading/drawing, not intensity scaling or orientation; exact IO fixtures provide numerical evidence.",
+    "GroupResponses and whole application/linked spatial-response callers are not qualified by the bounded component.",
+    "Main candidate provider preparation is not application compilation or scientific/native/performance acceptance."
+  ],
+  "adverseEvidence": [
+    "pls-geometry-component-01 passed but omitted Root BIDS URI forwarding; retained as development-only evidence.",
+    "pls-coherent-expanded-01 deliberately terminated before tests because edit used wrong working-directory-relative path; exit143 is not a source failure.",
+    "pls-main-provider-prepare-01 rejected correct upstream compact override syntax; guard repaired and real preparation02 passed."
+  ],
+  "sourceCandidate": "9bf71721dc852e67bdecb51a34ab16790bff4edf",
+  "sourceCheckout": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/plsneuro-imaging-consumer",
+  "freshCheckout": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/plsneuro-integration-qualified",
+  "nextRequired": "Inspect fresh complete application compile, then qualify actual SpatialResponsePane linked-cursor behavior and committed expanded probes. Neither I1 task is closed."
+}

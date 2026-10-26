@@ -4,8 +4,9 @@ import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 import gale.linalg.DMat
 import scalafim.fmri.hrf.design.SamplingFrame
-import scalafim.image.{SampleSpaces, SomeSampleSpace}
+import neuroim4s.image.{SampleSpaces}
 import scalafim.response.*
+import locus4s.provenance.*
 import scala.concurrent.ExecutionContext.Implicits.{global as executionContext}
 
 class ResponseKernelAdaptersSuite extends munit.FunSuite:

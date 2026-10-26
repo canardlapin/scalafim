@@ -1,0 +1,222 @@
+{
+  "schema": "scalafim.i1-transitive-caller-qualification.v1",
+  "recorded": "2026-10-21T13:44:36.997827+00:00",
+  "status": "4focused headless probes passed",
+  "productionSource": "5f7bee9521d5b03fff9546488a12f6d00881b4d9",
+  "probeSource": "27792846f99ee64ccd286698be77e93a55465c79",
+  "scalafimProduction": "896dda088b26fbaa2aedecc8cdedcfd6a9ea2c38",
+  "productionEquivalence": "Git diff5f..probeSource contains only docs and two test-source adaptations; complete production compilation and frozen native runtime remain applicable.",
+  "testSources": [
+    {
+      "path": "modules/adapters/src/test/scala/plsneuro/adapters/SpatialFixtures.scala",
+      "sha256": "7836a37204a7d7470200349dde85b4eb04dca35696e22264f625124b4d1a712b",
+      "gitBlob": "7f19faffbbcbcb3b3d94c11016ea9a22528fee4f"
+    },
+    {
+      "path": "modules/adapters/src/test/scala/plsneuro/adapters/LegacyResultImportProbe.scala",
+      "sha256": "76ce6688758edd5baa9358a10dc963a9c9d6734385e118c4474e3f4abae3fda8",
+      "gitBlob": "b8f9b44ac27e25ecd3e3fd72dab37d3aaa817c2f"
+    },
+    {
+      "path": "modules/adapters/src/test/scala/plsneuro/adapters/SurfaceReverseLookupProbe.scala",
+      "sha256": "a429ecc0c066488709504ce482cac945917aacba614ccc3f7b43cfd093fab787",
+      "gitBlob": "ae2a5d526b37eed9598774216c228b58456515d8"
+    },
+    {
+      "path": "modules/adapters/src/test/scala/plsneuro/adapters/RegionSelectionProbe.scala",
+      "sha256": "80a91358fb937d4d0b87ee6ecdb8111b89b129cca687c15fc2b28f35ee7eba51",
+      "gitBlob": "418d46a9164ce29fd2b1a01c4c9d539744ef7484"
+    },
+    {
+      "path": "modules/desktop/src/test/scala/plsneuro/desktop/SpatialDesktopMigrationProbe.scala",
+      "sha256": "ba95df49cc6d829a139b7f9c4591e3341474d21602836e42425cfccfcea8bc04",
+      "gitBlob": "472c4f7dab160a08af1c311f65bc599fa89eefe3"
+    }
+  ],
+  "fixture": {
+    "path": "modules/adapters/src/test/resources/spatial-migration-v1/legacy-result.json",
+    "sha256": "85289a77f5566bb7a2668d5f1818fe95739da3c14764d7efa96c9f2e9e65bbb8"
+  },
+  "runtime": {
+    "frozenReceiptSha256": "bc92763d47d402d766447e705d35aa727e451f173a0b6f0e6a60b9e8adff5f6d",
+    "compiledClasses": {
+      "path": "/private/tmp/scalafim-i1-headless11-0t8ctyib/classes",
+      "sha256": "9580fe7cf1b5a002906db5cefce4c5e6f7112b14a816adc4fe910f669425a165",
+      "files": 17
+    },
+    "compiler": "Scala3.7.4 exact cached compiler11JAR hashes in raw receipt",
+    "compilerOptions": [
+      "-deprecation",
+      "-feature",
+      "-unchecked",
+      "-Wunused:all",
+      "-Wvalue-discard",
+      "-Wnonunit-statement",
+      "-Wsafe-init",
+      "-Werror"
+    ],
+    "compiledAndFrozenBytesVerifiedAfterRuns": true,
+    "lane": "Direct test-only dotc compile and headless JVM mains over already verified frozen production; not a new sbt/full application test campaign."
+  },
+  "gates": [
+    {
+      "name": "pls-transitive-callers-10",
+      "exitCode": 124,
+      "reason": "timeout",
+      "durationSeconds": 1200.945544,
+      "log": {
+        "path": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/pls-transitive-callers-10.log",
+        "bytes": 12751,
+        "sha256": "e35837ad5a73d2f11fd77a23bca52c67077827295255b2844fa2a38b1c709f1a"
+      },
+      "metadata": {
+        "path": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/pls-transitive-callers-10.log.meta.json",
+        "bytes": 1896,
+        "sha256": "b309650767b6f5c9d21db40dd6b124d0a33e15903a102b9ffc046939b4bfe466"
+      }
+    },
+    {
+      "name": "pls-transitive-compile-11",
+      "exitCode": 1,
+      "reason": "exited",
+      "durationSeconds": 0.453951,
+      "log": {
+        "path": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/pls-transitive-compile-11.log",
+        "bytes": 603,
+        "sha256": "27ddca13a9d375f8bbaedeb6d5a25ffa062e6fb357fa2c45f84fb98abe247054"
+      },
+      "metadata": {
+        "path": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/pls-transitive-compile-11.log.meta.json",
+        "bytes": 18234,
+        "sha256": "d7fb248fee0f43da3d061a61828d39f96cadc4b3a13c3a992ce2d92ca2330942"
+      }
+    },
+    {
+      "name": "pls-transitive-compile-12",
+      "exitCode": 1,
+      "reason": "exited",
+      "durationSeconds": 6.707152,
+      "log": {
+        "path": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/pls-transitive-compile-12.log",
+        "bytes": 2091,
+        "sha256": "f91b4e7227255b27ca140c087e3d183a9fca792c982df8794f072310a2c64300"
+      },
+      "metadata": {
+        "path": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/pls-transitive-compile-12.log.meta.json",
+        "bytes": 18088,
+        "sha256": "824c7229ef8bf72ae16c0a9bec155dd1be883b707bbd3b2e2a01949ee712dc90"
+      }
+    },
+    {
+      "name": "pls-transitive-compile-13",
+      "exitCode": 0,
+      "reason": "exited",
+      "durationSeconds": 6.572486,
+      "log": {
+        "path": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/pls-transitive-compile-13.log",
+        "bytes": 480,
+        "sha256": "9f7a7b88d4f74705d3ca9fcb1f5d6143be860b3c81dca669dbeebf14371e63f9"
+      },
+      "metadata": {
+        "path": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/pls-transitive-compile-13.log.meta.json",
+        "bytes": 18087,
+        "sha256": "53a979d3f23fdd978141933357d8e05aa8a341d7ec9297f9353040793eded122"
+      }
+    },
+    {
+      "name": "pls-transitive-legacy-13",
+      "exitCode": 0,
+      "reason": "exited",
+      "durationSeconds": 0.991931,
+      "log": {
+        "path": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/pls-transitive-legacy-13.log",
+        "bytes": 629,
+        "sha256": "18895e3bff3d15aa98ea6439c362e9d495e264b7b20f29449cc030889878c397"
+      },
+      "metadata": {
+        "path": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/pls-transitive-legacy-13.log.meta.json",
+        "bytes": 16050,
+        "sha256": "068cf0690532edb34de8733ba1678fdcc1969a2f0b035fded9b2f95cc156e2a0"
+      }
+    },
+    {
+      "name": "pls-transitive-reverse-13",
+      "exitCode": 0,
+      "reason": "exited",
+      "durationSeconds": 0.507978,
+      "log": {
+        "path": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/pls-transitive-reverse-13.log",
+        "bytes": 568,
+        "sha256": "d40e469ad167f615e719594d06209c6f48a598250874b7d94b549c3025ce14df"
+      },
+      "metadata": {
+        "path": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/pls-transitive-reverse-13.log.meta.json",
+        "bytes": 15987,
+        "sha256": "6dc6cbaab48310b343f483da2ec35e46935299ed940383fb1aeb06a2ec63715a"
+      }
+    },
+    {
+      "name": "pls-transitive-region-13",
+      "exitCode": 0,
+      "reason": "exited",
+      "durationSeconds": 0.5541,
+      "log": {
+        "path": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/pls-transitive-region-13.log",
+        "bytes": 667,
+        "sha256": "d4b40b3d08fa7f12d995863920ec3f0507af406129ed1e9865ba9e5ac248d6d5"
+      },
+      "metadata": {
+        "path": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/pls-transitive-region-13.log.meta.json",
+        "bytes": 15979,
+        "sha256": "a9c03750a8b66ea4d8bc6240a5637574ce16f4518d465afcb21ddd29dbcd2fdd"
+      }
+    },
+    {
+      "name": "pls-transitive-cursor-13",
+      "exitCode": 0,
+      "reason": "exited",
+      "durationSeconds": 0.450117,
+      "log": {
+        "path": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/pls-transitive-cursor-13.log",
+        "bytes": 586,
+        "sha256": "1d0ce066b72876c07024ce8d85d589179df2cbf28fb26e8e3edc856fc478174b"
+      },
+      "metadata": {
+        "path": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/pls-transitive-cursor-13.log.meta.json",
+        "bytes": 16059,
+        "sha256": "69e301882526ffdf6a5163e8d2a99400e823daeec026b49392b13bdeb5887c3a"
+      }
+    }
+  ],
+  "witnesses": {
+    "LegacyResultImportProbe": "Unequal latent payload rows and literal physical support; archive/source digest, world/header contradiction, affine/cohort binding, overwrite and failed atomic publication refusal.",
+    "SurfaceReverseLookupProbe": "Actual native contributors, duplicate requests, anatomical/display identity, stale generation and cancellation; constructor/exported buffer isolation after collection before final fingerprint validation; changed-geometry fingerprint and stale index/display refusal.",
+    "RegionSelectionProbe": "Literal region support/coverage/sign-split clusters, identity and weighted cohort mean160+supportPosition with excluded support absent; regional averaging and closed-form basis reconstruction.",
+    "SpatialDesktopMigrationProbe": "Frozen historical writer fixture; literal physical voxel/canonical-profile ordinals, canonical support statistics, foreign unresolved-world cache/cursor identity."
+  },
+  "adaptationReview": {
+    "reviewer": "volume_view_astra_review",
+    "verdict": "APPROVE",
+    "blobs": [
+      "ae2a5d526b37eed9598774216c228b58456515d8",
+      "472c4f7dab160a08af1c311f65bc599fa89eefe3"
+    ],
+    "scope": "Two test-only API migrations; all physical/profile/statistics/world assertions retained. Hook is after collection before final validation, not concurrent mutation inside collection."
+  },
+  "retainedAdverseEvidence": [
+    "Sbt gate10 timed out1200s after settings reapplication before any probe executed; no compile/assertion verdict.",
+    "Direct compile11 misjoined newline-delimited classpath; no test source compiled or ran.",
+    "Direct compile12 exposed2stale test APIs (MeshCoordinates.update and removed colorizer alias); production untouched.",
+    "Compile13 and all4probe runs pass after reviewed test-only adaptation."
+  ],
+  "rawCompleteReceipt": {
+    "path": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/focused-headless-11.json",
+    "bytes": 89490,
+    "sha256": "84c4aa0e40406e23ccb2d7609ab70091dc02117f7998b8916e334ee12f79cd55"
+  },
+  "limits": [
+    "No all-branch or scientific calibration claim for every registered method.",
+    "Full Root milestone campaign and final independent I1 acceptance still pending.",
+    "Native/performance/device limitations remain in native-runtime-qualification-10.json."
+  ]
+}

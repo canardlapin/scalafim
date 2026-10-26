@@ -1,0 +1,23 @@
+{
+  "mote": "eco-neuroim-display",
+  "providerRevision": "21df6416e4e28e97cfbe39e20d7303349be7e4cf",
+  "reviewer": "volume_view_astra_review",
+  "verdict": "APPROVE closing display extraction",
+  "criteria": {
+    "portable": "47 JVM +47 JS layout/viewer tests pass.",
+    "platforms": "Canvas8 and browser10contracts; Java2D actual ARGB/device events; JavaFX picking/native five layouts36pixels, fresh PLS viewer/linked/cursor/hover/scroll/cleanup.",
+    "dependencySeparation": "core/IO/transforms below optional view modules; GUI backends optional.",
+    "transferAndOwnership": "Reviewed move of examples/tests/assets,22oldtracked view files/assets removed, alias-onlyColorizer deleted; direct Intaglio graphics/backend ownership."
+  },
+  "evidence": [
+    "view-review.json",
+    "layout-io-qualification.json",
+    "layout-descendant-pin-gates.json",
+    "fresh-linked-qualification.json"
+  ],
+  "limits": [
+    "Not exhaustive native visual equivalence, full PLS readiness, performance or scientific acceptance.",
+    "eco-neuroim-integrations remains open for all affected caller boundaries and live response-to-view handoff.",
+    "I1 milestone remains open for independent IO -> typed transform -> slice-display composition and remaining child task."
+  ]
+}

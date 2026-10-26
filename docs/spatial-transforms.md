@@ -14,15 +14,44 @@ Two ideas carry the design:
   needs. The forward direction exists exactly when it is known to exist.
 
 The transform examples below are compiled and executed by
-`modules/transform/jvm/src/test/scala/scalafim/transform/GuideExamplesSuite.scala`.
+`neuroim4s/modules/neuroim4s-transform-io/jvm/src/test/scala/neuroim4s/transform/GuideExamplesSuite.scala`.
 The linked-cursor example runs on both JVM and JS in
 `modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceVolumeCursorSuite.scala`.
 The pull-request workflow includes both suites through
 [`full-repository-tests.sh`](../tools/ci/full-repository-tests.sh):
-`transformJVM/test`, `surfaceViewJVM/test` and `surfaceViewJS/test`.
+`neuroimTransformTestAll`, `surfaceViewJVM/test` and `surfaceViewJS/test`.
 The design rationale is in
 [`plans/spatial-transform-parity.md`](plans/spatial-transform-parity.md) and
 [`decisions/spatial-transforms.md`](decisions/spatial-transforms.md).
+
+## Anatomical routing and scoped volume reads
+
+The optional `neuroim4s.spatial` API supplies `VolumeGrid`, `VolumeDomain`,
+`VolumeRegistration`, `VolumeGraph` and `VolumeExecution`. Registrations are
+anatomical affine or warp maps; node and edge IDs remain caller-owned. The
+reference contract contains native and template volume spaces only. An
+unsampled world can participate in a coordinate route, but compiling a sampled
+operator onto it returns `UnsampledDomain`.
+
+`VolumeGraph.path` prefers an existing forward route and consults geometric
+inverses only when no forward route exists. `allPaths` includes inverse
+alternatives when requested and ranks them by cost, length and caller edge
+label. Provider frame owners are checked at graph admission. Coordinate
+pullbacks run in reverse route order and values are sampled once.
+
+`VolumeExecution.compile` accepts ordered target rows and a `SamplingPolicy`
+(`Nearest` or `Trilinear`). The resulting operator can materialize only its
+source support and requested observations through a `VolumeSource`.
+`neuroim4s.spatial.io.NiftiVolumeSource` is the optional JVM implementation:
+preparation does no IO, terminal validation pins the file revision, reads return
+one compact block in request order, and every acquired channel is closed before
+returning. Changed files are reported as stale even when a downstream result
+cache contains values. Compressed sources require explicit staging.
+
+ScalaFIM `NiftiFieldSource` attaches functional field identity and provenance to
+that reader. The mixed spatial API uses the provider `VolumeGrid`,
+`ProviderMapBinding` and `SamplingPolicy` directly; it exports no compatibility
+aliases. See the [remaining ownership map](verification/neuroim-routing-20261020/ownership.md).
 
 ## World spaces and frames
 
@@ -35,11 +64,11 @@ A `WorldSpace` names a continuous RAS-millimetre coordinate system:
 - a declared space
 - `Unresolved(token)`, a fresh persistent scope when there is no anatomical identity evidence
 
-`FrameCatalog` turns a world space into an image4s `Frame[D3]`. Standard
+`FrameCatalog` (in [neuroim4s-spaces](https://github.com/canardlapin/neuroim4s)) turns a world space into a spatial4s `Frame[D3]`. Standard
 templates have stable frames that can appear in types:
 
 ```scala
-import scalafim.image.world.{FrameCatalog, Spaces, WorldSpace}
+import neuroim4s.spaces.{FrameCatalog, Spaces, WorldSpace}
 
 val mni = Spaces.MNI152NLin2009cAsym                      // usable as mni.type
 val subject = FrameCatalog.frame(WorldSpace.declare("sub-01 T1w").toOption.get)
@@ -331,19 +360,20 @@ position and world identity; this matches nibabel's `as_reoriented`.
 A viewer that links a cortical surface with a volume often shows data from two
 worlds: a surface in the subject's tkRAS or scanner space, and a volume in MNI
 reached through an fMRIPrep composite. The link between the two cursors is a
-typed `WorldLink[L, R]` (in `scalafim.image.world`):
+typed `WorldLink[L, R, D]` (in reframe4s, `reframe4s.core`):
 
 - `WorldLink.shared(left, right)` links two frames of one world. Coordinates
   carry over unchanged under a checked alignment, and frames of different
   worlds are refused.
 - `WorldLink.Mapped` joins different worlds through typed maps. A
-  `WorldTransform` supplies one with `link`: `toLeft` is its pullback, and
-  `toRight` exists exactly when the forward map does.
+  `WorldTransform` supplies one with `link`, checked against its frames:
+  `toLeft` is its pullback, and `toRight` exists exactly when the forward map
+  does.
 
 ```scala
-val link = warp.link              // WorldLink.Mapped[subject.type, mni.type]
-link.toLeft(peakInMni)                         // Right(point in subject): the pullback
-link.toRight(pointInSubject)                   // Left(DirectionUnavailable(LeftToRight, ...)) until the warp is inverted
+warp.link.foreach: link =>                     // WorldLink.Mapped[subject.type, mni.type, D3]
+  link.toLeft(peakInMni)                       // Right(point in subject): the pullback
+  link.toRight(pointInSubject)                 // Left(DirectionUnavailable(LeftToRight, ...)) until the warp is inverted
 ```
 
 ### Map one MNI peak to a subject volume and surface
@@ -429,7 +459,7 @@ synthetic API example.
 
 The oracle fixtures, and the tools that produced them, are listed in each
 fixture directory's `manifest.json` under
-`modules/transform/shared/src/test/resources/scalafim/transform/oracle/`.
+`neuroim4s/modules/neuroim4s-transform/shared/src/test/resources/scalafim/transform/oracle/`.
 
 - **Native tools:** SimpleITK/ITK; AFNI 26.1.04 and FSL 5.0.9 via the
   neurotransform oracles; ANTs 2.6.5.dev1 and the frozen FSL 6 command packages

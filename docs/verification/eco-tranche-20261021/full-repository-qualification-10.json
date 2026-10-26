@@ -1,0 +1,1067 @@
+{
+  "schema": "scalafim.full-repository-qualification.v1",
+  "recorded": "2026-10-21T15:05:47.835652+00:00",
+  "status": "PASS bounded headless regression campaign",
+  "command": "bash tools/ci/full-repository-tests.sh",
+  "source": {
+    "atLaunch": "0be3b64e720107d9b36ae6239daa650fbcdb980e",
+    "currentEvidenceHead": "ddc81ef07cf3400795b787ad30bfd5e6281c0c5b",
+    "productionTestsBuildAndToolsEquivalent": "896dda088b26fbaa2aedecc8cdedcfd6a9ea2c38",
+    "verification": "git diff896..HEAD --modules examples project build.sbt tools is empty. Only evidence/docs/Mote checkpoints changed while run was active, before fixed-checkout instruction; no production/test/pin/build mutation."
+  },
+  "execution": {
+    "sbt": "1.11.7",
+    "java": "OpenJDK22",
+    "heapPerBatch": "6g",
+    "freshJvmPerBatch": true,
+    "cache": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/root-full-campaign-cache-10",
+    "courserCache": "/Users/bbuchsbaum/Library/Caches/Coursier/v1",
+    "javaTmpdir": "/private/tmp/scalafim-eco-ci-20261021",
+    "noSourceProviderOverrides": true,
+    "startUtc": "2026-10-21T13:06:00Z",
+    "finishUtc": "2026-10-21T15:03:32.869572+00:00",
+    "exitCode": 0,
+    "exitStatusReceipt": {
+      "schema": "scalafim.full-campaign-observer.v1",
+      "pid": 31156,
+      "identity": "31156     1 Wed Oct 21 09:06:00 2026     bash tools/ci/full-repository-tests.sh",
+      "attachedUtc": "2026-10-21T14:16:34.727025+00:00",
+      "reason": "Original tool handle unavailable after monitoring agent interruption; existing bash campaign continues. Attached macOS kqueue exit-status observer without restart.",
+      "exitStatusMechanism": "KQ_FILTER_PROC NOTE_EXIT|NOTE_EXITSTATUS; local SDK event.h confirms same-user permission. Control child exit7 produced raw1792 -> exit7.",
+      "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/root-full-campaign-10.log",
+      "status": "finished",
+      "finishedUtc": "2026-10-21T15:03:32.869572+00:00",
+      "eventFlags": 2214592512,
+      "rawWaitStatus": 0,
+      "exitCode": 0,
+      "logBytes": 1654586,
+      "logSha256": "fbb4a2bfba75a14110eb9ca43c7bfe710feeb3ffa8f4150663c651587db6f81c"
+    },
+    "originalMetadata": "Original run_logged sidecar was left empty when agent tool handle disappeared; it is preserved unchanged. Parent attached kqueue before process termination and captured same-user process raw wait status0; no campaign restart."
+  },
+  "totals": {
+    "Total": 10678,
+    "Failed": 0,
+    "Errors": 0,
+    "Passed": 10670,
+    "Skipped": 8,
+    "Ignored": 5
+  },
+  "testTasks": 110,
+  "batches": [
+    {
+      "batch": "phrf-comparison-jvm",
+      "taskSummaries": [
+        {
+          "Total": 548,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 544,
+          "Skipped": 4
+        }
+      ],
+      "sum": {
+        "Total": 548,
+        "Passed": 544,
+        "Skipped": 4
+      },
+      "successMessages": 1,
+      "errorLines": 0,
+      "warnLines": 41
+    },
+    {
+      "batch": "phrf-comparison-js",
+      "taskSummaries": [
+        {
+          "Total": 254,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 254
+        }
+      ],
+      "sum": {
+        "Total": 254,
+        "Passed": 254
+      },
+      "successMessages": 1,
+      "errorLines": 0,
+      "warnLines": 41
+    },
+    {
+      "batch": "core-jvm",
+      "taskSummaries": [
+        {
+          "Total": 26,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 26
+        },
+        {
+          "Total": 38,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 38
+        },
+        {
+          "Total": 16,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 16
+        },
+        {
+          "Total": 2,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 2
+        },
+        {
+          "Total": 45,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 45
+        },
+        {
+          "Total": 172,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 172
+        },
+        {
+          "Total": 412,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 412
+        },
+        {
+          "Total": 5,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 5
+        },
+        {
+          "Total": 607,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 607
+        },
+        {
+          "Total": 18,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 18
+        }
+      ],
+      "sum": {
+        "Total": 1341,
+        "Passed": 1341
+      },
+      "successMessages": 10,
+      "errorLines": 0,
+      "warnLines": 41
+    },
+    {
+      "batch": "core-js",
+      "taskSummaries": [
+        {
+          "Total": 26,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 26
+        },
+        {
+          "Total": 38,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 38
+        },
+        {
+          "Total": 15,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 15
+        },
+        {
+          "Total": 2,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 2
+        },
+        {
+          "Total": 45,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 45
+        },
+        {
+          "Total": 170,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 170
+        },
+        {
+          "Total": 412,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 412
+        },
+        {
+          "Total": 5,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 5
+        },
+        {
+          "Total": 606,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 606
+        },
+        {
+          "Total": 16,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 16
+        }
+      ],
+      "sum": {
+        "Total": 1335,
+        "Passed": 1335
+      },
+      "successMessages": 10,
+      "errorLines": 0,
+      "warnLines": 41
+    },
+    {
+      "batch": "neuroim",
+      "taskSummaries": [
+        {
+          "Total": 26,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 26
+        },
+        {
+          "Total": 26,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 26
+        },
+        {
+          "Total": 336,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 336
+        },
+        {
+          "Total": 335,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 335
+        },
+        {
+          "Total": 31,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 31
+        }
+      ],
+      "sum": {
+        "Total": 754,
+        "Passed": 754
+      },
+      "successMessages": 5,
+      "errorLines": 0,
+      "warnLines": 41
+    },
+    {
+      "batch": "neuroim-transforms",
+      "taskSummaries": [
+        {
+          "Total": 137,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 137
+        },
+        {
+          "Total": 137,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 137
+        },
+        {
+          "Total": 28,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 28
+        }
+      ],
+      "sum": {
+        "Total": 302,
+        "Passed": 302
+      },
+      "successMessages": 3,
+      "errorLines": 0,
+      "warnLines": 41
+    },
+    {
+      "batch": "neuroim-routing",
+      "taskSummaries": [
+        {
+          "Total": 14,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 14
+        },
+        {
+          "Total": 14,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 14
+        },
+        {
+          "Total": 4,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 4
+        }
+      ],
+      "sum": {
+        "Total": 32,
+        "Passed": 32
+      },
+      "successMessages": 3,
+      "errorLines": 0,
+      "warnLines": 41
+    },
+    {
+      "batch": "neuroim-view-jvm",
+      "taskSummaries": [
+        {
+          "Total": 47,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 47
+        },
+        {
+          "Total": 2,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 2
+        },
+        {
+          "Total": 2,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 2
+        }
+      ],
+      "sum": {
+        "Total": 51,
+        "Passed": 51
+      },
+      "successMessages": 3,
+      "errorLines": 0,
+      "warnLines": 41
+    },
+    {
+      "batch": "neuroim-view-js",
+      "taskSummaries": [
+        {
+          "Total": 47,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 47
+        },
+        {
+          "Total": 8,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 8
+        }
+      ],
+      "sum": {
+        "Total": 55,
+        "Passed": 55
+      },
+      "successMessages": 2,
+      "errorLines": 0,
+      "warnLines": 41
+    },
+    {
+      "batch": "neuroatlas-volume",
+      "taskSummaries": [
+        {
+          "Total": 13,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 13
+        },
+        {
+          "Total": 13,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 13
+        },
+        {
+          "Total": 40,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 40
+        },
+        {
+          "Total": 40,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 40
+        },
+        {
+          "Total": 26,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 26
+        }
+      ],
+      "sum": {
+        "Total": 132,
+        "Passed": 132
+      },
+      "successMessages": 5,
+      "errorLines": 0,
+      "warnLines": 41
+    },
+    {
+      "batch": "image-surface-jvm",
+      "taskSummaries": [
+        {
+          "Total": 90,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 90
+        },
+        {
+          "Total": 105,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 105
+        },
+        {
+          "Total": 342,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 342
+        },
+        {
+          "Total": 21,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 21
+        },
+        {
+          "Total": 274,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 274
+        },
+        {
+          "Total": 70,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 70
+        }
+      ],
+      "sum": {
+        "Total": 902,
+        "Passed": 902
+      },
+      "successMessages": 6,
+      "errorLines": 0,
+      "warnLines": 41
+    },
+    {
+      "batch": "image-surface-js",
+      "taskSummaries": [
+        {
+          "Total": 90,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 90
+        },
+        {
+          "Total": 92,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 92
+        },
+        {
+          "Total": 300,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 298,
+          "Skipped": 2
+        },
+        {
+          "Total": 7,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 7
+        },
+        {
+          "Total": 274,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 274
+        },
+        {
+          "Total": 70,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 70
+        },
+        {
+          "Total": 57,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 57
+        }
+      ],
+      "sum": {
+        "Total": 890,
+        "Passed": 888,
+        "Skipped": 2
+      },
+      "successMessages": 7,
+      "errorLines": 0,
+      "warnLines": 41
+    },
+    {
+      "batch": "data-jvm",
+      "taskSummaries": [
+        {
+          "Total": 2,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 2
+        },
+        {
+          "Total": 30,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 30
+        },
+        {
+          "Total": 231,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 231
+        },
+        {
+          "Total": 81,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 81
+        },
+        {
+          "Total": 15,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 15
+        },
+        {
+          "Total": 11,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 11
+        },
+        {
+          "Total": 142,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 142
+        },
+        {
+          "Total": 91,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 91
+        }
+      ],
+      "sum": {
+        "Total": 603,
+        "Passed": 603
+      },
+      "successMessages": 8,
+      "errorLines": 0,
+      "warnLines": 41
+    },
+    {
+      "batch": "data-js",
+      "taskSummaries": [
+        {
+          "Total": 2,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 2
+        },
+        {
+          "Total": 29,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 29
+        },
+        {
+          "Total": 206,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 206
+        },
+        {
+          "Total": 61,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 61
+        },
+        {
+          "Total": 10,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 10
+        },
+        {
+          "Total": 8,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 8
+        },
+        {
+          "Total": 104,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 104
+        },
+        {
+          "Total": 68,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 68
+        }
+      ],
+      "sum": {
+        "Total": 488,
+        "Passed": 488
+      },
+      "successMessages": 8,
+      "errorLines": 0,
+      "warnLines": 41
+    },
+    {
+      "batch": "estimates-jvm",
+      "taskSummaries": [
+        {
+          "Total": 11,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 11
+        },
+        {
+          "Total": 10,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 10
+        }
+      ],
+      "sum": {
+        "Total": 21,
+        "Passed": 21
+      },
+      "successMessages": 2,
+      "errorLines": 0,
+      "warnLines": 41
+    },
+    {
+      "batch": "estimates-js",
+      "taskSummaries": [
+        {
+          "Total": 11,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 11
+        },
+        {
+          "Total": 4,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 4
+        }
+      ],
+      "sum": {
+        "Total": 15,
+        "Passed": 15
+      },
+      "successMessages": 2,
+      "errorLines": 0,
+      "warnLines": 41
+    },
+    {
+      "batch": "analysis-jvm",
+      "taskSummaries": [
+        {
+          "Total": 105,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 105
+        },
+        {
+          "Total": 764,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 764
+        },
+        {
+          "Total": 222,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 221,
+          "Skipped": 1
+        },
+        {
+          "Total": 6,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 6
+        },
+        {
+          "Total": 45,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 45
+        }
+      ],
+      "sum": {
+        "Total": 1142,
+        "Passed": 1141,
+        "Skipped": 1
+      },
+      "successMessages": 5,
+      "errorLines": 0,
+      "warnLines": 41
+    },
+    {
+      "batch": "analysis-js",
+      "taskSummaries": [
+        {
+          "Total": 105,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 105
+        },
+        {
+          "Total": 706,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 706
+        },
+        {
+          "Total": 222,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 221,
+          "Skipped": 1,
+          "Ignored": 5
+        },
+        {
+          "Total": 6,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 6
+        },
+        {
+          "Total": 45,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 45
+        }
+      ],
+      "sum": {
+        "Total": 1084,
+        "Passed": 1083,
+        "Skipped": 1,
+        "Ignored": 5
+      },
+      "successMessages": 5,
+      "errorLines": 0,
+      "warnLines": 42
+    },
+    {
+      "batch": "downstream-jvm",
+      "taskSummaries": [
+        {
+          "Total": 64,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 64
+        },
+        {
+          "Total": 15,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 15
+        },
+        {
+          "Total": 13,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 13
+        },
+        {
+          "Total": 25,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 25
+        },
+        {
+          "Total": 18,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 18
+        },
+        {
+          "Total": 105,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 105
+        },
+        {
+          "Total": 31,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 31
+        },
+        {
+          "Total": 73,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 73
+        },
+        {
+          "Total": 18,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 18
+        },
+        {
+          "Total": 15,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 15
+        }
+      ],
+      "sum": {
+        "Total": 377,
+        "Passed": 377
+      },
+      "successMessages": 10,
+      "errorLines": 0,
+      "warnLines": 41
+    },
+    {
+      "batch": "downstream-js",
+      "taskSummaries": [
+        {
+          "Total": 64,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 64
+        },
+        {
+          "Total": 15,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 15
+        },
+        {
+          "Total": 5,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 5
+        },
+        {
+          "Total": 25,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 25
+        },
+        {
+          "Total": 18,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 18
+        },
+        {
+          "Total": 104,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 104
+        },
+        {
+          "Total": 31,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 31
+        },
+        {
+          "Total": 54,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 54
+        },
+        {
+          "Total": 16,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 16
+        },
+        {
+          "Total": 7,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 7
+        }
+      ],
+      "sum": {
+        "Total": 339,
+        "Passed": 339
+      },
+      "successMessages": 10,
+      "errorLines": 0,
+      "warnLines": 41
+    },
+    {
+      "batch": "examples",
+      "taskSummaries": [
+        {
+          "Total": 3,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 3
+        },
+        {
+          "Total": 5,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 5
+        },
+        {
+          "Total": 3,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 3
+        }
+      ],
+      "sum": {
+        "Total": 11,
+        "Passed": 11
+      },
+      "successMessages": 3,
+      "errorLines": 0,
+      "warnLines": 41
+    },
+    {
+      "batch": "examples-js",
+      "taskSummaries": [
+        {
+          "Total": 2,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 2
+        }
+      ],
+      "sum": {
+        "Total": 2,
+        "Passed": 2
+      },
+      "successMessages": 1,
+      "errorLines": 0,
+      "warnLines": 41
+    }
+  ],
+  "skippedCases": [
+    "==> s scalafim.phrfcmp.prep.RhoBiasHeavySuite.frozen rho bias criterion over 50 harness datasets: trial and condition cells (opt-in) skipped 0.003s",
+    "==> s scalafim.phrfcmp.run.GlmSingleBridgeSuite.real GLMsingle on T-TX-fast: E-trial in input order equals the converter output bit for bit; scratch gone skipped 0.002s",
+    "==> s scalafim.phrfcmp.run.GlmSingleBridgeSuite.disk leak: no file created during a real bridge run contains a beta value (planted sentinel and real betas) skipped 0.0s",
+    "==> s scalafim.phrfcmp.run.GlmSingleBridgeSuite.F3/F4: a successful attempt reports both CPU figures and the output hash; guard is rusage, timing is the sidecar skipped 0.002s",
+    "==> s synthetic same-size hemisphere: placement at admission and prepare+map timings skipped",
+    "==> s P6-JS: real-field pointwise placement of both hemispheres matches the oracle within budget skipped",
+    "==> s scalafim.fmri.laws.FglsCmrgSuite.opt-in full external CMRG control packet preserves all five cells and every dataset skipped 0.004s",
+    "==> s opt-in full external CMRG control packet preserves all five cells and every dataset skipped"
+  ],
+  "ignoredSuites": [
+    "scalafim.fmri.laws.CorrectedGlsQualificationSuite",
+    "scalafim.fmri.laws.GlsContinuityStudySuite",
+    "scalafim.fmri.laws.GlsFactorStudySuite",
+    "scalafim.fmri.laws.GlsRemediationStudySuite",
+    "scalafim.fmri.laws.GlsTailContinuityStudySuite"
+  ],
+  "warnings": {
+    "build": "Existing Intaglio18unused settings and multiple-main notices; no compiler warning or error lines found in this campaign.",
+    "runtime": "JDK native/Unsafe and SLF4J no-provider notices retained in full log."
+  },
+  "adverseMeasurements": [
+    "[milestone] Gaussian SNR 0.25 admission 87.5% (reported, not gated)",
+    "[milestone] LWU admission 91.0% at SNR 1.00 is below 95%: recorded as unmet for rho-weak voxels",
+    "[milestone] LWU admission 77.0% at SNR 0.50 is below 95%: recorded as unmet for rho-weak voxels",
+    "[milestone] Gaussian SNR 0.25 admission 87.0% (reported, not gated)",
+    "[milestone] LWU admission 93.0% at SNR 1.00 is below 95%: recorded as unmet for rho-weak voxels",
+    "[milestone] LWU admission 81.0% at SNR 0.50 is below 95%: recorded as unmet for rho-weak voxels"
+  ],
+  "diagnosticSpikeUnmetLines": 26,
+  "limits": [
+    "All110test tasks executed with nonzero passing cases; optional8skips and5ignored suites are not passes.",
+    "Five explicitly opt-in GLSstudy suites remain unexecuted as studies; frozen prior negative qualification is not overridden.",
+    "Diagnostic spike configurations with unmet gates and LWUadmission targets remain in raw log, not general scientific acceptance.",
+    "SurfaceJavaFXdisplay tests are intentionally outside this headless script; separate65test/native recovery receipt applies.",
+    "Not hosted CI, clean remote checkout, canonical-main landing, broad PLSadoption, general performance or device qualification."
+  ],
+  "rawLog": {
+    "path": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/root-full-campaign-10.log",
+    "bytes": 1654586,
+    "sha256": "fbb4a2bfba75a14110eb9ca43c7bfe710feeb3ffa8f4150663c651587db6f81c"
+  },
+  "committedLog": {
+    "path": "root-full-campaign-10.log.gz",
+    "bytes": 354777,
+    "sha256": "611419ca76ace5c0dda15287d6e550f15a598727ceb9dba1e3abde7214eeafa3",
+    "decompressedSha256": "fbb4a2bfba75a14110eb9ca43c7bfe710feeb3ffa8f4150663c651587db6f81c"
+  },
+  "compileAll": {
+    "gate": "scalafimCompileAll",
+    "status": "PASS",
+    "log": {
+      "path": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/root-tranche-compile-all-03-surface.log",
+      "bytes": 968,
+      "sha256": "4c6230f0949080ae3eacf4583f43e42a6f44a9c605565c39f3e1706f8628511a"
+    },
+    "metadata": {
+      "schema_version": 1,
+      "started_utc": "2026-10-21T07:12:27.398041+00:00",
+      "finished_utc": "2026-10-21T07:13:54.039401+00:00",
+      "duration_seconds": 86.63992,
+      "command": [
+        "env",
+        "TMPDIR=/Volumes/My Passport for Mac/e01tmp",
+        "SBT_WARM_HEAP=6g",
+        "python3",
+        "tools/build/sbt-warm",
+        "scalafimCompileAll"
+      ],
+      "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020",
+      "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/root-tranche-compile-all-03-surface.log",
+      "exit_code": 0,
+      "child_returncode": 0,
+      "reason": "exited",
+      "detail": null,
+      "timeout_seconds": 1200.0,
+      "log_bytes": 968
+    },
+    "applicability": "Same production/build; subsequent896changes are2test-expectation corrections, exercised by separate65test native gate."
+  }
+}

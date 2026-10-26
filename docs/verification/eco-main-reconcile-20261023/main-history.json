@@ -1,0 +1,21 @@
+{
+  "root_source": "295d0171577cffa9d63324387b37ee204f64352c",
+  "upstream_main_integrated": "d13897efd18c7cdb8978146dbab3cc790f193a63",
+  "pre_merge_main_only_commits": 53,
+  "pre_merge_eco_only_commits": 149,
+  "resolution_policy": [
+    "Retain current-main behavior",
+    "Keep extracted owner paths and minimal module graph",
+    "Preserve validated event constructors and v3 identity with legacy projection",
+    "Preserve staging disk floors and before/after cancellation",
+    "Use bids4s-owned equivalence to refuse BOLD aliases before grouping"
+  ],
+  "confirmed_existing_owner_equivalence": [
+    "neuroatlas BoundaryQuery and16 tests",
+    "neurosurf FreeSurfer morphometry4files",
+    "neuroim unresolved NIfTI and adaptive image layouts"
+  ],
+  "new_surface_source": "4b23386bf750118b9c7c1220b6c592da9ba965e0",
+  "new_surface_topic_head": "8a6c6df3f3a78ce575a319eb1cb936d4d9fa3bea",
+  "upstream_integration_claim_boundary": "Incomingmainmerged intoisolatedtopic only; canonicalmainnotchanged; finaldefaultpinclosureandPLSacceptanceremain"
+}

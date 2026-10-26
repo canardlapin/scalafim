@@ -1,0 +1,15 @@
+{
+  "provider": "neuroim4s",
+  "before": "2c57d1592a98ba9f6ef416446a8c54e69a29a595",
+  "published": "21df6416e4e28e97cfbe39e20d7303349be7e4cf",
+  "origin": "git@github-canardlapin:canardlapin/neuroim4s.git",
+  "nonForce": true,
+  "cleanSource": true,
+  "review": "Astra approved layout, unresolved IO and native probe source deltas",
+  "testLogs": [
+    "volume-layout-platforms-01.log",
+    "unresolved-volume-io-01.log",
+    "volume-layout-native-01.log"
+  ],
+  "timeUtc": "2026-10-21T03:52:37.416244+00:00"
+}

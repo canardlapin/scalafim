@@ -1,0 +1,238 @@
+{
+  "status": "PASS for bounded provider restoration; complete PLS desktop/runtime pending",
+  "sourceRevision": "896dda088b26fbaa2aedecc8cdedcfd6a9ea2c38",
+  "restorationRevision": "63857d4810476818f012947a95f530cd0f8b49d6",
+  "review": {
+    "reviewer": "volume_view_astra_review",
+    "verdict": "APPROVE",
+    "scope": "Exact source SHA includes restoration plus test-fixture resource-count repair; no production blocker"
+  },
+  "donors": [
+    "e7a5ba6a6a4912bd4e60c7f7c634635d559106ec",
+    "bf202d75b83f94297083947db47518b18480c320",
+    "229a65f3e403f043a363ead4625e98248d9dcda4",
+    "140e4ab0a75e116d4172374318d158ec93e06c1a",
+    "89e139faca6fd2796273d9864338a2bd28532684",
+    "f0eb44afa7bd047c79d5998ad18b785c5ec7b6ed",
+    "fa188b9283d2864a30aac4cb7b85f701038860d2"
+  ],
+  "paths": [
+    "docs/verification/warm-update-salvage-20261016/scene-fixtures/FreezeCanonicalScene.scala.txt",
+    "docs/verification/warm-update-salvage-20261016/scene-fixtures/FreezeSurfaceScene.scala.txt",
+    "docs/verification/warm-update-salvage-20261016/scene-fixtures/canonical-v8-surface.json",
+    "docs/verification/warm-update-salvage-20261016/scene-fixtures/freeze-canonical.py",
+    "docs/verification/warm-update-salvage-20261016/scene-fixtures/freeze-surface.py",
+    "docs/verification/warm-update-salvage-20261016/scene-fixtures/historical-v8-surface.json",
+    "modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxColorPreparation.scala",
+    "modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxSurfaceController.scala",
+    "modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxSurfaceProbe.scala",
+    "modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxSurfaceProgram.scala",
+    "modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxAdaptiveAtlasSuite.scala",
+    "modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxAffineAtlasSuite.scala",
+    "modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxColorPreparationSuite.scala",
+    "modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxPairedCameraSuite.scala",
+    "modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxSurfaceLayerTransactionSuite.scala",
+    "modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxSurfaceProbeSuite.scala",
+    "modules/surface-view-raster/shared/src/main/scala/scalafim/surface/view/raster/SurfaceRasterizer.scala",
+    "modules/surface-view-raster/shared/src/test/scala/scalafim/surface/view/raster/SurfaceRasterizerSuite.scala",
+    "modules/surface-view-three/js/src/main/scala/scalafim/surface/view/three/ThreeSurfaceBackend.scala",
+    "modules/surface-view-three/js/src/main/scala/scalafim/surface/view/three/ThreeSurfaceProgram.scala",
+    "modules/surface-view-three/js/src/test/scala/scalafim/surface/view/three/ThreeSurfaceBackendSuite.scala",
+    "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceCompiler.scala",
+    "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceComposition.scala",
+    "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceCompositionDocument.scala",
+    "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceLayerTransaction.scala",
+    "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceRenderPlan.scala",
+    "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceSceneCodec.scala",
+    "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceSceneDocument.scala",
+    "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceSceneGeometry.scala",
+    "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceViewTypes.scala",
+    "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceViewer.scala",
+    "modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceCompositionDocumentSuite.scala",
+    "modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceFaceLayerSuite.scala",
+    "modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceLayerTransactionSuite.scala",
+    "modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfacePairedCameraSuite.scala",
+    "modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceScalarInterpolationSuite.scala",
+    "modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceScalarMappingSuite.scala",
+    "modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceSceneDocumentSuite.scala",
+    "modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceSceneLegendSuite.scala",
+    "modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceSceneVeryInflatedSuite.scala",
+    "modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceVisibilityPolicySuite.scala"
+  ],
+  "evidence": {
+    "portable": {
+      "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/surface-contracts-shared-jvm-js-01.log",
+      "sha256": "7746ca55d870a91ff02a5f2fe956478de36a212524e5822decea162c77d4622a",
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-21T07:01:30.489551+00:00",
+        "finished_utc": "2026-10-21T07:02:22.760713+00:00",
+        "duration_seconds": 52.270263,
+        "command": [
+          "python3",
+          "tools/build/sbt-warm",
+          "surfaceViewJVM/test",
+          "surfaceViewJS/test",
+          "surfaceViewRasterJVM/test",
+          "surfaceViewRasterJS/test"
+        ],
+        "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020",
+        "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/surface-contracts-shared-jvm-js-01.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 1200.0,
+        "log_bytes": 69105
+      }
+    },
+    "threeAndInvalidFixtureRed": {
+      "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/surface-contracts-three-javafx-01.log",
+      "sha256": "982090b744b9ba5e9bb5181d342fb82948cd35ad7632df5c68ef5508094abacc",
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-21T07:05:09.854085+00:00",
+        "finished_utc": "2026-10-21T07:06:42.032958+00:00",
+        "duration_seconds": 92.177481,
+        "command": [
+          "python3",
+          "tools/build/sbt-warm",
+          "surfaceViewThreeJS/test",
+          "surfaceViewJavafxJVM/test"
+        ],
+        "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020",
+        "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/surface-contracts-three-javafx-01.log",
+        "exit_code": 1,
+        "child_returncode": 1,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 1200.0,
+        "log_bytes": 57473
+      }
+    },
+    "fixtureCountRed": {
+      "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/surface-javafx-native-02.log",
+      "sha256": "f2e369f66c392eba5a30cd0448394fa626ed59bfefc12f1e237539bcc6c2687a",
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-21T07:14:29.572576+00:00",
+        "finished_utc": "2026-10-21T07:14:36.970440+00:00",
+        "duration_seconds": 7.39748,
+        "command": [
+          "env",
+          "TMPDIR=/Volumes/My Passport for Mac/e01tmp",
+          "SBT_WARM_HEAP=6g",
+          "python3",
+          "tools/build/sbt-warm",
+          "surfaceViewJavafxJVM/test",
+          "surfaceViewJavafxJVM/Test/runMain scalafim.surface.view.javafx.JavaFxColorPreparationProbe",
+          "surfaceViewJavafxJVM/Test/runMain scalafim.surface.view.javafx.JavaFxPairedNativePickProbe /Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/paired-native-picks-02.json",
+          "surfaceViewJavafxJVM/Test/runMain scalafim.surface.view.javafx.JavaFxAffineAtlasProbe",
+          "surfaceViewJavafxJVM/Test/runMain scalafim.surface.view.javafx.JavaFxAdaptiveAtlasProbe"
+        ],
+        "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020",
+        "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/surface-javafx-native-02.log",
+        "exit_code": 1,
+        "child_returncode": 1,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 1200.0,
+        "log_bytes": 10470
+      }
+    },
+    "javafxAndNative": {
+      "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/surface-javafx-native-03.log",
+      "sha256": "9c283336dd5470e7d666bec1e83408a71979da3b48b7ed1ddf669bf1d68bf115",
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-21T07:16:37.906328+00:00",
+        "finished_utc": "2026-10-21T07:16:55.384338+00:00",
+        "duration_seconds": 17.477666,
+        "command": [
+          "env",
+          "TMPDIR=/Volumes/My Passport for Mac/e01tmp",
+          "SBT_WARM_HEAP=6g",
+          "python3",
+          "tools/build/sbt-warm",
+          "surfaceViewJavafxJVM/test",
+          "surfaceViewJavafxJVM/Test/runMain scalafim.surface.view.javafx.JavaFxColorPreparationProbe",
+          "surfaceViewJavafxJVM/Test/runMain scalafim.surface.view.javafx.JavaFxPairedNativePickProbe /Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/paired-native-picks-03.json",
+          "surfaceViewJavafxJVM/Test/runMain scalafim.surface.view.javafx.JavaFxAffineAtlasProbe",
+          "surfaceViewJavafxJVM/Test/runMain scalafim.surface.view.javafx.JavaFxAdaptiveAtlasProbe"
+        ],
+        "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020",
+        "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/surface-javafx-native-03.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 1200.0,
+        "log_bytes": 15716
+      }
+    },
+    "compileAll": {
+      "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/root-tranche-compile-all-03-surface.log",
+      "sha256": "4c6230f0949080ae3eacf4583f43e42a6f44a9c605565c39f3e1706f8628511a",
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-21T07:12:27.398041+00:00",
+        "finished_utc": "2026-10-21T07:13:54.039401+00:00",
+        "duration_seconds": 86.63992,
+        "command": [
+          "env",
+          "TMPDIR=/Volumes/My Passport for Mac/e01tmp",
+          "SBT_WARM_HEAP=6g",
+          "python3",
+          "tools/build/sbt-warm",
+          "scalafimCompileAll"
+        ],
+        "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020",
+        "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/root-tranche-compile-all-03-surface.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 1200.0,
+        "log_bytes": 968
+      }
+    }
+  },
+  "passed": {
+    "surfaceViewJVM": 274,
+    "surfaceViewJS": 274,
+    "surfaceViewRasterJVM": 70,
+    "surfaceViewRasterJS": 70,
+    "surfaceViewThreeJS": 57,
+    "surfaceViewJavafxJVM": 65
+  },
+  "native": {
+    "colorPreparation": "PASS same-key buffer changes, foreign/stale A-B-A refusal, failed-publication retention and live camera/selection",
+    "pairedPick": {
+      "passed": true,
+      "hits": 2,
+      "surfaces": [
+        "pick-left",
+        "pick-right"
+      ]
+    },
+    "affineChildPicks": 1200,
+    "adaptiveChildPicks": 3300,
+    "updateParityAndBudgetRefusal": "PASS"
+  },
+  "preserved": [
+    "Strict mesh4s topology admission and single vertex-domain owner",
+    "Exact ordered connectivity comparison; no provider rollback",
+    "Historical frozen scene artifacts; canonical V8 remains V8 while complete historical family migrates V9",
+    "Complete geometry references and hybrid-document refusal",
+    "Portable raster and Three camera routing plus fail-atomic native camera changes"
+  ],
+  "fixtureRepair": "Former repeated identical faces are represented by distinct indexed coincident triangles. Literal chunk counts account for existing full source-buffer retention per chunk. Additional valid shared-square fixtures retain deduplication, winding, midpoint and morph-coordinate oracles. No production admission or upload policy was weakened.",
+  "limits": [
+    "Native host JavaFX21.0.5/JDK25 warnings retained; no stock Metal or broader device/GPU admission claim",
+    "ThreeJS tests are not browser/WebGL render qualification",
+    "Full ScalaFIM compile gate ran before the final two-test-only resource-count follow-up; production sources are identical",
+    "Portable and Three gates are reused unchanged for identical corresponding source paths",
+    "PLS complete desktop and native StudyPane/retained surface handoff still pending",
+    "No canonical main landing or publication follows from local source and native acceptance"
+  ]
+}

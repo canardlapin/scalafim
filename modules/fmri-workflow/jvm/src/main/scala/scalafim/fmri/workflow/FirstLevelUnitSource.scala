@@ -6,12 +6,11 @@ import image4s.geometry.Grid
 import image4s.geometry.GridCongruence
 import scalafim.dataset.*
 import scalafim.dataset.io.{NiftiResponseBlockSource, NiftiStagingCache}
-import scalafim.image.Mask
-import scalafim.image.PrimitiveBuffers
-import scalafim.image.SomeScalarVolume
-import scalafim.image.{space, valueAtCanonicalOrdinal, values}
-import scalafim.image.io.Nifti
-import scalafim.image.world.SpaceEvidence
+import neuroim4s.image.Mask
+import neuroim4s.image.SomeScalarVolume
+import neuroim4s.image.{space, valueAtCanonicalOrdinal, values}
+import neuroim4s.image.io.Nifti
+import neuroim4s.spaces.SpaceEvidence
 
 import java.net.URI
 import java.nio.file.Path
@@ -174,7 +173,7 @@ object FirstLevelUnitSource:
           Right(
             Mask.fromIndices(
               first.space,
-              PrimitiveBuffers.fromArray(selected),
+              (selected).clone(),
               "run-mask-intersection"
             )
           )

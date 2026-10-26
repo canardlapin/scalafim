@@ -7,7 +7,7 @@ import scalafim.fmri.design.event.EventModel
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{ArOptions, ArStructure, DvarsWeightEstimator, FitConfig, FitEngine, FitPlan, FmriModel, MissingDataPolicy, RobustOptions, RobustPsi, ScaleScope, VolumeWeighting}
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 import scala.concurrent.ExecutionContext.Implicits.global
 import scalafim.fmri.fit.GaleTestSyntax.*
 

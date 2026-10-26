@@ -1,5 +1,9 @@
 # Spatial Transform Parity
 
+> Superseded placement (2026-10-18): `WorldSpace`, `FrameCatalog`, `Spaces` and
+> `SpaceResolver` now live in neuroim4s-spaces (`neuroim4s.spaces`) and `WorldLink`
+> in reframe4s-core; see `docs/decisions/spatial-transforms.md`.
+
 Status: **proposed, revised after fresh-context review** (2026-09-24). Tracked in mote as the STP epic; the mapping from plan to ticket ids is in
 [spatial-transform-parity-epic.md](spatial-transform-parity-epic.md). Supersedes the transform sections of
 `docs/ecosystem-port.md:123-178` and corrects `docs/module-relations.md:316-356`.

@@ -1,0 +1,43 @@
+{
+  "sourceCommit": "12c0e17b2bf004862409741f3f046b78a8d0d803",
+  "donor": "b664cc576cc1a842e1342de25b02b01f43e402f5",
+  "review": {
+    "reviewer": "volume_view_astra_review",
+    "verdict": "APPROVE; all4files exactly match donor"
+  },
+  "check": {
+    "execution": {
+      "schema_version": 1,
+      "started_utc": "2026-10-21T06:03:55.013008+00:00",
+      "finished_utc": "2026-10-21T06:04:18.182065+00:00",
+      "duration_seconds": 23.169006,
+      "command": [
+        "env",
+        "TMPDIR=/Volumes/My Passport for Mac/e01tmp",
+        "SBT_WARM_HEAP=4g",
+        "python3",
+        "tools/build/sbt-warm",
+        "fmriWorkflowJVM/test",
+        "fmriWorkflowJS/test"
+      ],
+      "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020",
+      "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/first-level-workflow-jvm-js.log",
+      "exit_code": 0,
+      "child_returncode": 0,
+      "reason": "exited",
+      "detail": null,
+      "timeout_seconds": 1800.0,
+      "log_bytes": 10914
+    },
+    "sha256": "19581d2a63142172aa7f8325f43eb30c47201b95707dee041a10577e3f262abf"
+  },
+  "passed": {
+    "JVM": 53,
+    "JS": 44
+  },
+  "scope": "Exact selected run/table IDs, row/column/timing preservation, nuisance and block conflicts refused; explicit sampling fraction/reference.",
+  "limits": [
+    "Sampling declaration is not slice-timing-correction evidence.",
+    "Dataset opener, study support and live response/view caller qualification still pending."
+  ]
+}

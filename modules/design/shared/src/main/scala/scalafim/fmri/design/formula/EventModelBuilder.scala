@@ -1247,8 +1247,9 @@ object EventModelBuilder:
           onsets = onsets,
           durations = durations,
           blockIds = blockIds,
-          termTag = termTag
-        ).map(_.copy(sourceRows = sourceRows))
+          termTag = termTag,
+          sourceRows = sourceRows
+        )
       case Some(value) =>
         value.term(events, termTag)
 

@@ -1,7 +1,7 @@
 package scalafim.fmri.threshold
 
 import gale.linalg.DMat
-import scalafim.image.{SomeMaskVolume, SomeScalarVolume}
+import neuroim4s.image.{SomeMaskVolume, SomeScalarVolume}
 
 /** HierScan settings.
   *

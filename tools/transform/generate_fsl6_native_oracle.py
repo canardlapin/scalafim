@@ -14,7 +14,9 @@ import nibabel as nib
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[2]
-ORACLE = ROOT / "modules/transform/shared/src/test/resources/scalafim/transform/oracle"
+import oracle_common as oc
+
+ORACLE = Path(oc.transform_oracle_root())
 COEFFICIENTS = ORACLE / "neurotransform/fsl_coef_oracle"
 DENSE = ORACLE / "neurotransform/fsl_dense_oracle"
 CONVENTIONS = ORACLE / "conventions"

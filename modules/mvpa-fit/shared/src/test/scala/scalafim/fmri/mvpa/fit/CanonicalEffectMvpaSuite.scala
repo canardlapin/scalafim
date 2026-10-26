@@ -95,9 +95,9 @@ class CanonicalEffectMvpaSuite extends munit.FunSuite:
 
   test("dense capacity and strict unknown costs reject before provider access"):
     val p = poison(right(CanonicalGeometrySchedule.stable(iidGeometry())))
-    val denied = budget.copy(memory = scalafim.fmri.mvpa.analysis.ResourceLimit.OwnedNumeric(0L))
+    val denied = budget.copy(memory = mvpa4s.analysis.ResourceLimit.OwnedNumeric(0L))
     assert(CanonicalGlobal.assess(p._1, ridge, denied).isLeft)
-    val strict = budget.copy(memory = scalafim.fmri.mvpa.analysis.ResourceLimit.WholeNumeric(1000000L))
+    val strict = budget.copy(memory = mvpa4s.analysis.ResourceLimit.WholeNumeric(1000000L))
     assert(CanonicalGlobal.assess(p._1, ridge, strict).isLeft)
     assertEquals(p._2(), 0)
     assert(p._1.selectRuns(Vector(RunId("run-0"), RunId("run-0"))).isLeft)
@@ -105,13 +105,13 @@ class CanonicalEffectMvpaSuite extends munit.FunSuite:
 
   test("canonical input domains require exact run ordering and unique run identities"):
     val n = native(runResponses)
-    val partitions = right(scalafim.fmri.mvpa.AxisRef.fromStableKeys("bad-partitions", multivar.core.SpaceRole.Samples,
+    val partitions = right(mvpa4s.AxisRef.fromStableKeys("bad-partitions", multivar.core.SpaceRole.Samples,
       Vector("run-1", "run-0", "run-2"), "run", "partition", "native"))
     assert(CanonicalRunSet.make(partitions)(n.source.runs)(RunId.apply).isLeft)
 
   test("one real run supports a global fit while assessment requires held-out contributors"):
     val n = native(runResponses)
-    val partitions = right(scalafim.fmri.mvpa.AxisRef.fromStableKeys("one-canonical-run", multivar.core.SpaceRole.Samples,
+    val partitions = right(mvpa4s.AxisRef.fromStableKeys("one-canonical-run", multivar.core.SpaceRole.Samples,
       Vector("run-0"), "run", "partition", "native"))
     val one = right(CanonicalRunSet.make(partitions)(n.source.runs.take(1))(RunId.apply))
     val selection = right(one.selectRuns(Vector(RunId("run-0"))))
@@ -129,9 +129,9 @@ class CanonicalEffectMvpaSuite extends munit.FunSuite:
 
   test("failed MANOVA training does not acquire or read its held-out provider"):
     import multivar.core.{SpaceRole, ValueId, ValueIdentity}
-    import scalafim.fmri.mvpa.{AxisRef, EvidenceSource, Observations}
-    import scalafim.fmri.mvpa.analysis.*
-    import scalafim.response.{Provenance, ProvenanceId, SourceId}
+    import mvpa4s.{AxisRef, EvidenceSource, Observations}
+    import mvpa4s.analysis.*
+    import locus4s.provenance.{Provenance, ProvenanceId, SourceId}
     val design = DMat.tabulate(8, 2)((r, c) => if c == 0 then 1.0 else if r % 2 == 0 then -1.0 else 1.0)
     val geometry = right(ResponsePreparationPlan.fromConfig(FitConfig()).prepareManova(DesignMatrix.unsafe(design), Vector("intercept", "task"),
       scalafim.fmri.fit.FContrast("task", Vector(Map("task" -> 1.0))), SelectedTimepointIndices.unsafe((0 until 8).toVector),
@@ -168,9 +168,9 @@ class CanonicalEffectMvpaSuite extends munit.FunSuite:
     NativeCanonicalFixtures.contrast(rows.map(fromRows), Vector.fill(rows.length)(schedule))
 
   private def poison(schedule: CanonicalGeometrySchedule): (CanonicalRunSet[? <: multivar.core.SemanticSpace, ? <: multivar.core.SemanticSpace, CanonicalGeometrySchedule], () => Int) =
-    import scalafim.fmri.mvpa.{AxisRef, EvidenceSource, Observations}
-    import scalafim.fmri.mvpa.analysis.*
-    import scalafim.response.{Provenance, ProvenanceId, SourceId}
+    import mvpa4s.{AxisRef, EvidenceSource, Observations}
+    import mvpa4s.analysis.*
+    import locus4s.provenance.{Provenance, ProvenanceId, SourceId}
     import multivar.core.{SpaceRole, ValueId, ValueIdentity}
     var reads = 0
     val neural = right(AxisRef.fromStableKeys("canonical-poison-neural", SpaceRole.Observed, Vector("v0", "v1"), "native", "psc", "raw"))

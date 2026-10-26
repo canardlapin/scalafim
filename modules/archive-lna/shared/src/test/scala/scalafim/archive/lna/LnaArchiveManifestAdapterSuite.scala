@@ -7,7 +7,7 @@ import scalafim.archive.{
   RepresentationMetadata,
   RunLabel
 }
-import scalafim.image.{SampleSpaces, SomeSampleSpace}
+import neuroim4s.image.{SampleSpaces}
 
 class LnaArchiveManifestAdapterSuite extends munit.FunSuite:
   test("LNA manifest adaptation is pure namespaced and canonically readable"):

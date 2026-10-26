@@ -8,7 +8,7 @@ import scalafim.fmri.design.event.EventModel
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{ArOptions, ArStructure, FitConfig, FitEngine, FitPlan, FmriModel, MissingDataPolicy, RobustOptions, RobustPsi}
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 
 class FitWorkDescriptorSuite extends munit.FunSuite:
 

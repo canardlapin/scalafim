@@ -10,7 +10,7 @@ import scalafim.fmri.design.baseline.Intercept
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.laws.GeneratedLawSuite
 import scalafim.fmri.model.{FitPlan, FitStrategy, FmriModel, FmriModelBuilder, ModelBuildSpec}
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 
 class FixedEffectsStatusGeneratedLawsSuite extends GeneratedLawSuite:
 
@@ -77,7 +77,7 @@ class FixedEffectsStatusGeneratedLawsSuite extends GeneratedLawSuite:
   private lazy val healthyRunwise: RunwiseFmriFitResult =
     FitPlanExecutor
       .fit(FitPlan(model, FitStrategy.RunwiseLeastSquares()))
-      .fold(error => throw new IllegalArgumentException(error.message), identity)
+      .fold(error => throw new IllegalArgumentException(error.message), value => value)
       .asInstanceOf[RunwiseFmriFitResult]
 
   private lazy val model: FmriModel =

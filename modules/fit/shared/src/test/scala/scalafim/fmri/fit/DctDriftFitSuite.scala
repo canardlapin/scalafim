@@ -5,7 +5,7 @@ import scalafim.fmri.design.baseline.*
 import scalafim.fmri.hrf.*
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.model.{FitPlan, FmriModelBuilder, ModelBuildSpec}
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 
 class DctDriftFitSuite extends munit.FunSuite:
   private def right[A](value: Either[FitError, A]): A = value.fold(error => fail(error.message), identity)

@@ -1,0 +1,16 @@
+{
+  "baseline_commit": "1412c16c2",
+  "files": {
+    "build.sbt": "665d7abb56ad81d22850dc4b4407d2e3e3b2300283c763b6a77dbe08e3d91346",
+    "modules/mvpa-pipeline/shared/src/main/scala/scalafim/fmri/mvpa/pipeline/PipelineInterpreter.scala": "3a6d3b7428889ee03ace13897a52ed5e609f0ccc29930237e06d4daa2b6bf2fc",
+    "modules/mvpa-pipeline/shared/src/test/scala/external/consumer/PipelineInterpreterSuite.scala": "b75d9a164120a8bcbc5c7db634998f3f5a6c20f1d7cc81fbeb92acc6932b20ad",
+    "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/execution/LocalExecution.scala": "19e2f6ddd37fe13793d3aa1fc1eacd9149ac99c4d435ceab8937e2a3b12251cc",
+    "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/execution/UnitInterpreter.scala": "3b69c30425d08b554fd67d60bd3e57ecceafc56fa75b9da8ac1db833f9c9c7d8",
+    "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/pattern/VoxelFamilyRandomization.scala": "6ac17ec0251806ba0019c54b1615a50d6be57dce22cf81da67831a0407630851",
+    "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/execution/LocalExecutionSuite.scala": "c2160648d0ffa4df99000f8cd109947255a258aba3f79164a76a324ede635173"
+  },
+  "logs": {
+    "final-tests": "628ab5ab71268d7bf1fcf1c9003fd8cd78b0fe97386417c2ef61c9331c030584",
+    "clean-js-tests": "4ace921be7f4e1530d487db8176309e63fbb2ede40fcf2291ae9988302105e0f"
+  }
+}

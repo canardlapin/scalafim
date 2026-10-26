@@ -1,8 +1,8 @@
 package scalafim.fmri.threshold
 
-import scalafim.image.SomeScalarVolume
-import scalafim.image.SampleSpaces.*
-import scalafim.image.SomeNeuroVolume.*
+import neuroim4s.image.SomeScalarVolume
+import neuroim4s.image.SampleSpaces.*
+import neuroim4s.image.SomeNeuroVolume.*
 
 final class PriorWeights private (private[threshold] val data: Array[Double]):
   def length: Int = data.length
@@ -68,12 +68,12 @@ object PriorWeights:
       Right(new PriorWeights(out))
 
   def fromVolume(prior: SomeScalarVolume[Double], field: MaskedField): Either[ThresholdError, PriorWeights] =
-    if prior.space.spatialDims != field.space.spatialDims then
+    if prior.space.grid.shape != field.space.grid.shape then
       return Left(
         ThresholdError.ShapeMismatch(
           "prior/field",
-          field.space.spatialDims.mkString("x"),
-          prior.space.spatialDims.mkString("x")
+          field.space.grid.shape.mkString("x"),
+          prior.space.grid.shape.mkString("x")
         )
       )
     val out = new Array[Double](field.size)

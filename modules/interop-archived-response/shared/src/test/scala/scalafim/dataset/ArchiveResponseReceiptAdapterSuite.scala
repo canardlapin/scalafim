@@ -16,7 +16,6 @@ import scalafim.archive.{
 import scalafim.response.{
   CalibrationState,
   DomainId,
-  DomainReference,
   NonFinitePolicy,
   OrderedIndices,
   PhysicalReadUnit,
@@ -33,6 +32,7 @@ import scalafim.response.{
   TimeDomain,
   UnitId
 }
+import locus4s.provenance.DomainReference
 
 class ArchiveResponseReceiptAdapterSuite extends munit.FunSuite:
   test("every archive locality adapts to a conforming response receipt"):

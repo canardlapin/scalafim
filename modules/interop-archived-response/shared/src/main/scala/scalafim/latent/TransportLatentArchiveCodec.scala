@@ -14,8 +14,8 @@ import scalafim.archive.lna.{
   TransformKind,
   TransformParams
 }
-import scalafim.image.SomeSampleSpace
-import scalafim.image.SampleSpaces.*
+import image4s.SomeSampleSpace
+import neuroim4s.image.SampleSpaces.*
 import gale.linalg.DVec
 import scalafim.latent.LatentArchivePayloads.*
 
@@ -33,8 +33,8 @@ object TransportLatentArchiveCodec:
       runLabel: RunLabel = RunLabel.indexed(0),
       creator: String = "scalafim-latent"
   ): Either[ArchiveError, LnaArchive] =
-    if response.shape.samples != space.spatialDims.product then
-      Left(ArchiveError.ShapeMismatch(s"transport response has ${response.shape.samples} samples but space has ${space.spatialDims.product} voxels"))
+    if response.shape.samples != space.grid.shape.product then
+      Left(ArchiveError.ShapeMismatch(s"transport response has ${response.shape.samples} samples but space has ${space.grid.shape.product} voxels"))
     else
       for
         nativeDecoder <- linearMapMatrix(response.nativeDecoder)
@@ -124,7 +124,7 @@ object TransportLatentArchiveCodec:
             datasets = refs,
             header = Map(
               "response.kind" -> KindValue,
-              "space.dims" -> space.spatialDims.mkString("x"),
+              "space.dims" -> space.grid.shape.mkString("x"),
               "timepoints" -> response.shape.timepoints.toString,
               "samples" -> response.shape.samples.toString,
               "coefficients" -> response.shape.coefficients.toString,

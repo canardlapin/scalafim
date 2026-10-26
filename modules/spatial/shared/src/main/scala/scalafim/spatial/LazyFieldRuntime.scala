@@ -1,5 +1,9 @@
 package scalafim.spatial
 
+import neurosurf4s.routing.*
+
+import neuroim4s.spatial.{SamplingPolicy, VolumeReadRequest}
+
 import gale.linalg.{DMat, LinAlgError}
 
 import scala.collection.mutable
@@ -35,7 +39,7 @@ private object VolumePullbackProgramCompiler extends PullbackProgramCompiler:
     PullbackBackendId.unsafe("volume-pullback-program-v1")
 
   override def compile(program: PullbackProgram): Either[SpatialError, SpatialOperator] =
-    VolumePullbackOperatorCompiler.compile(program)
+    FunctionalRouting.compile(program)
 
 private object VolumeAffineProgramCompiler extends PullbackProgramCompiler:
   override val id: PullbackBackendId =
@@ -324,7 +328,12 @@ final class LazyFieldRuntime private (
             if block.request == request then Right(())
             else Left(SpatialError.FieldSourceRequestMismatch(source.descriptor.id))
           _ <- FieldSourceBlock.make(source.descriptor.id, request, block.data)
-          expanded <- expandSourceBlock(field, request, block.data)
+          expanded <- graph.domain(field.root).flatMap: domain =>
+            domain.geometry match
+              case SamplingGeometry.Volume(_) =>
+                VolumeReadRequest.make(field.plan.rootSampleCount, field.plan.rootObservations, request.sourceRows, request.observations)
+                  .flatMap(_.expand(block.data)).left.map(VolumeReadErrors(source.descriptor.id))
+              case _ => expandSourceBlock(field, request, block.data)
         yield expanded
       case None =>
         field.data.materialized match
@@ -366,17 +375,16 @@ final class LazyFieldRuntime private (
     if valueCount > Int.MaxValue.toLong then
       Left(SpatialError.FieldSourceReadFailed(field.data.fieldSource.get.descriptor.id, s"expanded block has $valueCount values"))
     else
-      val compact = block.copyData
-      val expanded = new Array[Double](valueCount.toInt)
+      val expanded = DMat.newBuilder(field.plan.rootSampleCount, request.columns)
       var compactRow = 0
       while compactRow < request.rows do
         val sourceRow = request.sourceRows(compactRow)
         var column = 0
         while column < request.columns do
-          expanded(sourceRow * request.columns + column) = compact(compactRow * request.columns + column)
+          expanded.writeLinear(sourceRow * request.columns + column, block(compactRow, column))
           column += 1
         compactRow += 1
-      Right(GaleSpatialSupport.unsafeOwnedMatrix(field.plan.rootSampleCount, request.columns, expanded))
+      Right(expanded.result())
 
   private def selectObservations(
     data: DMat,
@@ -392,16 +400,15 @@ final class LazyFieldRuntime private (
     if observations.length == data.cols && observations.indices.forall(i => observations(i) == i) then
       Right(data)
     else
-      val source = data.copyData
-      val selected = new Array[Double](data.rows * observations.length)
+      val selected = DMat.newBuilder(data.rows, observations.length)
       var row = 0
       while row < data.rows do
         var outCol = 0
         while outCol < observations.length do
-          selected(row * observations.length + outCol) = source(row * data.cols + observations(outCol))
+          selected.writeLinear(row * observations.length + outCol, data(row, observations(outCol)))
           outCol += 1
         row += 1
-      Right(GaleSpatialSupport.unsafeOwnedMatrix(data.rows, observations.length, selected))
+      Right(selected.result())
 
   private def validateResult(field: Field, result: DMat): Either[SpatialError, Unit] =
     if result.rows != field.sampleCount then
@@ -457,7 +464,7 @@ object LazyFieldRuntime:
   def apply(
     graph: SpatialGraph,
     backend: PullbackProgramCompiler = PullbackProgramCompiler.volume,
-    registry: MorphismCompilerRegistry = MorphismCompilerRegistry.standard,
+    registry: MorphismCompilerRegistry = FunctionalRouting.registry,
     planCache: EvaluationPlanCache = InMemoryEvaluationPlanCache.empty,
     resultCache: FieldResultCache = InMemoryFieldResultCache.empty,
     legacyOperatorCache: OperatorCache = InMemoryOperatorCache.empty

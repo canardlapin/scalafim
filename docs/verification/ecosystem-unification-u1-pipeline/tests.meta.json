@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-16T12:00:32.512785+00:00",
+  "finished_utc": "2026-10-16T12:01:49.386097+00:00",
+  "duration_seconds": 76.872609,
+  "command": [
+    "python3",
+    "tools/build/sbt-warm",
+    "reload",
+    "mvpaJVM/test",
+    "mvpaPipelineJVM/test",
+    "mvpaJS/test",
+    "mvpaPipelineJS/test"
+  ],
+  "cwd": "/Users/bbuchsbaum/code/scala/scalafim",
+  "log": "/tmp/scalafim-unification-u1-pipeline-20261016/tests.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 1800.0,
+  "log_bytes": 105417
+}

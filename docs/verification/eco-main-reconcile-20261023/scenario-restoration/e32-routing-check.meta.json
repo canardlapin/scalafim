@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-23T20:23:19.254483+00:00",
+  "finished_utc": "2026-10-23T20:23:19.495510+00:00",
+  "duration_seconds": 0.240919,
+  "command": [
+    "bash",
+    "-c",
+    "python3 -S tools/docs/check_first_level_docs.py --check && python3 -S -m unittest tools/scenarios/test_validate_manifest.py tools/ci/test_scenario_registration.py && python3 -S tools/ci/check_test_inventory.py --check && git diff --check"
+  ],
+  "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-followups-check-20261023",
+  "log": "/tmp/eco-e32-routing-check-86.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 60.0,
+  "log_bytes": 234
+}

@@ -1,6 +1,6 @@
 package scalafim.dataset
 
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 import gale.linalg.DMat
 
 class DeferredResponseBlockSourceSuite extends munit.FunSuite:

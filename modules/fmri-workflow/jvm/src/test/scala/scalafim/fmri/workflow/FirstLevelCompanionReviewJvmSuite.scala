@@ -1,7 +1,7 @@
 package scalafim.fmri.workflow
 
 import scalafim.dataset.*
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 import java.nio.file.{Files,Path}
 import scala.jdk.CollectionConverters.*
 

@@ -3,13 +3,13 @@ package scalafim.dataset
 import scalafim.archive.{ArchiveError, RunLabel}
 import scalafim.archive.lna.{LnaArchive, LnaPipeline}
 import gale.linalg.DMat
-import scalafim.image.Mask
+import neuroim4s.image.Mask
 import scalafim.latent.{
   LatentArchivePlan,
   LatentArchiveRegistry,
   LatentSelection
 }
-import scalafim.response.OperationId
+import locus4s.provenance.OperationId
 
 final class LatentArchiveDatasetBackend private (
     val id: DatasetId,
@@ -124,4 +124,4 @@ object LatentArchiveDatasetBackend:
       metadata: DatasetMetadata = DatasetMetadata.Empty
   ): LatentArchiveDatasetBackend =
     make(id, archive, run, registry, metadata)
-      .fold(error => throw new IllegalArgumentException(error.message), identity)
+      .fold(error => throw new IllegalArgumentException(error.message), value => value)

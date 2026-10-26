@@ -43,9 +43,9 @@ import scalafim.response.{
   DecodeConsistency,
   PhysicalLocality,
   ResponseBlock,
-  SelectionAxes,
-  SourceId
+  SelectionAxes
 }
+import locus4s.provenance.SourceId
 import scalafim.response.laws.ResponseLawChecks
 import zarr4s.{
   ArrayDescriptor,

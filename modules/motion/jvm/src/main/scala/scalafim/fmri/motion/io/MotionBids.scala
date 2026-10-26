@@ -3,11 +3,12 @@ package scalafim.fmri.motion.io
 import bids4s.*
 import bids4s.io.{BidsLoadConfig, BidsProjectLoader}
 import scalafim.fmri.motion.*
-import scalafim.image.*
-import scalafim.image.world.SpaceEvidence
+import neuroim4s.image.*
+import neuroim4s.spaces.SpaceEvidence
 
 import java.nio.file.{Path, Paths}
 
+/** Scan selectors use bids4s entity globs; `*` leaves an entity unrestricted. */
 object MotionBids:
   def loadProject(
       root: Path,
@@ -20,21 +21,21 @@ object MotionBids:
 
   def rawScans(
       project: BidsProject,
-      subid: String = ".*",
-      task: String = ".*",
-      run: String = ".*",
-      session: String = ".*",
+      subid: String = "*",
+      task: String = "*",
+      run: String = "*",
+      session: String = "*",
       kind: String = "bold"
   ): Either[MotionIoError, Vector[MotionBidsScan]] =
     scans(project, project.funcScans(subid = subid, task = task, run = run, session = session, kind = kind))
 
   def preprocScans(
       project: BidsProject,
-      subid: String = ".*",
-      task: String = ".*",
-      run: String = ".*",
-      session: String = ".*",
-      space: String = ".*",
+      subid: String = "*",
+      task: String = "*",
+      run: String = "*",
+      session: String = "*",
+      space: String = "*",
       desc: String = "preproc",
       kind: String = "bold",
       pipeline: Option[PipelineName] = Some(PipelineName("fmriprep"))

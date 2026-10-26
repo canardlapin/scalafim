@@ -1,21 +1,21 @@
 package scalafim.fmri.motion
 
-import scalafim.image.*
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.*
+import neuroim4s.image.SampleSpaces.*
 
 class MotionApplierSuite extends munit.FunSuite:
 
   private def line(values: Vector[Double], nVolumes: Int = 1): SomeScalarSeries[Double] =
-    val data = PrimitiveBuffers.tabulate[Double](values.length)(values)
+    val data = Array.tabulate[Double](values.length)(values)
     SomeScalarSeries.unsafeCopyFromCanonicalArray(
       data,
-      SampleSpaces(Vector(values.length / nVolumes, 1, 1)).addDim(ProviderAxes.time(nVolumes)),
+      SampleSpaces(Vector(values.length / nVolumes, 1, 1)).typed.appendNonSpatial(ProviderAxes.time(nVolumes)).fold(error => throw new IllegalArgumentException(error.message), value => value),
       "line"
     )
 
   private def volume(values: Vector[Double], dims: Vector[Int], nVolumes: Int): SomeScalarSeries[Double] =
-    val data = PrimitiveBuffers.tabulate[Double](values.length)(values)
-    SomeScalarSeries.unsafeCopyFromCanonicalArray(data, SampleSpaces(dims).addDim(ProviderAxes.time(nVolumes)), "volume")
+    val data = Array.tabulate[Double](values.length)(values)
+    SomeScalarSeries.unsafeCopyFromCanonicalArray(data, SampleSpaces(dims).typed.appendNonSpatial(ProviderAxes.time(nVolumes)).fold(error => throw new IllegalArgumentException(error.message), value => value), "volume")
 
   private def assertSameValues(actual: SomeScalarSeries[Double], expected: Vector[Double], tol: Double = 1e-12): Unit =
     val actualValues = actual.copyToCanonicalArray

@@ -51,13 +51,13 @@ candidate-bound release report supplies final execution status.
 
 ### E05: Immutable compiled-design authority
 
-- Owning modules: `design`, `model`, `fit`
-- Public API/source: `modules/design/shared/src/main/scala/scalafim/fmri/design/DesignSchema.scala`, `modules/model/shared/src/main/scala/scalafim/fmri/model/DesignBlock.scala`, `modules/model/shared/src/main/scala/scalafim/fmri/model/FmriModel.scala`, `modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitPlanExecutor.scala`
+- Owning modules: `design`, `fit`
+- Public API/source: `modules/design/shared/src/main/scala/scalafim/fmri/design/DesignSchema.scala`, `modules/fit/shared/src/main/scala/scalafim/fmri/model/DesignBlock.scala`, `modules/fit/shared/src/main/scala/scalafim/fmri/model/FmriModel.scala`, `modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitPlanExecutor.scala`
 - Suites and exact tests/scenarios: `modules/design/shared/src/test/scala/scalafim/fmri/design/DesignSchemaOwnershipSuite.scala` (`compiled schema owns its input and exported matrix storage`; `relabeling and combining schemas cannot reopen matrix ownership`; `runwise slices retain the matrix bound to their coefficient axis`); `modules/fit/shared/src/test/scala/scalafim/fmri/fit/DesignMatrixOwnershipSuite.scala` (`a compiled hypothesis and ordinary or chunked fits share an immutable design`; `LSS uses the canonical design after event and baseline arrays are mutated`; `model construction rejects a matrix changed without rebuilding its schema`)
 - External fixtures/receipts: none claimed
 - Commands:
-  - `sbt designJVM/test modelJVM/test fitJVM/test`
-  - `sbt designJS/test modelJS/test fitJS/test`
+  - `sbt designJVM/test fitJVM/test`
+  - `sbt designJS/test fitJS/test`
 
 ### E06: Structural column origins and deterministic fingerprint
 
@@ -71,13 +71,13 @@ candidate-bound release report supplies final execution status.
 
 ### E07: Model, FitPlan, and fit-result coefficient axis
 
-- Owning modules: `model`, `fit`
-- Public API/source: `modules/model/shared/src/main/scala/scalafim/fmri/model/FmriModel.scala`, `modules/model/shared/src/main/scala/scalafim/fmri/model/FitPlan.scala`, `modules/fit/shared/src/main/scala/scalafim/fmri/fit/FmriFitResult.scala`
-- Suites and exact tests/scenarios: `modules/model/shared/src/test/scala/scalafim/fmri/model/ModelSuite.scala` (`model and fit plan retain the canonical structural coefficient axis`; `compatibility label changes do not change structural identity`); `modules/fit/shared/src/test/scala/scalafim/fmri/fit/FitBlockSuite.scala` (`dense block merge preserves and validates the structural coefficient axis`)
+- Owning modules: `fit`
+- Public API/source: `modules/fit/shared/src/main/scala/scalafim/fmri/model/FmriModel.scala`, `modules/fit/shared/src/main/scala/scalafim/fmri/model/FitPlan.scala`, `modules/fit/shared/src/main/scala/scalafim/fmri/fit/FmriFitResult.scala`
+- Suites and exact tests/scenarios: `modules/fit/shared/src/test/scala/scalafim/fmri/model/ModelSuite.scala` (`model and fit plan retain the canonical structural coefficient axis`; `compatibility label changes do not change structural identity`); `modules/fit/shared/src/test/scala/scalafim/fmri/fit/FitBlockSuite.scala` (`dense block merge preserves and validates the structural coefficient axis`)
 - External fixtures/receipts: none claimed
 - Commands:
-  - `sbt modelJVM/test fitJVM/test`
-  - `sbt modelJS/test fitJS/test`
+  - `sbt fitJVM/test`
+  - `sbt fitJS/test`
 
 ### E08: Fingerprint-bound structural T/F hypotheses and estimability
 
@@ -120,13 +120,13 @@ candidate-bound release report supplies final execution status.
 
 ### E12: Declared factor levels and empty-cell policy
 
-- Owning modules: `design`, `model`
+- Owning modules: `design`, `fit`
 - Public API/source: `modules/design/shared/src/main/scala/scalafim/fmri/design/FactorLevels.scala`, `modules/design/shared/src/main/scala/scalafim/fmri/design/DesignSchema.scala`
-- Suites and exact tests/scenarios: `modules/model/shared/src/test/scala/scalafim/fmri/model/ModelBuilderSuite.scala` (`buildModel propagates declared factor levels through the public model path`)
+- Suites and exact tests/scenarios: `modules/fit/shared/src/test/scala/scalafim/fmri/model/ModelBuilderSuite.scala` (`buildModel propagates declared factor levels through the public model path`)
 - External fixtures/receipts: none claimed
 - Commands:
-  - `sbt designJVM/test modelJVM/test`
-  - `sbt designJS/test modelJS/test`
+  - `sbt designJVM/test fitJVM/test`
+  - `sbt designJS/test fitJS/test`
 
 ### E13: Missing, centering, and ordered orthogonalization receipts
 
@@ -140,8 +140,8 @@ candidate-bound release report supplies final execution status.
 
 ### E14: Structurally assigned heterogeneous HRFs
 
-- Owning modules: `design`, `model`, `fit`
-- Public API/source: `modules/design/shared/src/main/scala/scalafim/fmri/design/HrfAssignments.scala`, `modules/model/shared/src/main/scala/scalafim/fmri/model/FmriModelBuilder.scala`
+- Owning modules: `design`, `fit`
+- Public API/source: `modules/design/shared/src/main/scala/scalafim/fmri/design/HrfAssignments.scala`, `modules/fit/shared/src/main/scala/scalafim/fmri/model/FmriModelBuilder.scala`
 - Suites and exact tests/scenarios: `modules/design/shared/src/test/scala/scalafim/fmri/design/scenarios/HeterogeneousHrfScenarioSuite.scala` (`design.heterogeneous-hrf.v1`); `modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/StructuralFirstLevelScenarioSuite.scala` (`fit.structural-s09-heterogeneous-hrf.v1`)
 - External fixtures/receipts: `docs/scenarios/fixtures/design.heterogeneous-hrf.v1.r.json`
 - Commands:
@@ -150,8 +150,8 @@ candidate-bound release report supplies final execution status.
 
 ### E15: Validated fixed and estimated WLS preparation
 
-- Owning modules: `model`, `fit`
-- Public API/source: `modules/model/shared/src/main/scala/scalafim/fmri/model/FitConfig.scala`, `modules/fit/shared/src/main/scala/scalafim/fmri/fit/ResponsePreparation.scala`
+- Owning modules: `fit`
+- Public API/source: `modules/fit/shared/src/main/scala/scalafim/fmri/model/FitConfig.scala`, `modules/fit/shared/src/main/scala/scalafim/fmri/fit/ResponsePreparation.scala`
 - Suites and exact tests/scenarios: `modules/fit/shared/src/test/scala/scalafim/fmri/fit/ResponsePreparationSuite.scala` (`fixed weights equal OLS on square-root weighted design and response`; `estimated DVARS weighting is executable and records its source and normalization`); `modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/StructuralFirstLevelScenarioSuite.scala` (`fit.structural-s18-wls.v1`)
 - External fixtures/receipts: `docs/scenarios/fixtures/fit.structural-s18-wls.v1.r.json`
 - Commands:
@@ -170,13 +170,13 @@ candidate-bound release report supplies final execution status.
 
 ### E17: Shared, runwise, and fixed-effects coefficient scope
 
-- Owning modules: `model`, `fit`
-- Public API/source: `modules/model/shared/src/main/scala/scalafim/fmri/model/CoefficientScope.scala`, `modules/fit/shared/src/main/scala/scalafim/fmri/fit/FixedEffects.scala`, `modules/fit/shared/src/main/scala/scalafim/fmri/fit/FirstLevelFixedEffectsEstimates.scala`
-- Suites and exact tests/scenarios: `modules/model/shared/src/test/scala/scalafim/fmri/model/ModelSuite.scala` (`FitPlan exposes separate-runs-then-fixed-effects as an executable scope`); `modules/fit/shared/src/test/scala/scalafim/fmri/fit/FirstLevelFixedEffectsEstimatesSuite.scala` (`preparation reads no responses and blocked pooling matches independent mixed-TR R contrasts`; `explicit retained run coefficients match independent R values without changing pooled products`)
+- Owning modules: `fit`
+- Public API/source: `modules/fit/shared/src/main/scala/scalafim/fmri/model/CoefficientScope.scala`, `modules/fit/shared/src/main/scala/scalafim/fmri/fit/FixedEffects.scala`, `modules/fit/shared/src/main/scala/scalafim/fmri/fit/FirstLevelFixedEffectsEstimates.scala`
+- Suites and exact tests/scenarios: `modules/fit/shared/src/test/scala/scalafim/fmri/model/ModelSuite.scala` (`FitPlan exposes separate-runs-then-fixed-effects as an executable scope`); `modules/fit/shared/src/test/scala/scalafim/fmri/fit/FirstLevelFixedEffectsEstimatesSuite.scala` (`preparation reads no responses and blocked pooling matches independent mixed-TR R contrasts`; `explicit retained run coefficients match independent R values without changing pooled products`)
 - External fixtures/receipts: `docs/scenarios/fixtures/fit.mixed-tr-fixed-effects.v1.r.json`
 - Commands:
-  - `sbt modelJVM/test fitJVM/test`
-  - `sbt modelJS/test fitJS/test`
+  - `sbt fitJVM/test`
+  - `sbt fitJS/test`
 
 ### E18: Phase-2 public scenario set
 
@@ -322,13 +322,13 @@ candidate-bound release report supplies final execution status.
 
 ### E32: First-level estimates and fit-estimates bridge
 
-- Owning modules: `estimates`, `fit-estimates`, `group`
-- Public API/source: `modules/estimates/shared/src/main/scala/scalafim/estimates/EstimateSet.scala`, `modules/estimates/shared/src/main/scala/scalafim/estimates/EstimandCatalog.scala`, `modules/fit-estimates/shared/src/main/scala/scalafim/fmri/fit/estimates/FitEstimateProducer.scala`, `modules/fit-estimates/shared/src/main/scala/scalafim/fmri/fit/estimates/FitGroupAdapter.scala`
-- Suites and exact tests/scenarios: `modules/fit-estimates/shared/src/test/scala/scalafim/fmri/group/scenarios/GroupFirstLevelBridgeScenarioSuite.scala` (`group.first-level-bridge.v1`); `modules/fit-estimates/shared/src/test/scala/scalafim/fmri/group/scenarios/FirstLevelToGroupKnownEffectScenarioSuite.scala` (`group.first-level-to-group-known-effect.v1`)
+- Owning modules: `estimates`, `fmri-workflow`, `group`
+- Public API/source: `modules/estimates/shared/src/main/scala/scalafim/estimates/EstimateSet.scala`, `modules/estimates/shared/src/main/scala/scalafim/estimates/EstimandCatalog.scala`, `modules/fmri-workflow/shared/src/main/scala/scalafim/fmri/fit/estimates/FitEstimateProducer.scala`, `modules/fmri-workflow/shared/src/main/scala/scalafim/fmri/fit/estimates/FitGroupAdapter.scala`
+- Suites and exact tests/scenarios: `modules/fmri-workflow/shared/src/test/scala/scalafim/fmri/group/scenarios/GroupFirstLevelBridgeScenarioSuite.scala` (`group.first-level-bridge.v1`); `modules/fmri-workflow/shared/src/test/scala/scalafim/fmri/group/scenarios/FirstLevelToGroupKnownEffectScenarioSuite.scala` (`group.first-level-to-group-known-effect.v1`)
 - External fixtures/receipts: none claimed
 - Commands:
-  - `sbt fitEstimatesJVM/test`
-  - `sbt fitEstimatesJS/test`
+  - `sbt fmriWorkflowJVM/test`
+  - `sbt fmriWorkflowJS/test`
 
 ## Global acceptance criteria
 

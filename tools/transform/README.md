@@ -7,7 +7,8 @@ and the tooling decision is ADR §6.
 ## Layout
 
 - Fixtures live in
-  `modules/transform/shared/src/test/resources/scalafim/transform/oracle/<set>/`.
+  the standalone neuroim4s repository at
+  `modules/neuroim4s-transform/shared/src/test/resources/scalafim/transform/oracle/<set>/`.
 - Each set has a `manifest.json` recording:
   - the generator
   - tool versions
@@ -42,6 +43,14 @@ sign errors, so generators must break symmetry:
 
 ## Running
 
+The authoring scripts remain here alongside the surface/atlas workflow generators.
+Select the external transform corpus explicitly; they never recreate a deleted
+ScalaFIM transform module or guess a sibling checkout:
+
+```sh
+export NEUROIM4S_TRANSFORM_ORACLE_ROOT=/absolute/path/to/neuroim4s/modules/neuroim4s-transform/shared/src/test/resources/scalafim/transform/oracle
+```
+
 Python generators run through `uv`, with dependencies pinned per invocation:
 
 ```sh
@@ -60,3 +69,7 @@ digest in the manifest at generation time. Candidate tags:
 
 `neurotransform/` holds the generators of the imported neurotransform
 oracles, for provenance.
+
+Writer acceptance tooling moved with its writers to neuroim4s
+(`tools/transform/writer-acceptance.sh`). Existing native receipts and golden bytes
+are retained unchanged; re-run that tooling only when a writer's output changes.

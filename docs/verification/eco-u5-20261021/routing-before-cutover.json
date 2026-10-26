@@ -1,0 +1,58 @@
+{
+  "root_baseline": "f60d16e16",
+  "cases_passed": 12,
+  "tasks": [
+    "spatialJVM/testOnly scalafim.spatial.StagedPluginSuite",
+    "spatialJS/testOnly scalafim.spatial.StagedPluginSuite"
+  ],
+  "expected_values": [
+    [
+      87,
+      43
+    ],
+    [
+      129,
+      63
+    ]
+  ],
+  "expected_selected_observation": [
+    [
+      43
+    ],
+    [
+      63
+    ]
+  ],
+  "pullback_v1_by_platform": {
+    "JVM": "pullback-v1|root=component-root|target=component-target|path=component-root-to-component-sampled-affine:Affine3D:false:affine-pullback-v1:coordinate:provider-affine-v1:bb8ad63b,component-mixing:Functional:false:functional-value-plugin-v1:ValueTransform:plugin-v1:component-observations:ValueTransform:observation-linear-v1:19d8e79f,component-offset:Filter:false:filter-value-plugin-v1:FusionBarrier:plugin-v1:component-affine-values:FusionBarrier:pointwise-affine-v1:0x1.0p1:0x1.8p1|routing=Shortest|sampling=Trilinear|rows=0,1|inverse=false|compilers=affine-pullback-v1,functional-value-plugin-v1,filter-value-plugin-v1|stages=component-root-to-component-sampled-affine:CoordinatePullback:affine-pullback-v1:coordinate:provider-affine-v1:bb8ad63b,component-mixing:ValueTransform:functional-value-plugin-v1:ValueTransform:plugin-v1:component-observations:ValueTransform:observation-linear-v1:19d8e79f,component-offset:FusionBarrier:filter-value-plugin-v1:FusionBarrier:plugin-v1:component-affine-values:FusionBarrier:pointwise-affine-v1:0x1.0p1:0x1.8p1",
+    "JS": "pullback-v1|root=component-root|target=component-target|path=component-root-to-component-sampled-affine:Affine3D:false:affine-pullback-v1:coordinate:provider-affine-v1:ecef2863,component-mixing:Functional:false:functional-value-plugin-v1:ValueTransform:plugin-v1:component-observations:ValueTransform:observation-linear-v1:19d8e79f,component-offset:Filter:false:filter-value-plugin-v1:FusionBarrier:plugin-v1:component-affine-values:FusionBarrier:pointwise-affine-v1:0x1.0p1:0x1.8p1|routing=Shortest|sampling=Trilinear|rows=0,1|inverse=false|compilers=affine-pullback-v1,functional-value-plugin-v1,filter-value-plugin-v1|stages=component-root-to-component-sampled-affine:CoordinatePullback:affine-pullback-v1:coordinate:provider-affine-v1:ecef2863,component-mixing:ValueTransform:functional-value-plugin-v1:ValueTransform:plugin-v1:component-observations:ValueTransform:observation-linear-v1:19d8e79f,component-offset:FusionBarrier:filter-value-plugin-v1:FusionBarrier:plugin-v1:component-affine-values:FusionBarrier:pointwise-affine-v1:0x1.0p1:0x1.8p1"
+  },
+  "operator_recipe": "component-root->component-target|component-root-to-component-sampled-affine>component-mixing>component-offset|Shortest|Trilinear|rows=all|inv=false|affine-pullback-fused-v1|2x3",
+  "legacy_caveat": "Pre-extraction provider-affine-v1 numeric hash differs JVM/JS; preserve each exact existing fingerprint rather than silently change persisted IDs in this modularization. ProviderMapBinding hashes Double.hashCode, not frame identity.",
+  "raw_sha256": "94a1aececee7dc41f1013de6789fc2ce60466dbccd149e74af9dfc692985f794",
+  "metadata": {
+    "schema_version": 1,
+    "started_utc": "2026-10-22T01:25:33.887074+00:00",
+    "finished_utc": "2026-10-22T01:26:36.802723+00:00",
+    "duration_seconds": 62.915547,
+    "command": [
+      "env",
+      "-u",
+      "JAVA_TOOL_OPTIONS",
+      "JAVA_HOME=/Users/bbuchsbaum/Library/Java/JavaVirtualMachines/openjdk-22/Contents/Home",
+      "SBT_WARM_HEAP=6g",
+      "python3",
+      "tools/build/sbt-warm",
+      "spatialJVM/testOnly scalafim.spatial.StagedPluginSuite",
+      "spatialJS/testOnly scalafim.spatial.StagedPluginSuite"
+    ],
+    "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021",
+    "log": "/tmp/scalafim-eco-u5-staged-baseline-07.log",
+    "exit_code": 0,
+    "child_returncode": 0,
+    "reason": "exited",
+    "detail": null,
+    "timeout_seconds": 1200.0,
+    "log_bytes": 14083
+  }
+}

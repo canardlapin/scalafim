@@ -1,6 +1,6 @@
 package scalafim.examples.atlas
 
-import scalafim.atlas.*
+import neuroatlas4s.*
 
 class AtlasExamplesSmokeSuite extends munit.FunSuite:
   test("standard descriptor example lists volume and surface atlases") {

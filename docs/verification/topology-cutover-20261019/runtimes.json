@@ -1,0 +1,8 @@
+{
+  "sbt": "1.11.7",
+  "scala": "3.7.4",
+  "sbt_jvm": "Homebrew Java25.0.1, as reported in the sbt startup logs",
+  "node": "v26.7.0",
+  "shell_java": "OpenJDK22; this is the shell default, not the sbt JVM",
+  "scope": "Local macOS qualification; hosted CI and other runtime versions were not tested."
+}

@@ -1,0 +1,50 @@
+{
+  "status": "PASS and independently approved",
+  "implementationRevision": "6322b590c53c71cafe92d871fac90aae2b6549d2",
+  "repairRevision": "f6d7e0be76793754fb8f06f973b993ad8c215106",
+  "review": {
+    "reviewer": "volume_view_astra_review",
+    "verdict": "APPROVE",
+    "scope": "Receipt reservation and final free-floor recheck; preserves cache verification, locking, quotas and cancellation"
+  },
+  "evidence": {
+    "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/nifti-staging-free-floor-jvm-02.log",
+    "sha256": "867d47594f928c42982f6578e6b8308f8a3e44f1329355a5a6328218ba205bcc",
+    "metadata": {
+      "schema_version": 1,
+      "started_utc": "2026-10-21T07:03:43.726846+00:00",
+      "finished_utc": "2026-10-21T07:04:07.379679+00:00",
+      "duration_seconds": 23.652403,
+      "command": [
+        "env",
+        "TMPDIR=/Volumes/My Passport for Mac/e01tmp",
+        "SBT_WARM_HEAP=6g",
+        "python3",
+        "tools/build/sbt-warm",
+        "datasetJVM/test",
+        "datasetZarrJVM/test",
+        "fmriWorkflowJVM/test"
+      ],
+      "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020",
+      "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/nifti-staging-free-floor-jvm-02.log",
+      "exit_code": 0,
+      "child_returncode": 0,
+      "reason": "exited",
+      "detail": null,
+      "timeout_seconds": 1800.0,
+      "log_bytes": 18292
+    }
+  },
+  "passed": {
+    "datasetJVM": 91,
+    "datasetZarrJVM": 15,
+    "fmriWorkflowJVM": 73
+  },
+  "limits": [
+    "JVM-only staging source; no shared or JS change",
+    "No executed pre-fix red run for repair; deterministic seam was introduced with repair",
+    "Independent-process concurrency is not qualified by same-JVM tests",
+    "Free-space checks cannot stop unrelated processes consuming disk after a check",
+    "One-argument constructor intentionally retains unbounded limits; caller supplies explicit limits"
+  ]
+}

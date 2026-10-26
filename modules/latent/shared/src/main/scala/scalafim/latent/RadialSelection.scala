@@ -1,16 +1,12 @@
 package scalafim.latent
 
 import gale.linalg.DVec
-import scalafim.locus.{
-  DomainFactory,
+import locus4s.{
   FiniteDomain,
-  FiniteSpace,
+  Index,
   Injection,
-  Point,
   Selection,
-  SpaceKey,
-  TotalMap,
-  mapping
+  TotalMap
 }
 
 opaque type RadialActiveVoxelIndex = Int
@@ -123,14 +119,14 @@ sealed trait RadialLocusOrder:
   val order: RadialMaskOrder {
     type ActivePoint = RadialLocusOrder.this.ActivePoint
   }
-  val fullGridSpace: FiniteSpace[FullGridPoint]
+  val fullGridSpace: FiniteDomain[FullGridPoint]
   val activeToFull: Injection[ActivePoint, FullGridPoint]
   val activeSelection: Selection[FullGridPoint]
   private[latent] val fullToActive: Array[Int]
 
   def activePointFor(
-      full: Point[FullGridPoint]
-  ): Either[LatentError, Point[ActivePoint]] =
+      full: Index[FullGridPoint]
+  ): Either[LatentError, Index[ActivePoint]] =
     val ordinal = fullToActive(full.value)
     if ordinal < 0 then
       Left(
@@ -142,24 +138,24 @@ sealed trait RadialLocusOrder:
       Right(order.activeSpace.indexOption(ordinal).get)
 
   def fullPointFor(
-      active: Point[ActivePoint]
-  ): Point[FullGridPoint] =
+      active: Index[ActivePoint]
+  ): Index[FullGridPoint] =
     // Total: an injection's underlying map is defined on all of its source.
-    activeToFull.mapping(active)
+    activeToFull.toTotalMap(active)
 
 object RadialLocusOrder:
   private[latent] def make(
       requestedOrder: RadialMaskOrder,
       maskSize: Int
   ): RadialLocusOrder =
-    val fullResolution =
-      DomainFactory.unsafeRestore(
-        SpaceKey.unsafe(s"scalafim:latent:radial-full:$maskSize"),
-        maskSize
-      )
+    // The order carries no grid geometry, so the full grid has no persistent
+    // identity of its own: a mask size names many unrelated grids. It is
+    // derived and ephemeral; callers with a real grid compose through it.
+    val fullDomain =
+      FiniteDomain.ephemeral("radial-full", maskSize).fold(error => throw new IllegalArgumentException(error.message), identity)
     type Active = requestedOrder.ActivePoint
-    type Full = fullResolution.S
-    val full: FiniteSpace[Full] = fullResolution.space
+    type Full = fullDomain.S
+    val full: FiniteDomain[Full] = fullDomain.value
     val mapping =
       TotalMap
         .fromTargetOrdinals(
@@ -169,7 +165,7 @@ object RadialLocusOrder:
         )
         .toOption
         .get
-    val injection = Injection.validate(mapping).toOption.get
+    val injection = Injection.fromTotalMap(mapping).toOption.get
     val selection =
       Selection
         .fromOrdinals(full, requestedOrder.activeToFullGrid)
@@ -184,7 +180,7 @@ object RadialLocusOrder:
       type ActivePoint = Active
       type FullGridPoint = Full
       val order: requestedOrder.type = requestedOrder
-      val fullGridSpace: FiniteSpace[Full] = full
+      val fullGridSpace: FiniteDomain[Full] = full
       val activeToFull: Injection[Active, Full] = injection
       val activeSelection: Selection[Full] = selection
       private[latent] val fullToActive: Array[Int] = reverse
@@ -225,7 +221,7 @@ object RadialMaskOrder:
     // Derived from the full radial grid; ephemeral rather than keyed by its own
     // index list, which for a whole-brain mask was a megabyte-scale string.
     val activeDomain =
-      DomainFactory.unsafeEphemeral("radial-active", activeToFullGrid.length)
+      FiniteDomain.ephemeral("radial-active", activeToFullGrid.length).fold(error => throw new IllegalArgumentException(error.message), identity)
     type Active = activeDomain.S
     val active: FiniteDomain[Active] = activeDomain.value
     val selection =

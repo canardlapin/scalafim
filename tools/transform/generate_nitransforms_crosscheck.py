@@ -29,7 +29,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 import oracle_common as oc  # noqa: E402
 
 OUT = oc.oracle_dir("nitransforms_crosscheck")
-R = oc.ORACLE_ROOT
+R = oc.transform_oracle_root()
 points = [
     np.array(p)
     for p in [

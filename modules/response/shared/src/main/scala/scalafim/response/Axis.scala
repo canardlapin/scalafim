@@ -1,5 +1,6 @@
 package scalafim.response
 
+import locus4s.provenance.{ProvenanceIdentity, ProvenanceIdentityError}
 import ravel.{Array1, NDArray, Shape}
 
 sealed trait TimeAxis
@@ -132,10 +133,12 @@ object OrderedIndices:
   ): OrderedIndices[A] =
     new OrderedIndices(domain, domainSize, values)
 
+/** Response identifiers share the provider's identifier grammar. */
 private[response] object ResponseIdentity:
   def validate(label: String, value: String): Either[IdentityError, String] =
-    val normalized = value.trim
-    if normalized.isEmpty then Left(IdentityError.Empty(label))
-    else if normalized.exists(character => character.isControl || character.isWhitespace) then
-      Left(IdentityError.Invalid(label, value))
-    else Right(normalized)
+    ProvenanceIdentity
+      .validate(label, value)
+      .left
+      .map:
+        case ProvenanceIdentityError.Empty(label) => IdentityError.Empty(label)
+        case ProvenanceIdentityError.Invalid(label, value) => IdentityError.Invalid(label, value)

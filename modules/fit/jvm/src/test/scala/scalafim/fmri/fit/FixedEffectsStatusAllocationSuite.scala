@@ -3,7 +3,7 @@ package scalafim.fmri.fit
 import java.lang.management.ManagementFactory
 import com.sun.management.ThreadMXBean
 import scalafim.dataset.{DatasetEvents, DatasetId, FmriDataset, InMemoryDatasetBackend}
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 import scalafim.fmri.design.{FactorLevelRegistry, EmptyCellPolicy}
 import scalafim.fmri.design.baseline.Intercept
 import scalafim.fmri.hrf.*

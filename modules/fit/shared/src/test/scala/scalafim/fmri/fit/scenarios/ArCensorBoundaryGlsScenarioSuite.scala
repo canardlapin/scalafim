@@ -24,7 +24,7 @@ import scalafim.fmri.model.{
   ModelBuildSpec,
   ModelError
 }
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 import gale.linalg.DVec
 
 /** Public run/censor GLS workflow anchored to an independent exact-first R receipt. */

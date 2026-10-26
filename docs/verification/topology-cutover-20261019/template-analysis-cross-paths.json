@@ -1,0 +1,17 @@
+{
+  "observed": [
+    {
+      "analysis": "/Users/bbuchsbaum/.cache/scalafim-sbt/templates/788c6bdac97cca30/staging/c42ffad74301778951e7/locus4s/modules/locus4s-provenance/js/target/scala-3.7.4/zinc/inc_compile_3.zip",
+      "sha256": "47b22a860ac86da3f6f8029bc793d74bd8fd65ebdecafedb6c5074a883acb630",
+      "primary_base_references": 109,
+      "secondary_base_references": 0
+    },
+    {
+      "analysis": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/613c2f1216058878/staging/c42ffad74301778951e7/locus4s/modules/locus4s-provenance/js/target/scala-3.7.4/zinc/inc_compile_3.zip",
+      "sha256": "17350bcb87d06a4cab9b4b334ff0ecc7e7e83ce7b9420bc5ee13e9a113c2f483",
+      "primary_base_references": 1,
+      "secondary_base_references": 109
+    }
+  ],
+  "inference": "Template analysis contains absolute product paths into its source base. A seeded build can invalidate/delete prior products there when source paths change. This is a likely mechanism for the missing directories; no destructive reproducer was run. Resume uses the existing owned base, not a new template clone."
+}

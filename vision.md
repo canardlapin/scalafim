@@ -4,6 +4,21 @@ ScalaFIM is a Scala 3 system for functional imaging computation. Its purpose is
 to turn the fMRI analysis stack into a coherent, typed, modular engine rather
 than a translation of legacy R APIs.
 
+ScalaFIM composes independently usable neuroim4s (volumes and anatomical worlds),
+neuroatlas4s (atlas semantics), mvpa4s (identified multivariate analysis) and
+neurosurf4s (surface anatomy and display). Their cores do not depend on ScalaFIM.
+Generic arrays, finite domains, coordinates, meshes and numerical operators stay
+in Ravel, locus4s, spatial4s, mesh4s, image4s, reframe4s and Gale. One library owns
+each invariant; adapters preserve exact owners and ordering instead of rebuilding
+equivalent containers.
+
+ScalaFIM retains functional datasets, response/latent interpretation, HRF/design,
+model fitting, inference and functional workflow integration. Its spatial layer
+composes sample-by-observation demand and value execution over provider-owned
+anatomical routes. Optional IO, volume/surface integration and rendering remain
+separate dependencies. See the [delivered ownership ledger](docs/verification/eco-u6-cleanup-20261022/ownership.md)
+and [direct-composition guide](docs/standalone-composition.md).
+
 The source R packages are essential references, not straitjackets:
 `~/code/neuroim2`, `~/code/fmrihrf`, `~/code/fmridesign`, `~/code/fmrireg`, and
 `~/code/fmridataset` define much of the statistical behavior, terminology, and

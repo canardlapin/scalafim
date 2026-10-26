@@ -1,0 +1,24 @@
+{
+  "consolidated_source_head": "d9216dc8831143c1b6e7f4760f987947c03c4ff6",
+  "independently_tested_equivalent_head": "77257a7e0e1a4b8983c22537fd05300cc815f627",
+  "all_source_and_input_files_byte_identical": true,
+  "input_file_count": 3054,
+  "input_manifest_sha256": "8f1a271ac16e16b0abdabfca12513e4433759c6742267abf5f126f8bfa0c092a",
+  "matrix_source_head": "5b984197a6fac0cd8cf994b389f31dba97f07dba",
+  "compile_all_and_surface_delta_source_head": "8c1de275700d1bd4fbc06d07ced43f7423208b40",
+  "difference_from_compile_all_and_surface_source": [
+    "examples/surface-jvm/src/main/resources/surface/tetra_lh_midthickness.surf.gii"
+  ],
+  "fixture_delta_test": "fixture-io-gates.json",
+  "difference_from_matrix_source": [
+    "modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxNativePickProbe.scala",
+    "modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxViewportIsolationProbe.scala",
+    "modules/surface/README.md",
+    "modules/surface/shared/src/main/scala/scalafim/surface/TriangleMesh.scala",
+    "modules/surface/shared/src/test/scala/consumer/MeshStorageBoundaryCompileSuite.scala",
+    "modules/surface/shared/src/test/scala/scalafim/surface/FramedSurfaceSuite.scala",
+    "modules/surface/shared/src/test/scala/scalafim/surface/MeshAdmissionSuite.scala"
+  ],
+  "scope": "Final source equals the separately tested secondary source byte-for-byte. Compared with the passing97-target matrix, only the explicit raw-chart change and its tests/docs plus two JavaFX Test-only probes differ. Those follow-ups have separate qualification records. No receipt is relabelled to this commit.",
+  "input_manifest": "common Git verification/topology-cutover-20261019/final-inputs.sha256.json"
+}

@@ -1,0 +1,32 @@
+{
+  "source_commit": "31a42a69004c6282e01ad939c370f249fdf5e604",
+  "cwd": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/acceptance-clone-25",
+  "cache": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/acceptance-cache-25",
+  "controlled_JAVA_OPTS": "-Dsbt.server.autostart=false -XX:ActiveProcessorCount=4",
+  "commands": [
+    [
+      "compile-33",
+      [
+        "sbt",
+        "-J-XX:ActiveProcessorCount=4",
+        "-Dsbt.server.autostart=false",
+        "-Djava.awt.headless=true",
+        "-Dsbt.boot.directory=/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/acceptance-cache-25/boot",
+        "-Dsbt.global.base=/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/acceptance-cache-25/global",
+        "-Dsbt.ivy.home=/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/acceptance-cache-25/ivy",
+        "-Dsbt.supershell=false",
+        "scalafimCompileAll"
+      ],
+      7200
+    ],
+    [
+      "full-34",
+      [
+        "bash",
+        "tools/ci/full-repository-tests.sh"
+      ],
+      21600
+    ]
+  ],
+  "started": 1792649174.3823428
+}

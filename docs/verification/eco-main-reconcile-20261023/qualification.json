@@ -1,0 +1,108 @@
+{
+  "source": "dd1e60c1e3462d67ee825008a6f58cde5ecca08a",
+  "main_integrated": "d13897efd18c7cdb8978146dbab3cc790f193a63",
+  "source_review": {
+    "reviewer": "independent Astra expert",
+    "verdict": "APPROVE bounded Root integration",
+    "exact_source": "dd1e60c1e3462d67ee825008a6f58cde5ecca08a",
+    "scope": "Preserved agreed eco scientific identity/validation; restored main behavior; coherent provider defaults; no blocking source findings. Not product admission."
+  },
+  "owning_checks": {
+    "scope": "Current-main behavior reconciliation before final provider pin coherence update",
+    "checks": [
+      {
+        "name": "design",
+        "source": "295d0171577cffa9d63324387b37ee204f64352c",
+        "counts": [
+          621,
+          620
+        ],
+        "raw_log": "checks/eco-root-design-34.log.gz",
+        "exit_code": 0,
+        "duration_seconds": 199.115403
+      },
+      {
+        "name": "dataset-fit",
+        "source": "295d0171577cffa9d63324387b37ee204f64352c",
+        "counts": [
+          91,
+          68,
+          764,
+          706
+        ],
+        "raw_log": "checks/eco-root-dataset-fit-35.log.gz",
+        "exit_code": 0,
+        "duration_seconds": 251.818208
+      },
+      {
+        "name": "workflow",
+        "source": "295d0171577cffa9d63324387b37ee204f64352c",
+        "counts": [
+          82,
+          63
+        ],
+        "raw_log": "checks/eco-root-workflow-39.log.gz",
+        "exit_code": 0,
+        "duration_seconds": 152.056247
+      }
+    ],
+    "limits": [
+      "Does not qualify PLS consumer, hosted CI, full repository or final provider pin graph."
+    ]
+  },
+  "full_compile": {
+    "exit_code": 0,
+    "command": [
+      "python3",
+      "tools/build/sbt-warm",
+      "scalafimCompileAll"
+    ],
+    "duration_seconds": 2196.10225,
+    "sbt_command_seconds": 1827.2,
+    "log": "checks/eco-root-final-compile-53.log.gz",
+    "jvm": "Oracle JDK22",
+    "scala": "3.7.4",
+    "sbt": "1.11.7",
+    "compiler_error_lines": 0,
+    "build_lint_note": "Existing Intaglio unused doc-tag settings warnings are retained in raw log."
+  },
+  "boundaries": {
+    "source_count": 561,
+    "classpath_courts": 24,
+    "loaded_builds": [
+      "file:/Users/bbuchsbaum/code/scala/scalafim-eco-followups-check-20261023/",
+      "https://github.com/canardlapin/alder.git#7618c715002b3912f856c4d44468ae173fce4dec",
+      "https://github.com/canardlapin/bids4s.git#5dafc800499b2a4642a19ff47fa5924516b2c024",
+      "https://github.com/canardlapin/gale.git#779ed3d8169cdd9f4eb9ab10b1ca9defadc27715",
+      "https://github.com/canardlapin/graph4s.git#613371f3bd0b12ce99352db0c637645eb62c6283",
+      "https://github.com/canardlapin/image4s.git#855a3a61029f78e975b43cd1736de1c94180c004",
+      "https://github.com/canardlapin/intaglio.git#d553c327824f9916b1c0a055226c6c5e8f77bc59",
+      "https://github.com/canardlapin/linops4s.git#fec77db060b130b3c609a43d07ff0bfb31088aae",
+      "https://github.com/canardlapin/locus4s.git#e32b0aeba5c4d19c457b2329272b95b26c061943",
+      "https://github.com/canardlapin/mesh4s.git#fd8b93ea42879ec5414342a084f05b831a4bbfc7",
+      "https://github.com/canardlapin/multivar.git#7afdeea290fdcc80b81a4126aa303f93a5348c0e",
+      "https://github.com/canardlapin/mvpa4s.git#11b547338df58dc8b922006e0a9cca9b575fe3ff",
+      "https://github.com/canardlapin/neuroatlas4s.git#0256e98eb78d35523ce6dbd08fea4f19b76e1b68",
+      "https://github.com/canardlapin/neuroim4s.git#4f75c2bf141449d032f9fe3c558ef13a22a4d59f",
+      "https://github.com/canardlapin/neurosurf4s.git#4b23386bf750118b9c7c1220b6c592da9ba965e0",
+      "https://github.com/canardlapin/ravel.git#195d71027423d5bda1c53ef1baa17e07670fe290",
+      "https://github.com/canardlapin/reframe4s.git#622ab31f97bbe30a9bc6436464f3124643856f47",
+      "https://github.com/canardlapin/resample4s.git#6bc4172a966c92f1b06811eac64ac2bada9fef9b",
+      "https://github.com/canardlapin/spatial4s.git#f79674114dc5f1f88866708b74f7ea42e59895a8",
+      "https://github.com/canardlapin/zarr4s.git#2a5ba963b151b62c739d1bf5a19d49202bb6ff29"
+    ],
+    "errors": [],
+    "receipt": "checks/ecosystem-boundaries.json.gz"
+  },
+  "producer_sources": {
+    "neurosurf4s": "4b23386bf750118b9c7c1220b6c592da9ba965e0",
+    "neuroatlas4s": "0256e98eb78d35523ce6dbd08fea4f19b76e1b68",
+    "mvpa4s": "11b547338df58dc8b922006e0a9cca9b575fe3ff"
+  },
+  "limits": [
+    "Fresh PLS native201/brain27 and original performance gates pending",
+    "No current source hosted CI or main landing claimed",
+    "No human visual or scientific acceptance implied",
+    "Full compilation is distinct from repeating the earlier full repository test campaign; affected modules and direct consumers were executed."
+  ]
+}

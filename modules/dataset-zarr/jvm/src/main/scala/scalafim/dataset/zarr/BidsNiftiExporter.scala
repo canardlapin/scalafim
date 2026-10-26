@@ -13,7 +13,7 @@ import gale.linalg.DMat
 import image4s.geometry.{Affine, D3}
 import scalafim.archive.zarr.*
 import bids4s.EntityKey
-import scalafim.image.NeuroAffineSyntax.*
+import neuroim4s.image.NeuroAffineSyntax.*
 import zarr4s.*
 
 final case class BidsExportResult(

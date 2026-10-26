@@ -3,7 +3,7 @@ package scalafim.dataset
 import image4s.AxisKind
 import gale.linalg.DMat
 import scalafim.fmri.hrf.design.SamplingFrame
-import scalafim.image.{SampleSpaceError, SampleSpaces, SomeSampleSpace}
+import neuroim4s.image.{SampleSpaceError, SampleSpaces}
 
 class DatasetSuite extends munit.FunSuite:
 

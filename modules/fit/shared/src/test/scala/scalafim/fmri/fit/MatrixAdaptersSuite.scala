@@ -16,7 +16,7 @@ class MatrixAdaptersSuite extends munit.FunSuite:
 
   test("fitting requires the scan selection recorded by the coverage policy"):
     import scalafim.dataset.*
-    import scalafim.image.SampleSpaces
+    import neuroim4s.image.SampleSpaces
     import scalafim.fmri.hrf.*
     import scalafim.fmri.hrf.design.SamplingFrame
     import scalafim.fmri.design.{EventSupportPolicy, ResponseSupportRequest, ScanIndex}

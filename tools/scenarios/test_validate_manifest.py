@@ -9,7 +9,39 @@ import unittest
 
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from validate_manifest import validate_locked_environment  # noqa: E402
+from validate_manifest import validate_locked_environment, validate_suite_source  # noqa: E402
+
+
+class SuiteSourceSuite(unittest.TestCase):
+  def test_registered_class_and_package_must_exist_in_contained_source(self) -> None:
+    with tempfile.TemporaryDirectory() as directory:
+      root = Path(directory)
+      (root / "Suite.scala").write_text("package example.scenarios\n\nclass ExampleSuite extends munit.FunSuite:\n")
+      errors: list[str] = []
+      validate_suite_source(root, "Suite.scala", "example.scenarios.ExampleSuite", "example", errors)
+      self.assertEqual(errors, [])
+      for path, name in (
+          ("Missing.scala", "example.scenarios.ExampleSuite"),
+          ("Suite.scala", "example.scenarios.MissingSuite"),
+          ("Suite.scala", "wrong.package.ExampleSuite"),
+          ("../Suite.scala", "example.scenarios.ExampleSuite"),
+          (str(root / "Suite.scala"), "example.scenarios.ExampleSuite"),
+      ):
+        with self.subTest(path=path, name=name):
+          errors = []
+          validate_suite_source(root, path, name, "example", errors)
+          self.assertTrue(errors)
+
+  def test_symlink_cannot_escape_repository(self) -> None:
+    with tempfile.TemporaryDirectory() as directory:
+      base = Path(directory)
+      root = base / "repository"
+      root.mkdir()
+      (base / "External.scala").write_text("package example\nclass ExternalSuite\n")
+      (root / "Linked.scala").symlink_to(base / "External.scala")
+      errors: list[str] = []
+      validate_suite_source(root, "Linked.scala", "example.ExternalSuite", "example", errors)
+      self.assertTrue(any("escapes" in error for error in errors))
 
 
 class ReferenceLockSuite(unittest.TestCase):

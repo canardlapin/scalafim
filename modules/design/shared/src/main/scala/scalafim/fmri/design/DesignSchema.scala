@@ -402,9 +402,8 @@ final case class EventRowProvenance(
   def canonical: String =
     s"parent=${parent.value}|phase=${phase.fold("")(_.value)}|source=$sourceRow|block=$blockId|onset=${java.lang.Double.doubleToLongBits(onset.value)}|duration=${java.lang.Double.doubleToLongBits(duration.value)}"
 
-/** A retained event's original table row, without assuming a parent trial.
-  * Both indices are zero-based: eventIndex addresses the lowered term schedule;
-  * sourceRow addresses the input event table before formula filtering.
+/** An ordinary event's original table row, without inventing a parent trial.
+  * Both eventIndex (term-local) and sourceRow (caller table) are zero-based.
   */
 final case class SourceEventRow(
     term: TermId,
@@ -420,6 +419,9 @@ final case class SourceEventRow(
 
   def canonical: String =
     s"term=${term.value}|event=$eventIndex|source=$sourceRow|block=$blockId|onset=${java.lang.Double.doubleToLongBits(onset.value)}|duration=${java.lang.Double.doubleToLongBits(duration.value)}"
+
+final case class ConvolutionReceipt(term: String, recipe: String):
+  def canonical: String = s"term=$term;recipe=$recipe"
 
 /** Policy for non-finite continuous event/modulator values.
   *
@@ -813,6 +815,7 @@ final case class DesignAudit(
     /** Rows retained and dropped by derived-column declarations, when the build had any. */
     derivedRows: Vector[DerivedRowsReceipt] = Vector.empty,
     sourceEvents: Vector[SourceEventRow] = Vector.empty,
+    convolutionReceipts: Vector[ConvolutionReceipt] = Vector.empty,
     responseSupport: Vector[EventSupportReceipt] = Vector.empty
 ):
   require(eventsSeen >= 0 && eventsUsed >= 0, "event counts must be non-negative")
@@ -823,6 +826,15 @@ final case class DesignAudit(
   )
 
   def canonical: String =
+    val sources = if sourceEvents.isEmpty then "" else sourceEvents.map(_.canonical).mkString(";source-events=", ",", "")
+    val convolution = if convolutionReceipts.isEmpty then "" else convolutionReceipts.map(_.canonical).mkString(";convolution=", "|", "")
+    val support = if responseSupport.isEmpty then "" else responseSupport.map(_.canonical).mkString(";response-support=", "|", "")
+    legacyV2Canonical + sources + convolution + support
+
+  /** Frozen pre-source-row audit encoding for explicit legacy receipt checks.
+    * New identity evidence belongs in canonical, never in this v2 projection.
+    */
+  private[design] def legacyV2Canonical: String =
     val exclusions = excludedEvents
       .map(e => s"${e.eventIndex}:${e.reason}:${e.term.fold("")(_.value)}")
       .mkString(",")
@@ -863,9 +875,7 @@ final case class DesignAudit(
         s"unavailable:$reason:rows=$rows:columns=${columns.map(_.value).mkString(",")}"
     }
     val diags = diagnostics.map(d => s"${d.kind}:${d.term.fold("")(_.value)}:${d.message}").mkString(",")
-    val sources = if sourceEvents.isEmpty then "" else sourceEvents.map(_.canonical).mkString(";source-events=", ",", "")
-    val support = if responseSupport.isEmpty then "" else responseSupport.map(_.canonical).mkString(";response-support=", "|", "")
-    s"seen=$eventsSeen;used=$eventsUsed;excluded=$exclusions;empty=$cells;empty-audits=$cellAudits;factors=$factors;missing=$missing;provenance=$provenance;centering=$centering;degenerate-modulators=$degenerateModulators;orthogonalization=$orthogonalization$basisOrthogonalization$eventResponse$derived;policies=$policies;rank=$rank;diagnostics=$diags" + sources + support
+    s"seen=$eventsSeen;used=$eventsUsed;excluded=$exclusions;empty=$cells;empty-audits=$cellAudits;factors=$factors;missing=$missing;provenance=$provenance;centering=$centering;degenerate-modulators=$degenerateModulators;orthogonalization=$orthogonalization$basisOrthogonalization$eventResponse$derived;policies=$policies;rank=$rank;diagnostics=$diags"
 
 /** An identity of exact matrix contents and their semantics, encoded identically
   * on JVM and Scala.js. Platform computations can produce different value bits;
@@ -874,7 +884,7 @@ final case class DesignAudit(
 final case class DesignFingerprint private (value: String, canonicalEncoding: String)
 
 object DesignFingerprint:
-  private val schemaVersion = "design-schema/v2"
+  private val schemaVersion = "design-schema/v3"
 
   def from(
       matrix: Mat,
@@ -891,6 +901,25 @@ object DesignFingerprint:
       columns: Vector[StructuralColumn],
       audit: DesignAudit
   ): String =
+    encode(matrix, rows, columns, audit.canonical, schemaVersion)
+
+  /** A digest projection, not a provenance-complete current identity. */
+  private[design] def legacyV2Value(
+      matrix: Mat,
+      rows: RowLayout,
+      columns: Vector[StructuralColumn],
+      audit: DesignAudit
+  ): String =
+    val encoding = encode(matrix, rows, columns, audit.legacyV2Canonical, "design-schema/v2")
+    s"design-schema/v2:${hash(encoding)}"
+
+  private def encode(
+      matrix: Mat,
+      rows: RowLayout,
+      columns: Vector[StructuralColumn],
+      auditEncoding: String,
+      version: String
+  ): String =
     val data = matrix.data
     val values = new java.lang.StringBuilder(math.max(16, data.length * 21))
     var index = 0
@@ -900,7 +929,7 @@ object DesignFingerprint:
       values.append(java.lang.Double.doubleToLongBits(data(index)))
       index += 1
     val cols = columns.map(_.canonical).mkString(";")
-    s"$schemaVersion|matrix=${matrix.rows}x${matrix.cols}|rows=${rows.canonical}|columns=$cols|audit=${audit.canonical}|values=${values.toString}"
+    s"$version|matrix=${matrix.rows}x${matrix.cols}|rows=${rows.canonical}|columns=$cols|audit=$auditEncoding|values=${values.toString}"
 
   private def hash(value: String): String =
     // FNV-style 64-bit rolling hash.  It is an identity, not a security hash;
@@ -1376,8 +1405,6 @@ object DesignSchema:
       factorLevels = (left.factorLevels ++ right.factorLevels).distinct,
       missingValues = left.missingValues ++ right.missingValues,
       eventProvenance = left.eventProvenance ++ right.eventProvenance,
-      sourceEvents = left.sourceEvents ++ right.sourceEvents,
-      responseSupport = left.responseSupport ++ right.responseSupport,
       centeringReceipts = left.centeringReceipts ++ right.centeringReceipts,
       degenerateModulatorReceipts = left.degenerateModulatorReceipts ++ right.degenerateModulatorReceipts,
       orthogonalizationReceipts = left.orthogonalizationReceipts ++ right.orthogonalizationReceipts,
@@ -1386,7 +1413,10 @@ object DesignSchema:
       rankPreview = None,
       diagnostics = left.diagnostics ++ right.diagnostics,
       eventResponseScales = left.eventResponseScales ++ right.eventResponseScales,
-      derivedRows = left.derivedRows ++ right.derivedRows
+      derivedRows = left.derivedRows ++ right.derivedRows,
+      sourceEvents = left.sourceEvents ++ right.sourceEvents,
+      convolutionReceipts = left.convolutionReceipts ++ right.convolutionReceipts,
+      responseSupport = left.responseSupport ++ right.responseSupport
     )
 
   private[design] def validate(
@@ -1402,7 +1432,7 @@ object DesignSchema:
       val expected = DesignFingerprint.from(matrix, rows, columns, audit)
       if rankPreview != expectedPreview || !audit.rankPreview.contains(expectedPreview) then
         Left(DesignError.InvalidSchema("design rank preview does not match the realized matrix and structural columns"))
-      else if expected.value != fingerprint.value then
+      else if expected != fingerprint then
         Left(DesignError.InvalidSchema("design fingerprint does not match matrix, rows, columns, and audit"))
       else Right(())
     }

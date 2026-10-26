@@ -3,7 +3,7 @@ package scalafim.estimates.io
 import java.nio.file.Files
 import java.nio.{ByteBuffer, ByteOrder}
 import scalafim.estimates.*
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 
 class LocalEstimateStoreSuite extends munit.FunSuite:
   private def right[A](value: Either[EstimateError, A]): A = value.fold(e => fail(e.message), identity)

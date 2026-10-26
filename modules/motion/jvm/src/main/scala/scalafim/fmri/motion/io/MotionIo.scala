@@ -4,7 +4,7 @@ import bids4s.{BidsFile, JsonValue}
 import image4s.geometry.Affine
 import image4s.geometry.D3
 import scalafim.fmri.motion.*
-import scalafim.image.*
+import neuroim4s.image.*
 
 import java.nio.file.Path
 

@@ -1,0 +1,89 @@
+{
+  "source_head": "8c1de275700d1bd4fbc06d07ced43f7423208b40",
+  "portable_matrix_source_head": "1cb288d5f5fb955c953deec6a633a4c830bb56fe",
+  "source_clean_after_gate": true,
+  "changed_inputs": [
+    {
+      "path": "modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxNativePickProbe.scala",
+      "before_sha256": "7f68849a0299747edb87eef55afb0f13c3bc9f72a59e69a7dd9e4519adf59b6e",
+      "after_sha256": "192ab0f573f630e2b142cf8b3ebf19ecc7b71a41a3b36867feb73ace07cfc5e0"
+    },
+    {
+      "path": "modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxViewportIsolationProbe.scala",
+      "before_sha256": "42c02f0b14e36e6054cde3b12375660ecac808b554eb2b4a9be6c2222a7b60ce",
+      "after_sha256": "2f3c2691dc738dac7a8d11736918bef9f362f39b34029b608445448c1f02abc0"
+    },
+    {
+      "path": "modules/surface/README.md",
+      "before_sha256": "7e93942ea9521a1b60cfd73c4ce4596fb5bea810eb45b4a5f8cf570621949dfb",
+      "after_sha256": "ef031ddca689c3b0ef9baf7ee12749ee52af0da92efa40538af260e854ca3ffc"
+    },
+    {
+      "path": "modules/surface/shared/src/main/scala/scalafim/surface/TriangleMesh.scala",
+      "before_sha256": "b9d6499a4d448b2da9ee53d5bc4310ae68fa72f7fb5470da09329bb42fd25df4",
+      "after_sha256": "3c7d0fa38b380a199b9ae0306333458a9975937e4867854ab5085c15fb2bf7fe"
+    },
+    {
+      "path": "modules/surface/shared/src/test/scala/consumer/MeshStorageBoundaryCompileSuite.scala",
+      "before_sha256": null,
+      "after_sha256": "2b60a7c304059f431a420054f2bbdee42ab64a0c258d0c0ec6e0ae0f256fe3ab"
+    },
+    {
+      "path": "modules/surface/shared/src/test/scala/scalafim/surface/FramedSurfaceSuite.scala",
+      "before_sha256": "8677ee845c5203288e0b1a6f02841086a164e36b970d58c051bdd675c753c948",
+      "after_sha256": "a68b08dc3593f5108cd6468490f8b4a65b29c01416169d55dc751d6c8ad764f1"
+    },
+    {
+      "path": "modules/surface/shared/src/test/scala/scalafim/surface/MeshAdmissionSuite.scala",
+      "before_sha256": "a6b1cef3f9648901dbc4ae15c60885459cfac1f31f831f434da134ed1c322e59",
+      "after_sha256": "e2831b6d2468078034895122ba62862b0c881ad1d1c8d46b6a1a420b4e1bcac0"
+    }
+  ],
+  "unchanged_source_input_files": 3047,
+  "input_manifest": "raw-chart-inputs.sha256.json",
+  "input_manifest_sha256": "b90e3bac21f4758d36657366da46e5c7b18c548c4d9acbfa233268fb3115eb59",
+  "targets": [
+    "surfaceJVM/test",
+    "surfaceJS/test"
+  ],
+  "exit_code": 0,
+  "test_summaries": [
+    {
+      "total": 320,
+      "failed": 0,
+      "errors": 0,
+      "passed": 320,
+      "skipped": 0
+    },
+    {
+      "total": 279,
+      "failed": 0,
+      "errors": 0,
+      "passed": 277,
+      "skipped": 2
+    }
+  ],
+  "raw_log": "raw-chart-delta-01.log",
+  "raw_log_sha256": "455bf3adc0647674297575b44a2fe60b1c3e038ee4cd91f0c0f6f4b1cf4e78a2",
+  "metadata": {
+    "schema_version": 1,
+    "started_utc": "2026-10-19T17:13:49.399667+00:00",
+    "finished_utc": "2026-10-19T17:18:50.698666+00:00",
+    "duration_seconds": 301.296511,
+    "command": [
+      "python3",
+      "tools/build/sbt-warm",
+      "surfaceJVM/test",
+      "surfaceJS/test"
+    ],
+    "cwd": "/private/tmp/scalafim-u3-javafx-20261019",
+    "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/topology-cutover-20261019/raw-chart-delta-01.log",
+    "exit_code": 0,
+    "child_returncode": 0,
+    "reason": "exited",
+    "detail": null,
+    "timeout_seconds": 1800.0,
+    "log_bytes": 68011
+  },
+  "scope": "One production follow-up: TriangleMesh storage point field is package-private; fresh uninterpreted ephemeral chart per field without physical scale. Full surface tests on both platforms include persistent identity, semantic ownership, placement/transport, sampling and frozen real-chain scenario. Two JavaFX Test-only probe changes were qualified separately. No numerical kernel, field values, topology/face ordering or frozen oracle resource changed."
+}

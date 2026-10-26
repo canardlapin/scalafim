@@ -50,9 +50,22 @@ bash tools/ci/first-level-gate.sh
 ```
 
 This uses Python's standard library for manifest and checked-in fixture
-coherence, then runs the shared `scenario-testkit`, `hrf`, `hrf-laws`,
-`design`, `model`, and `fit` tests on both the JVM and Scala.js. It does not
+coherence, then runs the shared `scenario-testkit`, `hrf`, `design`, `fit`,
+and `first-level-laws` tests on both the JVM and Scala.js. It does not
 install or execute R, Nilearn, or fmrimod.
+
+The four transform-chain and two surface-chain scenarios live in the
+`provider-contract` integration test court. They compose the standalone providers
+with ScalaFIM's scenario harness; their numerical references, mutation controls
+and declared caveats remain part of acceptance. Run them with:
+
+```sh
+python3 tools/build/sbt-warm providerContractJVM/test providerContractJS/test
+```
+
+The bounded full-repository runner schedules this court on both platforms.
+The focused first-level gate validates its registration and fixture paths;
+it does not execute these six workflow scenarios.
 
 ## Live regeneration
 

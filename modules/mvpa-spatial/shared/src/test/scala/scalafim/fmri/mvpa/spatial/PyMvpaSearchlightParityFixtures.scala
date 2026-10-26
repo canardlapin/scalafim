@@ -1,6 +1,6 @@
 package scalafim.fmri.mvpa.spatial
 
-import scalafim.fmri.mvpa.PatternMatrix
+import mvpa4s.PatternMatrix
 
 /** Constants generated without ScalaFIM by `tools/mvpa/generate_pymvpa_searchlight_reference.py`.
   */

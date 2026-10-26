@@ -1,5 +1,9 @@
 package scalafim.spatial
 
+import neurosurf4s.routing.*
+
+import neuroim4s.spatial.SamplingPolicy
+
 enum FieldExplanationPhase:
   case Descriptive, Planned, Evaluated
 

@@ -1,0 +1,46 @@
+{
+  "sourceCommit": "9c4b7813a3b538849862c862a54ec01c5e79a3ac",
+  "providerRevision": "21df6416e4e28e97cfbe39e20d7303349be7e4cf",
+  "freshSparseCheckout": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/neuroim-composition-qualified-01",
+  "sourceScope": "Onlystandaloneconsumerandrootfilescheckedout;ScalaFIMmodulesabsent.",
+  "execution": {
+    "schema_version": 1,
+    "started_utc": "2026-10-21T05:53:23.441216+00:00",
+    "finished_utc": "2026-10-21T05:55:02.942996+00:00",
+    "duration_seconds": 99.502037,
+    "command": [
+      "env",
+      "TMPDIR=/Volumes/My Passport for Mac/e01tmp",
+      "sbt",
+      "-batch",
+      "-J-Xmx4g",
+      "-J-Djava.io.tmpdir=/Volumes/My Passport for Mac/e01tmp",
+      "-Dsbt.supershell=false",
+      "-Dsbt.log.noformat=true",
+      "-Dsbt.global.base=/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/composition-consumer-fresh-global-01",
+      "runMain consumer.NeuroimCompositionConsumer"
+    ],
+    "cwd": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/neuroim-composition-qualified-01/tools/neuroim-composition-consumer",
+    "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/neuroim-composition-consumer-09-fresh.log",
+    "exit_code": 0,
+    "child_returncode": 0,
+    "reason": "exited",
+    "detail": null,
+    "timeout_seconds": 1800.0,
+    "log_bytes": 20629
+  },
+  "logSha256": "d07cf0def1bdd2a6ad59efcdfd32bf4fe33b637af072f88366c83833957001bf",
+  "passedScope": [
+    "ActualnoncubicNIfTIwrite/readwithtypedworldevidence",
+    "Literalvoxel/worldaffineoracle14.5,-2,9.5",
+    "PublictypedworldtransformfeedsactualJava2Dslice",
+    "Exactrenderedpixelff9f9f9f/value311",
+    "Foreignframecursorrefusal",
+    "Directimmutableproviderbuildandforbiddenartifactrefusal"
+  ],
+  "review": {
+    "reviewer": "volume_view_astra_review",
+    "verdict": "APPROVEIO->typedtransform->display;changesrequiredforclaimedpicktransition"
+  },
+  "limitation": "Initialcursoralreadyatpicktarget;samedatareadoutdidnotprovepick/reducertransition. Parentrepairaddsinitial111->final311statechange;finalqualificationpending. No fullI1closure/fullnative/scientificclaim."
+}

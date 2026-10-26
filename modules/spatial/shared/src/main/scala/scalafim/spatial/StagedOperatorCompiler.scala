@@ -1,5 +1,7 @@
 package scalafim.spatial
 
+import neurosurf4s.routing.*
+
 import gale.backend.Backend.given
 import gale.linalg.{DMat, DoubleLinearOperator, LinAlgError, LinearOperator}
 import gale.sparse.Sparse
@@ -18,7 +20,7 @@ object StagedOperatorCompiler:
                 "row-linear value stages interleaved with coordinate pullbacks require an explicit fusion-barrier backend"
               )
             )
-          else VolumePullbackOperatorCompiler.compileCoordinateOnly(program)
+          else VolumePullbackOperatorCompiler.compileCoordinateComponent(program).map(_.operator)
         else compileAlgebraic(program)
     yield operator
 
@@ -122,11 +124,14 @@ object ValueStageExecutor:
           try current = current * matrix.t
           catch case err: LinAlgError => error = Some(SpatialError.OperatorAssemblyFailed(err.getMessage))
         case ValueTransform.PointwiseAffine(scale, offset) =>
-          val data = current.copyData
-          var valueIndex = 0
-          while valueIndex < data.length do
-            data(valueIndex) = scale * data(valueIndex) + offset
-            valueIndex += 1
-          current = GaleSpatialSupport.unsafeOwnedMatrix(current.rows, current.cols, data)
+          val builder = DMat.newBuilder(current.rows, current.cols)
+          var row = 0
+          while row < current.rows do
+            var col = 0
+            while col < current.cols do
+              builder.writeLinear(row * current.cols + col, scale * current(row, col) + offset)
+              col += 1
+            row += 1
+          current = builder.result()
       index += 1
     error.toLeft(current)

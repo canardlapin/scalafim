@@ -9,7 +9,7 @@ import scalafim.fmri.fit.fixtures.CorrectedSpmgRealisticNuisanceRFixture as Real
 import scalafim.fmri.hrf.*
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.model.{FmriModelBuilder, ModelBuildSpec, ModelError, NuisanceRegressors, SampledRegressorRun}
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 
 /** Public acceptance examples for mixed task timing and scan-aligned nuisance.
   *

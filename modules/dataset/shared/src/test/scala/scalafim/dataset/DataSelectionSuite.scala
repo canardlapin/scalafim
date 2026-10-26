@@ -1,7 +1,7 @@
 package scalafim.dataset
 
 import gale.linalg.DMat
-import scalafim.image.{Mask, SampleSpaces, SomeSampleSpace, VoxelCoord}
+import neuroim4s.image.{Mask, SampleSpaces, VoxelCoord}
 
 class DataSelectionSuite extends munit.FunSuite:
 

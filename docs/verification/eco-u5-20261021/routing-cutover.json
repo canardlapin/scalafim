@@ -1,0 +1,85 @@
+{
+  "root_source": "cb3c8b1e2aacbbe3173c16846fff247a8be9ef25",
+  "provider_at_gate": "c9b05c72e2e452d66dcff8603ea96f589d3572fd",
+  "provider_final_custody": "73a244fbe5d7b4db2f0c946d98fa2a3c00101ab7",
+  "results": {
+    "spatialJVM": 119,
+    "spatialJS": 108,
+    "atlasJVM": 81,
+    "atlasJS": 61,
+    "passed": 369,
+    "skipped": 0
+  },
+  "caller_gate": {
+    "schema_version": 1,
+    "started_utc": "2026-10-22T01:40:20.279693+00:00",
+    "finished_utc": "2026-10-22T01:45:43.707754+00:00",
+    "duration_seconds": 323.403767,
+    "command": [
+      "env",
+      "-u",
+      "JAVA_TOOL_OPTIONS",
+      "JAVA_HOME=/Users/bbuchsbaum/Library/Java/JavaVirtualMachines/openjdk-22/Contents/Home",
+      "SBT_WARM_HEAP=6g",
+      "python3",
+      "tools/build/sbt-warm",
+      "spatialJVM/test",
+      "spatialJS/test",
+      "atlasJVM/test",
+      "atlasJS/test"
+    ],
+    "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021",
+    "log": "/tmp/scalafim-eco-u5-routing-callers-11.log",
+    "exit_code": 0,
+    "child_returncode": 0,
+    "reason": "exited",
+    "detail": null,
+    "timeout_seconds": 1800.0,
+    "log_bytes": 48417
+  },
+  "compile_all": {
+    "schema_version": 1,
+    "started_utc": "2026-10-22T01:46:02.757341+00:00",
+    "finished_utc": "2026-10-22T01:48:08.972256+00:00",
+    "duration_seconds": 126.214316,
+    "command": [
+      "env",
+      "-u",
+      "JAVA_TOOL_OPTIONS",
+      "JAVA_HOME=/Users/bbuchsbaum/Library/Java/JavaVirtualMachines/openjdk-22/Contents/Home",
+      "SBT_WARM_HEAP=6g",
+      "python3",
+      "tools/build/sbt-warm",
+      "scalafimCompileAll"
+    ],
+    "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021",
+    "log": "/tmp/scalafim-eco-u5-routing-compile-12.log",
+    "exit_code": 0,
+    "child_returncode": 0,
+    "reason": "exited",
+    "detail": null,
+    "timeout_seconds": 1800.0,
+    "log_bytes": 3355
+  },
+  "review": {
+    "verdict": "APPROVE",
+    "source": "cb3c8b1e2aacbbe3173c16846fff247a8be9ef25",
+    "reviewer": "/root/volume_view_astra_review",
+    "scope": "functional dispatch, barrier/row/observation order, checked owners, original full fingerprint literals, independent backprojection and deleted-test custody"
+  },
+  "real_asset_route": {
+    "token": "scalafim-route:sha256:68fc557306abb1b15dc02007d80f2a067d2190a3c1c421f3e339d8877350be6a",
+    "vertices_per_hemisphere": 32492,
+    "unplaced": 0,
+    "voxel_disagreements_res01_res02": 0,
+    "left_max_mm": 1.5020796086550972e-08,
+    "right_max_mm": 1.5311129897981346e-08,
+    "timing_gate_asserted": false
+  },
+  "adverse_attempts": {
+    "08": "production boundary import and private helper access",
+    "09": "test helper/import access",
+    "10": "2 compile-time external consumer tests still imported retired Root namespace; preserved/moved intact to provider;120 passed"
+  },
+  "limits": "No full final U6 campaign or hosted CI claim. Current v1 fingerprint is intentionally platform-dependent; see routing-before-cutover.json. Final custody pin changes only tests/resources/generators/docs versus c9b05c7; focused final-pin acceptance follows."
+}

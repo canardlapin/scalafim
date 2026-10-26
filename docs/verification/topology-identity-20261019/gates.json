@@ -1,0 +1,260 @@
+{
+  "baseline": "dda3152a9",
+  "gates": [
+    {
+      "task": "surfaceJVM/testOnly scalafim.surface.SurfaceIdentityGoldenSuite",
+      "exitCode": 0,
+      "log": "14-identity-goldens-jvm.log",
+      "total": 2,
+      "failed": 0,
+      "errors": 0,
+      "passed": 2
+    },
+    {
+      "task": "surfaceViewJVM/testOnly scalafim.surface.view.SurfaceSceneDocumentSuite",
+      "exitCode": 0,
+      "log": "14-identity-goldens-jvm.log",
+      "total": 11,
+      "failed": 0,
+      "errors": 0,
+      "passed": 11
+    },
+    {
+      "task": "mvpaSpatialJVM/testOnly scalafim.fmri.mvpa.spatial.SupportGraphsSuite",
+      "exitCode": 0,
+      "log": "14-identity-goldens-jvm.log",
+      "total": 3,
+      "failed": 0,
+      "errors": 0,
+      "passed": 3
+    },
+    {
+      "task": "atlasJVM/testOnly scalafim.atlas.AtlasPublicationSuite",
+      "exitCode": 0,
+      "log": "14-identity-goldens-jvm.log",
+      "total": 8,
+      "failed": 0,
+      "errors": 0,
+      "passed": 8
+    },
+    {
+      "task": "surfaceJS/testOnly scalafim.surface.SurfaceIdentityGoldenSuite",
+      "exitCode": 0,
+      "log": "16-identity-surface-js.log",
+      "total": 2,
+      "failed": 0,
+      "errors": 0,
+      "passed": 2
+    },
+    {
+      "task": "surfaceViewJS/testOnly scalafim.surface.view.SurfaceSceneDocumentSuite",
+      "exitCode": 0,
+      "log": "16-identity-surface-js.log",
+      "total": 11,
+      "failed": 0,
+      "errors": 0,
+      "passed": 11
+    },
+    {
+      "task": "mvpaSpatialJS/testOnly scalafim.fmri.mvpa.spatial.SupportGraphsSuite",
+      "exitCode": 0,
+      "log": "17-identity-consumers-js.log",
+      "total": 3,
+      "failed": 0,
+      "errors": 0,
+      "passed": 3
+    },
+    {
+      "task": "atlasJS/testOnly scalafim.atlas.AtlasPublicationSuite",
+      "exitCode": 0,
+      "log": "17-identity-consumers-js.log",
+      "total": 8,
+      "failed": 0,
+      "errors": 0,
+      "passed": 8
+    }
+  ],
+  "attempts": [
+    {
+      "task": "surfaceJVM/testOnly scalafim.surface.SurfaceIdentityGoldenSuite",
+      "exitCode": 1,
+      "log": "13-identity-goldens-jvm.log"
+    },
+    {
+      "task": "surfaceJVM/testOnly scalafim.surface.SurfaceIdentityGoldenSuite",
+      "exitCode": 0,
+      "log": "14-identity-goldens-jvm.log",
+      "total": 2,
+      "failed": 0,
+      "errors": 0,
+      "passed": 2
+    },
+    {
+      "task": "surfaceViewJVM/testOnly scalafim.surface.view.SurfaceSceneDocumentSuite",
+      "exitCode": 0,
+      "log": "14-identity-goldens-jvm.log",
+      "total": 11,
+      "failed": 0,
+      "errors": 0,
+      "passed": 11
+    },
+    {
+      "task": "mvpaSpatialJVM/testOnly scalafim.fmri.mvpa.spatial.SupportGraphsSuite",
+      "exitCode": 0,
+      "log": "14-identity-goldens-jvm.log",
+      "total": 3,
+      "failed": 0,
+      "errors": 0,
+      "passed": 3
+    },
+    {
+      "task": "atlasJVM/testOnly scalafim.atlas.AtlasPublicationSuite",
+      "exitCode": 0,
+      "log": "14-identity-goldens-jvm.log",
+      "total": 8,
+      "failed": 0,
+      "errors": 0,
+      "passed": 8
+    },
+    {
+      "task": "surfaceJS/testOnly scalafim.surface.SurfaceIdentityGoldenSuite",
+      "exitCode": 0,
+      "log": "16-identity-surface-js.log",
+      "total": 2,
+      "failed": 0,
+      "errors": 0,
+      "passed": 2
+    },
+    {
+      "task": "surfaceViewJS/testOnly scalafim.surface.view.SurfaceSceneDocumentSuite",
+      "exitCode": 0,
+      "log": "16-identity-surface-js.log",
+      "total": 11,
+      "failed": 0,
+      "errors": 0,
+      "passed": 11
+    },
+    {
+      "task": "mvpaSpatialJS/testOnly scalafim.fmri.mvpa.spatial.SupportGraphsSuite",
+      "exitCode": 0,
+      "log": "17-identity-consumers-js.log",
+      "total": 3,
+      "failed": 0,
+      "errors": 0,
+      "passed": 3
+    },
+    {
+      "task": "atlasJS/testOnly scalafim.atlas.AtlasPublicationSuite",
+      "exitCode": 0,
+      "log": "17-identity-consumers-js.log",
+      "total": 8,
+      "failed": 0,
+      "errors": 0,
+      "passed": 8
+    }
+  ],
+  "logs": [
+    {
+      "file": "13-identity-goldens-jvm.log",
+      "sha256": "84a15b44500a0085c59d2c8876ffe529d747cd6be84da3d2e49f893c96bbca14",
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-19T15:12:03.543335+00:00",
+        "finished_utc": "2026-10-19T15:12:56.090326+00:00",
+        "duration_seconds": 52.547179,
+        "command": [
+          "python3",
+          "tools/build/sbt-warm",
+          "surfaceJVM/testOnly scalafim.surface.SurfaceIdentityGoldenSuite",
+          "surfaceViewJVM/testOnly scalafim.surface.view.SurfaceSceneDocumentSuite",
+          "mvpaSpatialJVM/testOnly scalafim.fmri.mvpa.spatial.SupportGraphsSuite",
+          "atlasJVM/testOnly scalafim.atlas.AtlasPublicationSuite"
+        ],
+        "cwd": "/private/tmp/scalafim-simplify-a-20261019",
+        "log": "/private/tmp/scalafim-simplify-a-evidence/13-identity-goldens-jvm.log",
+        "exit_code": 1,
+        "child_returncode": 1,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 900.0,
+        "log_bytes": 10008
+      }
+    },
+    {
+      "file": "14-identity-goldens-jvm.log",
+      "sha256": "7d444c0d28e7e1e50ca5b5c0c38259d29dc1a28bd7a76e5ca642e1e767e0ea68",
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-19T15:13:05.741062+00:00",
+        "finished_utc": "2026-10-19T15:13:38.538093+00:00",
+        "duration_seconds": 32.797175,
+        "command": [
+          "python3",
+          "tools/build/sbt-warm",
+          "surfaceJVM/testOnly scalafim.surface.SurfaceIdentityGoldenSuite",
+          "surfaceViewJVM/testOnly scalafim.surface.view.SurfaceSceneDocumentSuite",
+          "mvpaSpatialJVM/testOnly scalafim.fmri.mvpa.spatial.SupportGraphsSuite",
+          "atlasJVM/testOnly scalafim.atlas.AtlasPublicationSuite",
+          "firstLevelLawsJVM/Test/scalafmtCheck"
+        ],
+        "cwd": "/private/tmp/scalafim-simplify-a-20261019",
+        "log": "/private/tmp/scalafim-simplify-a-evidence/14-identity-goldens-jvm.log",
+        "exit_code": 1,
+        "child_returncode": 1,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 900.0,
+        "log_bytes": 4290
+      }
+    },
+    {
+      "file": "16-identity-surface-js.log",
+      "sha256": "ad8c5e5a3af09e407af686d39c3acb89f9146f2eff18c18c6e8e178dda1335fe",
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-19T15:14:19.779632+00:00",
+        "finished_utc": "2026-10-19T15:15:25.534776+00:00",
+        "duration_seconds": 65.755536,
+        "command": [
+          "/opt/homebrew/opt/python@3.14/bin/python3.14",
+          "/private/tmp/scalafim-simplify-a-20261019/tools/build/sbt-warm",
+          "surfaceJS/testOnly scalafim.surface.SurfaceIdentityGoldenSuite",
+          "surfaceViewJS/testOnly scalafim.surface.view.SurfaceSceneDocumentSuite"
+        ],
+        "cwd": "/private/tmp/scalafim-simplify-a-20261019",
+        "log": "/private/tmp/scalafim-simplify-a-evidence/16-identity-surface-js.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 900.0,
+        "log_bytes": 11041
+      }
+    },
+    {
+      "file": "17-identity-consumers-js.log",
+      "sha256": "f5a2fa7741791dff58a03d92ae89a4b8fb0630babf1849b60a8c7b0fd9fc98f6",
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-19T15:15:27.077563+00:00",
+        "finished_utc": "2026-10-19T15:16:28.391058+00:00",
+        "duration_seconds": 61.313722,
+        "command": [
+          "/opt/homebrew/opt/python@3.14/bin/python3.14",
+          "/private/tmp/scalafim-simplify-a-20261019/tools/build/sbt-warm",
+          "mvpaSpatialJS/testOnly scalafim.fmri.mvpa.spatial.SupportGraphsSuite",
+          "atlasJS/testOnly scalafim.atlas.AtlasPublicationSuite"
+        ],
+        "cwd": "/private/tmp/scalafim-simplify-a-20261019",
+        "log": "/private/tmp/scalafim-simplify-a-evidence/17-identity-consumers-js.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 900.0,
+        "log_bytes": 10727
+      }
+    }
+  ],
+  "referenceSha256": "533f5ff16738f295ff04393823c5a240b800abd4519181cc90cec0fa4e089d57"
+}

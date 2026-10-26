@@ -1,0 +1,106 @@
+{
+  "initial_review": {
+    "verdict": "object",
+    "severity": "P2",
+    "candidate": "7a662192a1a5769e92c9809feec0286f47728419",
+    "public_base": "375ceb229f707a6e9fb447a3e24564e8c5cd3036",
+    "consumer_source": "e86bbcaf5fbfa9c0387cf4d9ea76e0eb11085218",
+    "finding": "Uncatalogued coordinate endpoints leak AtlasError.Provider(MissingDomain), replacing former AtlasError.NoTransformRoute.",
+    "provider_locations": [
+      "VolumeTransforms.scala:119",
+      "VolumeTransforms.scala:154",
+      "Query.scala:76"
+    ],
+    "legacy_oracle": "eb85814ad:modules/atlas/shared/src/main/scala/scalafim/atlas/SpaceTransformGraph.scala:169",
+    "limits": "Independent source/log review only, no sbt run by reviewer; old743-pass receipt qualifies7cfe136, not current pin descendant."
+  },
+  "repair": {
+    "candidate": "f03287dd870bb65394914e69be0ecfcc4b9334d9",
+    "policy": "Check normalized endpoints against expanded catalog after successful graph admission; preserve identity paths and graph-validation failures.",
+    "baseline_log": "atlas-custom-route-before-01.log",
+    "baseline": "Focused JVM suite:9 total,2 failures reproduce wrong error ADT,7 pass including genuine provider frame failure.",
+    "tests": "Nonempty/empty public atlas query, reversed endpoint, empty custom identity, explicit custom registration, malformed graph precedence.",
+    "final_review": {
+      "verdict": "approve",
+      "reviewer": "independent Astra / lean_expert",
+      "reviewer_task": "atlas_volume_astra_review",
+      "candidate": "f03287dd870bb65394914e69be0ecfcc4b9334d9",
+      "resolved": "P2 unsupported endpoint failure-contract regression",
+      "remaining_findings": [],
+      "evidence": "VolumeTransforms.scala153-158 restores refusal after graph validation; VolumeTemplateRoutesSuite75-105 covers identity, declared custom registry, nonempty/empty query, reverse endpoint and genuine graph failure precedence.",
+      "limits": "Source/log inspection; no sbt run by reviewer. Final default-pin consumer acceptance/publication/U6/scientific/performance/visual acceptance remain separate."
+    },
+    "provider_gates": {
+      "JVM_volume": 24,
+      "JS_volume": 24,
+      "JVM_IO": 26,
+      "skips": 0
+    },
+    "root_gates": {
+      "atlasJVM": 81,
+      "atlasJS": 61,
+      "root_source": "3f0b901d2d344e15defc19634e6239e4751c19ec",
+      "closure": "Four explicit provider checkout overrides; atlas repairf032. Not default-pin acceptance."
+    },
+    "bundle": {
+      "path": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/geodesic-extraction-20261020/neuroatlas4s-custom-route-repair.bundle",
+      "sha256": "8f0e5ff10fbbd54592cdf161a9d4bedcd37900f9ba3363ed7bb1101124f913c7",
+      "verification": "The bundle contains this ref:\nf03287dd870bb65394914e69be0ecfcc4b9334d9 HEAD\nThe bundle requires this ref:\n7a662192a1a5769e92c9809feec0286f47728419 \nThe bundle uses this hash algorithm: sha1\n/Users/bbuchsbaum/code/scala/scalafim/.git/verification/geodesic-extraction-20261020/neuroatlas4s-custom-route-repair.bundle is okay\n"
+    }
+  },
+  "checks": {
+    "atlas-custom-route-before-01.log": {
+      "log_sha256": "85011d1872d306dbead178d6a97ee03d7f7ade8105c1743f21c052daf71720c0",
+      "metadata_sha256": "346593066da29c3f97dbd774c1629bfa91e6ba4000cb09b25677d4e95f97c5fa",
+      "exit_code": 1,
+      "argv": [
+        "sbt",
+        "-batch",
+        "-J-Xmx4g",
+        "-Dsbt.supershell=false",
+        "-Dsbt.log.noformat=true",
+        "-Dsbt.global.base=/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+        "-Dneuroatlas4s.neuroim4s.build=/Users/bbuchsbaum/code/scala/neuroim4s-eco-distances-20261020",
+        "-Dneuroatlas4s.graph4s.build=/Users/bbuchsbaum/code/scala/graph4s-eco-distances-20261020",
+        "volumeJVM/testOnly consumer.volume.VolumeTemplateRoutesSuite"
+      ]
+    },
+    "atlas-custom-route-after-02.log": {
+      "log_sha256": "b76f41ea70602ea5d5dc17f4585c437fa8d5a5511984e810a1a3a7bbe1a1eb37",
+      "metadata_sha256": "918a8080357b687ffcd1f7efac27f93c0a4f9f2f58e2039c7f7c8d5a566d07c1",
+      "exit_code": 0,
+      "argv": [
+        "sbt",
+        "-batch",
+        "-J-Xmx4g",
+        "-Dsbt.supershell=false",
+        "-Dsbt.log.noformat=true",
+        "-Dsbt.global.base=/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+        "-Dneuroatlas4s.neuroim4s.build=/Users/bbuchsbaum/code/scala/neuroim4s-eco-distances-20261020",
+        "-Dneuroatlas4s.graph4s.build=/Users/bbuchsbaum/code/scala/graph4s-eco-distances-20261020",
+        "volumeJVM/test",
+        "volumeJS/test",
+        "volumeIoJVM/test"
+      ]
+    },
+    "atlas-custom-route-consumer-03.log": {
+      "log_sha256": "3980158ca426354eb634b318d56692ef717c23ecc27c4d38a4173c0e59ba54e6",
+      "metadata_sha256": "6d60eb75daf7c366e4b49b4cdf57200d6452fb879518d22d24f30c827b87f7b7",
+      "exit_code": 0,
+      "argv": [
+        "sbt",
+        "-batch",
+        "-J-Xmx4g",
+        "-Dsbt.supershell=false",
+        "-Dsbt.log.noformat=true",
+        "-Dsbt.global.base=/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+        "-Dscalafim.graph4s.build=/Users/bbuchsbaum/code/scala/graph4s-eco-distances-20261020",
+        "-Dscalafim.mesh4s.build=/Users/bbuchsbaum/code/scala/mesh4s-eco-distances-20261020",
+        "-Dscalafim.neuroim4s.build=/Users/bbuchsbaum/code/scala/neuroim4s-eco-distances-20261020",
+        "-Dscalafim.neuroatlas4s.build=/Users/bbuchsbaum/code/scala/neuroatlas4s-eco-distances-20261020",
+        "atlasJVM/test",
+        "atlasJS/test"
+      ]
+    }
+  }
+}

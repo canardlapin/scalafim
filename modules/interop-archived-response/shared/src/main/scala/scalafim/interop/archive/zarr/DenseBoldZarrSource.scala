@@ -26,7 +26,6 @@ import scalafim.response.{
   ByteRange,
   ChunkId,
   DecodeConsistency,
-  DomainReference,
   IntegrityEvidence,
   LogicalReadSummary,
   ObjectId,
@@ -37,9 +36,6 @@ import scalafim.response.{
   PhysicalLocality,
   PhysicalReadSummary,
   PhysicalReadUnit,
-  Provenance,
-  ProvenanceEvidence,
-  ProvenanceId,
   ReadCapabilities,
   ReadError,
   ReadPlanSummary,
@@ -49,7 +45,13 @@ import scalafim.response.{
   ResolvedResponseSelection,
   ResponseBlock,
   ResponseSource,
-  SelectionAxes,
+  SelectionAxes
+}
+import locus4s.provenance.{
+  DomainReference,
+  Provenance,
+  ProvenanceEvidence,
+  ProvenanceId,
   SourceId
 }
 import zarr4s.{

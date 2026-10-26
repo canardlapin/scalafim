@@ -8,8 +8,8 @@ import scala.util.control.NonFatal
 import scalafim.archive.ContentDigest
 import scalafim.archive.io.{LocalObjectStore, LocalStoreError, VerifiedFileObject}
 import scalafim.estimates.FileReference
-import scalafim.fmri.mvpa.{AxisRecord, AxisRef}
-import scalafim.fmri.mvpa.pattern.*
+import mvpa4s.{AxisRecord, AxisRef}
+import mvpa4s.pattern.*
 import ujson.*
 
 /** Immutable local v1 archive. Metadata is written after all payload leaves and
@@ -233,7 +233,7 @@ private object PatternMetadata:
     case None
     case LowRank(axisStableKey: String, rank: Int)
     case Provider(axisStableKey: String, name: String)
-    def apply(neural: scalafim.fmri.mvpa.AxisDescriptor): Either[PatternArchiveError, ResidualCovarianceCapability] = this match
+    def apply(neural: mvpa4s.AxisDescriptor): Either[PatternArchiveError, ResidualCovarianceCapability] = this match
       case None => Right(ResidualCovarianceCapability.NotFitted)
       case LowRank(key, rank) if key == neural.stableKey => Right(ResidualCovarianceCapability.DiagonalPlusLowRank(neural, rank))
       case Provider(key, name) if key == neural.stableKey => Right(ResidualCovarianceCapability.ProviderBacked(neural, name))
@@ -271,8 +271,8 @@ private object PatternMetadata:
       case TargetGeometry.Categorical(x) => Obj("Kind" -> "categorical", "Conditions" -> axis(x.conditions.toRecord))
       case TargetGeometry.Continuous(x) => Obj("Kind" -> "continuous", "Blocks" -> Arr.from(x.blockWeights.map(_._1)))
     val center = p.centering match
-      case scalafim.fmri.mvpa.pattern.CenteringPolicy.CenteredBeforeFit(n, t) => Obj("Kind" -> "centered", "Neural" -> n, "Target" -> t)
-      case scalafim.fmri.mvpa.pattern.CenteringPolicy.ExplicitIntercept(_, r) => Obj("Kind" -> "intercept", "Receipt" -> r)
+      case mvpa4s.pattern.CenteringPolicy.CenteredBeforeFit(n, t) => Obj("Kind" -> "centered", "Neural" -> n, "Target" -> t)
+      case mvpa4s.pattern.CenteringPolicy.ExplicitIntercept(_, r) => Obj("Kind" -> "intercept", "Receipt" -> r)
     val deg = p.degenerateTarget match
       case DegenerateTargetPolicy.Refuse => Obj("Kind" -> "refuse")
       case DegenerateTargetPolicy.RecordExperimental(r) => Obj("Kind" -> "experimental", "Reason" -> r)
@@ -285,7 +285,7 @@ private object PatternMetadata:
       case GaugeEvidence.DeclaredSolverDiagnostic(s, r) => Obj("Kind" -> "declared", "Solver" -> s, "Rank" -> r)
       case GaugeEvidence.VerifiedByGaleGramCholesky(t) => Obj("Kind" -> "gale", "Tolerance" -> t)
     Obj("Target" -> target, "Centering" -> center, "Degenerate" -> deg, "Covariance" -> cov, "Binding" -> Obj("Source" -> p.trainingBinding.source, "Fingerprint" -> p.trainingBinding.fingerprintDigest), "Lineage" -> Arr.from(p.trainingLineage), "Diagnostics" -> Obj("Objective" -> Arr.from(p.diagnostics.objective), "Solver" -> p.diagnostics.solver, "Notes" -> Arr.from(p.diagnostics.notes)), "Gauge" -> gauge, "Interpretation" -> "experimental-fit-only", "CoordinateGauge" -> "unfixed-basis")
-  private def axisRecord(a: scalafim.fmri.mvpa.AxisDescriptor): Value = Obj("StableKey" -> a.stableKey)
+  private def axisRecord(a: mvpa4s.AxisDescriptor): Value = Obj("StableKey" -> a.stableKey)
   private def readRef(v: Value): FileReference = FileReference(v("Path").str, ContentDigest.unsafeSha256(v("SHA256").str), integer(v("Bytes"), "reference bytes", 0, 9007199254740991L))
   private def readAxis(v: Value): AxisRecord = AxisRecord(v("Namespace").str, multivar.core.SpaceRole.valueOf(v("Role").str), v("StableKeys").arr.toVector.map(_.str), v("Basis").str, v("Units").str, v("Scale").str, v("Lineage").arr.toVector.map(_.str), v("CoordinateSignature").str)
   private def readPayload(v: Value): ProfilePayload = ProfilePayload(v("Name").str, integer(v("Rows"), "rows", 1, Int.MaxValue).toInt, integer(v("Columns"), "columns", 1, Int.MaxValue).toInt, readRef(v("Reference")))

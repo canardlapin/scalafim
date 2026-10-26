@@ -1,7 +1,11 @@
 package scalafim.spatial
 
+import neurosurf4s.routing.*
+
+import neuroim4s.spatial.SamplingPolicy
+
 import gale.linalg.DMat
-import scalafim.image.{SpatialAxis, VoxelCoord}
+import neuroim4s.image.{SpatialAxis, VoxelCoord}
 
 enum FieldApiError:
   case Spatial(error: SpatialError)
@@ -74,10 +78,6 @@ extension (field: Field)
 
   def box(box: VoxelBox)(using graph: SpatialGraph): Either[FieldApiError, Field] =
     field.select(FieldDemand.box(box))
-
-  @deprecated("Use box; VoxelBox is geometric rather than extensional.", "0.2.0")
-  def region(region: VoxelBox)(using graph: SpatialGraph): Either[FieldApiError, Field] =
-    field.box(region)
 
   def timeBlock(start: Int, length: Int)(using graph: SpatialGraph): Either[FieldApiError, Field] =
     TimeBlock

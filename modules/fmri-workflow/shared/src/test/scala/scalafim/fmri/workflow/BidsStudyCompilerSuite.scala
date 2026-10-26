@@ -7,16 +7,16 @@ import image4s.geometry.D3
 import image4s.geometry.Frame
 import image4s.geometry.GeometryError
 import image4s.geometry.Grid
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 
 import munit.FunSuite
 import bids4s.*
 import scalafim.dataset.{DatasetId, DatasetShape}
-import scalafim.image.SomeSampleSpace
+import image4s.SomeSampleSpace
 
 class BidsStudyCompilerSuite extends FunSuite:
 
-  private val fixtureWorld = scalafim.image.world.WorldSpace.declare("registered BIDS compiler fixture world")
+  private val fixtureWorld = neuroim4s.spaces.WorldSpace.declare("registered BIDS compiler fixture world")
     .fold(error => fail(error.message), identity)
 
   private def fixtureSpace(dims: Vector[Int]): image4s.SomeSampleSpace =
@@ -57,6 +57,48 @@ class BidsStudyCompilerSuite extends FunSuite:
     val unit = BidsStudyCompiler.compile(project, fixture.recipe, fixture.headers).toOption.get.units.head
     assertEquals(unit.runs.head.timing.sliceTimingCorrected, None)
   }
+
+  test("numeric run companions match across padding without rewriting source paths") {
+    val fixture = studyFixture(subjects = Vector("01"), runs = Vector("01"))
+    val paths = fixture.project.manifest.files.map(_.path.value).map { path =>
+      if path.endsWith("_events.tsv") then path.replace("run-01", "run-1") else path
+    }
+    val project = fixture.project.copy(manifest = BidsManifest.fromRelativePaths(paths, fixture.project.derivatives))
+    val run = BidsStudyCompiler.compile(project, fixture.recipe, fixture.headers).toOption.get.units.head.runs.head
+    assertEquals(run.id.value, "01")
+    assert(run.bold.location.value.contains("run-01"))
+    assert(run.events.location.value.contains("run-1_"))
+  }
+
+  test("numeric-equivalent event companions are ambiguous and subject labels stay distinct") {
+    val fixture = studyFixture(subjects = Vector("01"), runs = Vector("01"))
+    val paths = fixture.project.manifest.files.map(_.path.value)
+    val events = paths.find(_.endsWith("_events.tsv")).get
+    val duplicate = fixture.project.copy(manifest = BidsManifest.fromRelativePaths(
+      paths :+ events.replace("run-01", "run-1"), fixture.project.derivatives))
+    val ambiguous = BidsStudyCompiler.compile(duplicate, fixture.recipe, fixture.headers).left.toOption.get
+    assert(ambiguous.issues.exists(_.code == CatalogIssueCode.AmbiguousCompanion))
+    val otherSubject = fixture.project.copy(manifest = BidsManifest.fromRelativePaths(
+      paths.map(p => if p == events then p.replace("sub-01", "sub-1") else p), fixture.project.derivatives))
+    val missing = BidsStudyCompiler.compile(otherSubject, fixture.recipe, fixture.headers).left.toOption.get
+    assert(missing.issues.exists(_.code == CatalogIssueCode.MissingEvents))
+  }
+
+  test("numeric-equivalent confounds preserve raw paths and refuse ambiguous companions") {
+    val fixture = studyFixture(subjects = Vector("01"), runs = Vector("01"))
+    val paths = fixture.project.manifest.files.map(_.path.value)
+    val confounds = paths.find(_.endsWith("_timeseries.tsv")).get
+    val unpadded = confounds.replace("run-01", "run-1").replace("echo-1_", "echo-001_")
+    val selected = fixture.project.copy(manifest = BidsManifest.fromRelativePaths(
+      paths.map(path => if path == confounds then unpadded else path), fixture.project.derivatives))
+    val run = BidsStudyCompiler.compile(selected, fixture.recipe, fixture.headers).toOption.get.units.head.runs.head
+    assertEquals(run.id.value, "01")
+    assert(run.confounds.exists(_.location.value.endsWith(unpadded)))
+    val duplicate = fixture.project.copy(manifest = BidsManifest.fromRelativePaths(
+      paths :+ unpadded, fixture.project.derivatives))
+    val report = BidsStudyCompiler.compile(duplicate, fixture.recipe, fixture.headers).left.toOption.get
+    assert(report.issues.exists(_.code == CatalogIssueCode.AmbiguousCompanion))
+    }
 
   test("run and echo index padding selects unique event confound and mask companions") {
     val fixture = studyFixture(subjects = Vector("01"), runs = Vector("01"))
@@ -197,6 +239,28 @@ class BidsStudyCompilerSuite extends FunSuite:
         assert(collision.message.contains(bold) && collision.message.contains(aliasBold))
       }
     }
+  }
+
+  test("three padded BOLD aliases form one collision without absorbing another subject") {
+    val fixture = studyFixture(subjects = Vector("01", "02"), runs = Vector("01"))
+    val paths = fixture.project.manifest.files.map(_.path.value)
+    val bold = paths.find(path => path.contains("sub-01_") && path.endsWith("_bold.nii")).get
+    val aliases = Vector("run-1_echo-01", "run-001_echo-0001").map(bold.replace("run-01_echo-1", _))
+    val originalSidecar = BidsPath(bold.stripSuffix(".nii") + ".json")
+    val addedSidecars = aliases.map(path => BidsPath(path.stripSuffix(".nii") + ".json"))
+    val project = fixture.project.copy(
+      manifest = BidsManifest.fromRelativePaths(paths ++ aliases ++ addedSidecars.map(_.value), fixture.project.derivatives),
+      sidecars = fixture.project.sidecars ++ addedSidecars.map(_ -> fixture.project.sidecars(originalSidecar))
+    )
+    val headers = fixture.headers.headers ++ aliases.map(path => BidsPath(path) -> fixture.headers.headers(BidsPath(bold)))
+    val report = BidsStudyCompiler.compile(project, fixture.recipe, ImageHeaderCatalog(headers)).left.toOption.get
+    val collisions = report.issues.filter(_.code == CatalogIssueCode.DuplicateRun)
+    assertEquals(collisions.size, 1)
+    val collision = collisions.head
+    val expected = (Vector(bold) ++ aliases).sorted
+    assertEquals(collision.path, Some(BidsPath(expected.head)))
+    assertEquals(collision.message, s"numeric-equivalent BOLD aliases collide: ${expected.mkString(", ")}")
+    assert(!collision.message.contains("sub-02_"))
   }
 
   test("compiler groups exact fMRIPrep entities into deterministic multi-run units") {

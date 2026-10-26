@@ -1,12 +1,12 @@
 package scalafim.dataset
 
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 
 import gale.linalg.{DMat, DVec}
 import scalafim.archive.lna.GaleArchiveTestData
 import scalafim.archive.RunLabel
 import scalafim.archive.lna.{LnaPipeline, QuantParams}
-import scalafim.image.SomeSampleSpace
+import image4s.SomeSampleSpace
 import scalafim.latent.{
   BoldZipCoarseBasis,
   BoldZipDetailBasis,

@@ -11,7 +11,7 @@ import image4s.geometry.GeometryError
 import image4s.geometry.Grid
 import image4s.geometry.GridId
 import image4s.geometry.LengthUnit
-import scalafim.image.Mask
+import neuroim4s.image.Mask
 
 class DatasetCongruenceBindingSuite extends munit.FunSuite:
 

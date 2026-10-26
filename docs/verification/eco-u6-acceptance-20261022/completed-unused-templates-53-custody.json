@@ -1,0 +1,114 @@
+{
+  "scope": "Only own-created immutable optional template seeds, no modern/legacy current base references. External byte/mode/directory/link custody, global wrapper lock for fresh recheck+quarantine. No symlinks; existing bases unchanged; absent seed uses normal cold bootstrap.",
+  "before_free_bytes": 20557127680,
+  "started": 1792654892.5186071,
+  "contexts": [
+    {
+      "original_template": "/Users/bbuchsbaum/.cache/scalafim-sbt/templates/1d56318c0de63526",
+      "modern_key": "1d56318c0de63526",
+      "legacy_key": "3745db5938cd4304",
+      "creation_log": "/tmp/scalafim-eco-u5-routing-final-pin-13.log",
+      "creation_log_sha256": "22b664d0d3059c3617a885aacc3db258d66f153ed70e49b195a6bd6320799fb7",
+      "archive": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-unused-templates-53/1d56318c0de63526.tar.gz",
+      "archive_sha256": "7a071675cdec0fc77bd0d46924cc3b75e2b846b320fbef30b39b72c433957e63",
+      "inventory": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-unused-templates-53/1d56318c0de63526.inventory.json",
+      "inventory_sha256": "e82d402bc9a6302d7bccbec65e8914c84aea77ee57a35629c723849665a8413f",
+      "entries": 160650,
+      "regular_files": 129911,
+      "byte_mode_directory_link_verified": true,
+      "internal_copy_removed": true,
+      "captured_quarantine": "/Users/bbuchsbaum/.cache/scalafim-sbt/templates/.retained-1d56318c0de63526-58212fe182424b44a114ad0620cc1983",
+      "quarantine_identity": [
+        16777232,
+        845438271
+      ],
+      "after_free_bytes": 20730990592
+    },
+    {
+      "original_template": "/Users/bbuchsbaum/.cache/scalafim-sbt/templates/3622033f1a4fb9e9",
+      "modern_key": "3622033f1a4fb9e9",
+      "legacy_key": "2c99dfa12c954adc",
+      "creation_log": "/tmp/scalafim-eco-u5-routing-callers-11.log",
+      "creation_log_sha256": "b8119128750ac2ac8c2ea58fc19619a1fb0ec44cd996dcd4ac7bec555d3cb8b0",
+      "archive": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-unused-templates-53/3622033f1a4fb9e9.tar.gz",
+      "archive_sha256": "93ae5c251bb4aa162a8ea38eb12f8c409a0d1e56a434f25f1169694c139e3412",
+      "inventory": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-unused-templates-53/3622033f1a4fb9e9.inventory.json",
+      "inventory_sha256": "90128e6351e40e8c54f093039ac2ff91f34a689f7f14c9000ac9364e86f07f08",
+      "entries": 140636,
+      "regular_files": 114239,
+      "byte_mode_directory_link_verified": true,
+      "internal_copy_removed": true,
+      "captured_quarantine": "/Users/bbuchsbaum/.cache/scalafim-sbt/templates/.retained-3622033f1a4fb9e9-179fe69dd7854a4a9ced86185f6b6acf",
+      "quarantine_identity": [
+        16777232,
+        845185210
+      ],
+      "after_free_bytes": 20821909504
+    },
+    {
+      "original_template": "/Users/bbuchsbaum/.cache/scalafim-sbt/templates/4659ce7086d55ce5",
+      "modern_key": "4659ce7086d55ce5",
+      "legacy_key": "46bd0fe529e14489",
+      "creation_log": "/tmp/scalafim-eco-u5-compile-all-06.log",
+      "creation_log_sha256": "3d4c4a115c31c2a6765ab3920beaca2690ab77e3fcf3df30943671bc43d7df2c",
+      "archive": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-unused-templates-53/4659ce7086d55ce5.tar.gz",
+      "archive_sha256": "3edf6f155178d743281063555df56ae2292625de4774e907ae2b7e16d3bbffd3",
+      "inventory": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-unused-templates-53/4659ce7086d55ce5.inventory.json",
+      "inventory_sha256": "b61948271b1dc5babe1b44805009264ae1bc4c6d82ea4245ec791cbfa6008242",
+      "entries": 127261,
+      "regular_files": 104196,
+      "byte_mode_directory_link_verified": true,
+      "internal_copy_removed": true,
+      "captured_quarantine": "/Users/bbuchsbaum/.cache/scalafim-sbt/templates/.retained-4659ce7086d55ce5-00b39c43e325477fb5c82edb9a36e562",
+      "quarantine_identity": [
+        16777232,
+        843959059
+      ],
+      "after_free_bytes": 20866359296
+    },
+    {
+      "original_template": "/Users/bbuchsbaum/.cache/scalafim-sbt/templates/ca12d05708478403",
+      "modern_key": "ca12d05708478403",
+      "legacy_key": "c9f3ded9910b5534",
+      "creation_log": "/tmp/scalafim-eco-u5-routing-callers-08.log",
+      "creation_log_sha256": "951d325a650ae9b48f8c0a4e6ba28c47d5e716a90c5ccc552f41eacff1727db1",
+      "archive": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-unused-templates-53/ca12d05708478403.tar.gz",
+      "archive_sha256": "11a9c987c3607644e9846e51fca12b3a4ba0b27f195d62e3e9f2a109aff7e48a",
+      "inventory": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-unused-templates-53/ca12d05708478403.inventory.json",
+      "inventory_sha256": "0521690fe000f2852d0d63e45131b43753fb0e131fd5c23a5938011c9b1c41cf",
+      "entries": 131284,
+      "regular_files": 106922,
+      "byte_mode_directory_link_verified": true,
+      "internal_copy_removed": true,
+      "captured_quarantine": "/Users/bbuchsbaum/.cache/scalafim-sbt/templates/.retained-ca12d05708478403-43c51de884d04ab8bed7ee2e6223e8bf",
+      "quarantine_identity": [
+        16777232,
+        844505674
+      ],
+      "after_free_bytes": 20931403776
+    },
+    {
+      "original_template": "/Users/bbuchsbaum/.cache/scalafim-sbt/templates/d64f3fa3bdfac650",
+      "modern_key": "d64f3fa3bdfac650",
+      "legacy_key": "f733231732a9ef69",
+      "creation_log": "/tmp/neurosurf4s-eco-u5-default-pins-09.log",
+      "creation_log_sha256": "d83faa5f228ffc91f5ee0fee5c5ee26b5b3d1cfc9169bfc8284b8793ba3bedd4",
+      "archive": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-unused-templates-53/d64f3fa3bdfac650.tar.gz",
+      "archive_sha256": "9c438b85db6aaaf29017c17c63ff7d1e53ee024eac9f1e04a5f054780ad9d500",
+      "inventory": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-unused-templates-53/d64f3fa3bdfac650.inventory.json",
+      "inventory_sha256": "1cee8bbba4ab4b81d877a0dc11c8a84f29f8b7b00283f84cde962b660be8f24a",
+      "entries": 82719,
+      "regular_files": 64949,
+      "byte_mode_directory_link_verified": true,
+      "internal_copy_removed": true,
+      "captured_quarantine": "/Users/bbuchsbaum/.cache/scalafim-sbt/templates/.retained-d64f3fa3bdfac650-a59dbc72d3bc4ca58369df0f7febc521",
+      "quarantine_identity": [
+        16777232,
+        840625246
+      ],
+      "after_free_bytes": 22039326720
+    }
+  ],
+  "finished": 1792655467.9399092,
+  "after_free_bytes": 22039326720
+}

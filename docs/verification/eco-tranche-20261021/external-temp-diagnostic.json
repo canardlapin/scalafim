@@ -1,0 +1,30 @@
+{
+  "sourceReport": "/Users/bbuchsbaum/Library/Logs/DiagnosticReports/java-2026-10-21-000126.ips",
+  "sha256": "1769132c8692f782cd9151c012c98820945a34dc34ca514751b3efc37bb0932b",
+  "pid": 49663,
+  "exception": {
+    "codes": "0x0000000000000001, 0x000000018af4fe54",
+    "rawCodes": [
+      1,
+      6626278996
+    ],
+    "type": "EXC_BREAKPOINT",
+    "signal": "SIGTRAP"
+  },
+  "termination": {
+    "flags": 0,
+    "code": 5,
+    "namespace": "SIGNAL",
+    "indicator": "Trace/BPT trap: 5",
+    "byProc": "exc handler",
+    "byPid": 49663
+  },
+  "nativeFrames": [
+    "__chk_fail_overflow",
+    "__memcpy_chk",
+    "Java_org_scalasbt_ipcsocket_JNIUnixDomainSocketLibraryProvider_bindNative"
+  ],
+  "diagnosis": "sbt native Unix socket binding overflow after overly long external temp path; short actual external temp directory allowed next JVM gate to complete",
+  "rawFailedLog": "root-layout-pins-jvm-02.log",
+  "successfulGate": "root-layout-pins-jvm-03.log"
+}

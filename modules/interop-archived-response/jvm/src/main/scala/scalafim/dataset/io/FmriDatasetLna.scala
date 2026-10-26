@@ -10,7 +10,7 @@ import scalafim.latent.{
   LatentArchivePlan,
   LatentArchiveRegistry
 }
-import scalafim.response.OperationId
+import locus4s.provenance.OperationId
 
 enum LnaDatasetReadMode:
   case SelectionAware

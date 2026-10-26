@@ -12,8 +12,8 @@ import scalafim.fmri.hrf.{Hrf, HrfDescriptor, PositiveSeconds, Seconds, Support}
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.family.*
 import scalafim.fmri.model.*
-import scalafim.image.SampleSpaces
-import scalafim.image.world.{TemplateName, WorldSpace}
+import neuroim4s.image.SampleSpaces
+import neuroim4s.spaces.{TemplateName, WorldSpace}
 
 class ProfileFitIdentitySuite extends munit.FunSuite:
   // A rank-one, exactly representable fixture keeps these structural goldens
@@ -58,7 +58,7 @@ class ProfileFitIdentitySuite extends munit.FunSuite:
     .fold(error => fail(error.message), identity)
   private lazy val dataset = FmriDataset.unsafe(InMemoryDatasetBackend(DatasetId("identity|dataset"),
     DMat.zeros(4, 1), SampleSpaces.inWorld(SampleSpaces(Vector(1, 1, 1)),
-      WorldSpace.Template(TemplateName.unsafe("identity-golden"))).fold(error => fail(error.message), identity), metadata), frame).dataset
+      WorldSpace.Template(TemplateName("identity-golden").toOption.get)).fold(error => fail(error.message), identity), metadata), frame).dataset
   private lazy val baseline = BaselineModel.build(frame, BaselineBasis.Constant, intercept = Intercept.Global)
   private val membership = TrialMembership.make(Vector(0, 0), 1).fold(error => fail(error.message), identity)
   private val drive = ProfileTrialDrive.make(schedule, membership, Vector(ConditionId.unsafe("a|b")),
@@ -80,11 +80,16 @@ class ProfileFitIdentitySuite extends munit.FunSuite:
   test("actual prepared profile provenance has the same literal golden on JVM and JS"):
     assertEquals(prepared().provenance, ProfileFitIdentitySuite.ProfileGolden)
 
-  test("profile term identity retains known source rows without inventing them for hand-built inputs"):
-    val identified = term.copy(sourceRows = Vector(2, 5))
-    assertNotEquals(ProfileFitIdentity.term(term), ProfileFitIdentity.term(identified))
-    assertNotEquals(ProfileFitIdentity.term(identified),
-      ProfileFitIdentity.term(identified.copy(sourceRows = Vector(5, 2))))
+  test("ordinary caller-row attribution changes design identity but not fixed-condition numerical inputs"):
+    val first = term.copy(sourceRows = Vector(2, 4))
+    val second = term.copy(sourceRows = Vector(8, 9))
+    assertEquals(ProfileFitIdentity.term(first), ProfileFitIdentity.term(second))
+    def fingerprint(value: EventTerm) =
+      EventModel.build(Vector(value.convolve(basis.kernel, frame)), frame).designSchema.fingerprint
+    assertNotEquals(fingerprint(first), fingerprint(second))
+    assertNotEquals(ProfileFitIdentity.term(first), ProfileFitIdentity.term(first.copy(onsets = Vector(Seconds(1.0), Seconds(2.0)))))
+    val changedValues = first.copy(events = Vector(Event.factor(Vector("a|b", "other"), "condition")))
+    assertNotEquals(ProfileFitIdentity.term(first), ProfileFitIdentity.term(changedValues))
 
 
   private lazy val fixedFixture: (ProfileHrfPlan, ProfileDecodePolicy) =

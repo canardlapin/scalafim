@@ -9,7 +9,7 @@ import scalafim.fmri.fit.fixtures.FmriAr041GlsFixture as R
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{ArBiasCorrection, ArCensorTreatment, ArInitialization, AutocorrelationConfig, FitPlan, FitStrategy, FmriModel}
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 
 class StationaryGlsSuite extends munit.FunSuite:
   private def matrix(rows: Vector[Vector[Double]]): DMat = Matrix.tabulate(rows.length,rows.head.length)((r,c) => rows(r)(c))

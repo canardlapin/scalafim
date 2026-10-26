@@ -20,7 +20,7 @@ import scalafim.fmri.model.{
   ArInitialization,
   ArCensorTreatment
 }
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 import scalafim.scenarios.{ScenarioObservation, ScenarioResult}
 import ujson.{Arr, Bool, Num, Obj, Str}
 
@@ -95,7 +95,7 @@ private[laws] final case class GlsStudyCell(
     else TimeSegments.withCensorResets(TimeSegments.fromRunLengths(runLengths), censorRows.toSet)
   val estimationLayout: NoiseEstimationLayout = NoiseEstimationLayout
     .excludingRows(segments, rows, censorRows.toSet)
-    .fold(error => throw new IllegalArgumentException(error.message), identity)
+    .fold(error => throw new IllegalArgumentException(error.message), value => value)
   val eventRows: Vector[Vector[Double]] =
     val kernel = Vector.tabulate(33)(i => Hrfs.SPMG1(Lag(i.toDouble)).data(0))
     Vector.tabulate(rows) { row =>

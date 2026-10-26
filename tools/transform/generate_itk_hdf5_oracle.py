@@ -25,7 +25,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 import oracle_common as oc  # noqa: E402
 
 OUT = oc.oracle_dir("itk_hdf5")
-SOURCE = os.path.join(oc.ORACLE_ROOT, "neurotransform", "itk_oracle")
+SOURCE = os.path.join(oc.transform_oracle_root(), "neurotransform", "itk_oracle")
 field = sitk.ReadImage(os.path.join(SOURCE, "warp.nii.gz"), sitk.sitkVectorFloat64)
 
 rows = []

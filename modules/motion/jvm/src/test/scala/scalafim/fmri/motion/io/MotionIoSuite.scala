@@ -4,9 +4,9 @@ import bids4s.*
 import image4s.geometry.Affine
 import image4s.geometry.D3
 import scalafim.fmri.motion.*
-import scalafim.image.*
-import scalafim.image.SampleSpaces.*
-import scalafim.image.world.{SpaceEvidence, WorldSpace}
+import neuroim4s.image.*
+import neuroim4s.image.SampleSpaces.*
+import neuroim4s.spaces.{SpaceEvidence, WorldSpace}
 
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -26,7 +26,7 @@ class MotionIoSuite extends munit.FunSuite:
     val run = MotionNiftiIo.readRun(runPath, evidence).fold(err => fail(err.message), identity)
     val mask = MotionNiftiIo.readMask(maskPath, evidence).fold(err => fail(err.message), identity)
 
-    assertEquals(run.space.dims.take(4), Vector(2, 1, 1, 3))
+    assertEquals(run.space.logicalShape.take(4), Vector(2, 1, 1, 3))
     assertEquals(run.nVolumes, 3)
     assertEqualsDouble(run.valueAtCanonicalOrdinal(0), 1.0, 1e-12)
     assertEqualsDouble(run.valueAtCanonicalOrdinal(5), 6.0, 1e-12)
@@ -122,6 +122,14 @@ class MotionIoSuite extends munit.FunSuite:
         fail(s"expected slice timing, got $other")
     assertEquals(scan.plan().acquisitionTiming, scan.acquisitionTiming)
 
+    val defaultRaw = MotionBids.rawScans(project).fold(err => fail(err.message), identity)
+    val globRaw = MotionBids.rawScans(project, subid = "0?", task = "re*", run = "0?")
+      .fold(err => fail(err.message), identity)
+    val absentRaw = MotionBids.rawScans(project, subid = "02").fold(err => fail(err.message), identity)
+    assertEquals(defaultRaw.map(_.path), scans.map(_.path))
+    assertEquals(globRaw.map(_.path), scans.map(_.path))
+    assertEquals(absentRaw, Vector.empty)
+
     val preproc =
       MotionBids
         .preprocScans(project, subid = "01", task = "rest", run = "01", space = "MNI152NLin2009cAsym")
@@ -129,6 +137,15 @@ class MotionIoSuite extends munit.FunSuite:
     assertEquals(preproc.length, 1)
     assertEquals(preproc.head.repetitionTimeSeconds, Some(2.0))
     assertEquals(preproc.head.acquisitionTiming, AcquisitionTiming.Volume)
+
+    val defaultPreproc = MotionBids.preprocScans(project).fold(err => fail(err.message), identity)
+    val globPreproc = MotionBids.preprocScans(project, task = "re*", space = "MNI152*")
+      .fold(err => fail(err.message), identity)
+    val absentPreproc = MotionBids.preprocScans(project, space = "other*")
+      .fold(err => fail(err.message), identity)
+    assertEquals(defaultPreproc.map(_.path), preproc.map(_.path))
+    assertEquals(globPreproc.map(_.path), preproc.map(_.path))
+    assertEquals(absentPreproc, Vector.empty)
   }
 
   test("BIDS adapter rejects structurally invalid project identities") {
@@ -268,16 +285,16 @@ class MotionIoSuite extends munit.FunSuite:
         origin = Some(Vector(10.0, 20.0, 30.0)),
         affine = Some(affine)
       )
-    val data = PrimitiveBuffers.tabulate[Double](2 * 1 * 2 * 2)(i => i.toDouble + 0.25)
-    SomeScalarSeries.unsafeCopyFromCanonicalArray(data, spatial.addDim(ProviderAxes.time(2)), "motion-io-fixture")
+    val data = Array.tabulate[Double](2 * 1 * 2 * 2)(i => i.toDouble + 0.25)
+    SomeScalarSeries.unsafeCopyFromCanonicalArray(data, spatial.typed.appendNonSpatial(ProviderAxes.time(2)).fold(error => throw new IllegalArgumentException(error.message), value => value), "motion-io-fixture")
 
   private def estimatorRun(): SomeScalarSeries[Double] =
     val dims = Vector(7, 5, 5)
     val nxyz = dims.product
     val space = SampleSpaces(dims)
     val frame =
-      PrimitiveBuffers.tabulate[Double](nxyz) { lin =>
-        val voxel = space.indexToVoxel3D(lin)
+      Array.tabulate[Double](nxyz) { lin =>
+        val voxel = neuroim4s.image.Indexing.indexToGrid(neuroim4s.image.SpatialDims.unsafeFromVector(space.grid.shape), lin)
         val dx = voxel.x.toDouble - 3.0
         val dy = voxel.y.toDouble - 2.0
         val dz = voxel.z.toDouble - 2.0
@@ -286,7 +303,7 @@ class MotionIoSuite extends munit.FunSuite:
           0.2 * voxel.y.toDouble -
           0.15 * voxel.z.toDouble
       }
-    val data = PrimitiveBuffers.ofSize[Double](nxyz * 2)
+    val data = Array.ofDim[Double](nxyz * 2)
     var lin = 0
     while lin < nxyz do
       var t = 0
@@ -294,7 +311,7 @@ class MotionIoSuite extends munit.FunSuite:
         data(lin * 2 + t) = frame(lin)
         t += 1
       lin += 1
-    SomeScalarSeries.unsafeCopyFromCanonicalArray(data, space.addDim(ProviderAxes.time(2)), "motion-cli-estimate-fixture")
+    SomeScalarSeries.unsafeCopyFromCanonicalArray(data, space.typed.appendNonSpatial(ProviderAxes.time(2)).fold(error => throw new IllegalArgumentException(error.message), value => value), "motion-cli-estimate-fixture")
 
   private def writeFloat32Nifti(path: Path, dims: Vector[Int], values: Vector[Double]): Unit =
     Files.createDirectories(path.getParent)
@@ -312,6 +329,7 @@ class MotionIoSuite extends munit.FunSuite:
     bb.putFloat(80, 1.0f)
     bb.putFloat(84, 1.0f)
     bb.putFloat(88, 1.0f)
+    if dims.length == 4 then bb.putFloat(92, 1.0f)
     bb.putFloat(108, 352.0f)
     bb.putFloat(112, 1.0f)
     bb.putFloat(116, 0.0f)

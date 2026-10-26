@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-23T19:38:09.034157+00:00",
+  "finished_utc": "2026-10-23T19:42:00.447056+00:00",
+  "duration_seconds": 231.409665,
+  "command": [
+    "python3",
+    "tools/build/sbt-warm",
+    "providerSpikeJVM/test",
+    "providerSpikeJS/test"
+  ],
+  "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-followups-check-20261023",
+  "log": "/tmp/eco-surface-scenario-gates-63.log",
+  "exit_code": 1,
+  "child_returncode": 1,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 1500.0,
+  "log_bytes": 19512
+}

@@ -1,0 +1,129 @@
+{
+  "status": "Complete production, provenance and StudyPane/ViewerScene handoffs PASS; retained-surface pixel oracle FAIL",
+  "sourceCommit": "9896a300c43702cc7252577fb74302c56a1053d8",
+  "scalafimRevision": "896dda088b26fbaa2aedecc8cdedcfd6a9ea2c38",
+  "execution": {
+    "schema_version": 1,
+    "started_utc": "2026-10-21T07:25:23.354312+00:00",
+    "finished_utc": "2026-10-21T07:29:56.753852+00:00",
+    "duration_seconds": 273.398294,
+    "command": [
+      "env",
+      "TMPDIR=/Volumes/My Passport for Mac/e01tmp",
+      "sbt",
+      "-batch",
+      "-J-Xmx4g",
+      "-J-Djava.io.tmpdir=/Volumes/My Passport for Mac/e01tmp",
+      "-Dsbt.supershell=false",
+      "-Dsbt.log.noformat=true",
+      "-Dsbt.global.base=/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/fresh-integration-global",
+      "-Dplsneuro.providers=/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/main-imaging-providers",
+      "desktop/compile",
+      "set adapters / Test / unmanagedSources := Seq(file(\"modules/adapters/src/test/scala/plsneuro/adapters/SpatialFixtures.scala\"))",
+      "set desktop / Test / unmanagedSources := Seq(\"RuntimeProvenanceProbe.scala\", \"NativeParticipantExplorerStudyProbe.scala\", \"InspectionTestSources.scala\", \"ViewerSceneProbe.scala\", \"NativeSurfaceLayerTransactionProbe.scala\").map(name => file(\"modules/desktop/src/test/scala/plsneuro/desktop/\" + name))",
+      "desktop/Test/runMain plsneuro.desktop.RuntimeProvenanceProbe \"/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/plsneuro-main-qualified-07\"",
+      "desktop/Test/runMain plsneuro.desktop.NativeParticipantExplorerStudyProbe \"/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/first-level-consumer-fixture-06\" \"/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/study-handoff-native-07\"",
+      "desktop/Test/runMain plsneuro.desktop.ViewerSceneProbe",
+      "desktop/Test/runMain plsneuro.desktop.NativeSurfaceLayerTransactionProbe \"/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/surface-transactions-native-07\""
+    ],
+    "cwd": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/plsneuro-main-qualified-07",
+    "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/pls-main-desktop-handoff-07.log",
+    "exit_code": 1,
+    "child_returncode": 1,
+    "reason": "exited",
+    "detail": null,
+    "timeout_seconds": 1800.0,
+    "log_bytes": 20777
+  },
+  "logSha256": "afadfc6b8242bdf53de243431aeda03cc5e81f204a3ce6ec0a71c7287eb036aa",
+  "fullProductionCompile": {
+    "status": "PASS",
+    "productionFiltering": null,
+    "adapters": 88,
+    "glmReviewJavafx": 22,
+    "desktop": 107
+  },
+  "runtimeProvenance": {
+    "status": "PASS",
+    "sourceAndBuildInputs": 276,
+    "providers": 13,
+    "applicationDigest": "sha256:dea90b7669155cdb3f610547ac16556e6ea6adb390a32856494a57878437fca9",
+    "checks": [
+      "Every compiled source/resource/build input hash matches committed source",
+      "Exact declared provider revisions and candidate patch hashes",
+      "One Gale class origin"
+    ]
+  },
+  "studyPane": {
+    "status": "PASS",
+    "path": [
+      "GroupResponses.resultGeometry",
+      "ParticipantExplorerInputs",
+      "ResultPresentation.ResponseCohort",
+      "StudyPane"
+    ],
+    "coverage": [
+      "Actual discovery/preparation/first-level condition and FIR participant entry",
+      "Participant comparison produces estimates without group fitting",
+      "Actual group method reuses retained first-level artifacts",
+      "New selected-unit estimation invalidates old cohort",
+      "Dataset draft edits retain participant inspection and gate new analysis",
+      "StudyPane.dispose waits for terminated resources"
+    ],
+    "screenshots": [
+      {
+        "path": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/study-handoff-native-07/beta-model-entry.png",
+        "bytes": 148074,
+        "sha256": "9eba44cc5aeda561d06557c56ed79ada48208396510c2d6dc90085f0b672201a"
+      },
+      {
+        "path": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/study-handoff-native-07/beta-participants.png",
+        "bytes": 128871,
+        "sha256": "b13f03ef3d5f759d483bfdd48cc8d52f1b14a98dc73156c73c0ff0bd77823ab7"
+      },
+      {
+        "path": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/study-handoff-native-07/fir-model-entry.png",
+        "bytes": 200730,
+        "sha256": "e7614883fd10d4d5b03b994c31d013fc2e58a82f544f2d3d4b199e24f3e6f0b8"
+      },
+      {
+        "path": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/study-handoff-native-07/fir-participants.png",
+        "bytes": 133318,
+        "sha256": "fd8c05101441bd6ff28f340aef70b2841487454464b6f846ef815de9f58f1ff8"
+      }
+    ]
+  },
+  "viewerScene": {
+    "status": "PASS",
+    "coverage": [
+      "Actual consumer fixed/morph capture/reopen",
+      "Complete geometry family binding and foreign provenance/content refusals",
+      "Canonical unchanged-save bytes",
+      "Legacy downgrade/unsupported-state refusals",
+      "Actual map/statistics fingerprints and artifact hash before restore"
+    ]
+  },
+  "retainedSurface": {
+    "status": "FAIL",
+    "failure": "Scalar snapshot lacks chromatic map ink: 0",
+    "priorAssertions": "Retained SubScene/controller, interaction state, scalar/missingness layer updates, wrong-space refusal/recovery and burst convergence passed before pixel check",
+    "next": "Diagnostic-only failure artifact source1b664d8 retains assertion; fresh runtime08 pending"
+  },
+  "testSelection": {
+    "adapters": [
+      "SpatialFixtures.scala"
+    ],
+    "desktop": [
+      "RuntimeProvenanceProbe.scala",
+      "NativeParticipantExplorerStudyProbe.scala",
+      "InspectionTestSources.scala",
+      "ViewerSceneProbe.scala",
+      "NativeSurfaceLayerTransactionProbe.scala"
+    ]
+  },
+  "limits": [
+    "No I1 closure while retained-surface pixel assertion fails",
+    "No full PLS scientific calibration, application performance, native device matrix or main landing claim",
+    "Existing JavaFX unnamed-module and JDK Unsafe warnings retained"
+  ]
+}

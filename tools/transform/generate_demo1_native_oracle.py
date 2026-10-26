@@ -151,7 +151,7 @@ def main():
     parser.add_argument("--image", required=True)
     parser.add_argument("--source-dir", type=Path, required=True)
     parser.add_argument("--provenance-dir", type=Path, required=True)
-    parser.add_argument("--out", type=Path, default=Path(oc.ORACLE_ROOT)/"demo1_native")
+    parser.add_argument("--out", type=Path, default=Path(oc.transform_oracle_root())/"demo1_native")
     args = parser.parse_args()
     if not args.image.startswith("sha256:") and "@sha256:" not in args.image:
         parser.error("--image must identify immutable bytes")

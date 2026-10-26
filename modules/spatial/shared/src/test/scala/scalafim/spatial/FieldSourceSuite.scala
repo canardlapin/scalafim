@@ -1,14 +1,16 @@
 package scalafim.spatial
 
-import scalafim.image.world.SubjectId
+import neurosurf4s.routing.*
+
+import neuroim4s.spaces.SubjectId
 
 import image4s.geometry.GeometryError
-import scalafim.image.{SampleSpaceError, SampleSpaces, SomeSampleSpace}
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.{SampleSpaceError, SampleSpaces}
+import neuroim4s.image.SampleSpaces.*
 
 class FieldSourceSuite extends munit.FunSuite:
 
-  private val fixtureWorld = scalafim.image.world.WorldSpace.freshUnresolved()
+  private val fixtureWorld = neuroim4s.spaces.WorldSpace.freshUnresolved()
 
   private def spatialValue[A](result: Either[SpatialError, A]): A =
     result match

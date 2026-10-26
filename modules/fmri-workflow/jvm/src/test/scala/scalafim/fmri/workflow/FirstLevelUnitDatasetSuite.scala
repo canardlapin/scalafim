@@ -5,10 +5,11 @@ import scalafim.dataset.*
 import scalafim.fmri.fit.{FitPlanExecutor, RunwiseFmriFitResult}
 import scalafim.fmri.hrf.*
 import scalafim.fmri.model.{FitStrategy, ModelBuildSpec}
-import scalafim.image.{SampleSpaces, SomeSampleSpace, SomeScalarSeries, SomeScalarVolume, PrimitiveBuffers}
-import scalafim.image.io.Nifti
-import scalafim.image.SampleSpaces.*
-import scalafim.image.world.{SpaceEvidence, WorldSpace}
+import image4s.SomeSampleSpace
+import neuroim4s.image.{SampleSpaces, SomeScalarSeries, SomeScalarVolume}
+import neuroim4s.image.io.Nifti
+import neuroim4s.image.SampleSpaces.*
+import neuroim4s.spaces.{SpaceEvidence, WorldSpace}
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
 
@@ -19,7 +20,7 @@ class FirstLevelUnitDatasetSuite extends munit.FunSuite:
     Nifti.writeVolume(path, SomeScalarVolume.unsafeCopyFromCanonicalArray(data, space, "mask"))
       .fold(error => fail(error.message), _ => path)
   private def writeBold(path: Path, space: SomeSampleSpace, data: Array[Double]): Path =
-    Nifti.writeSeries(path, SomeScalarSeries.unsafeCopyFromCanonicalArray(data, space.addDim(ProviderAxes.time(96)), "bold"))
+    Nifti.writeSeries(path, SomeScalarSeries.unsafeCopyFromCanonicalArray(data, space.typed.appendNonSpatial(ProviderAxes.time(96)).fold(error => throw new IllegalArgumentException(error.message), identity), "bold"))
       .fold(error => fail(error.message), _ => path)
 
   test("selected companion files bind into condition and FIR fits without discovering unrelated files") {

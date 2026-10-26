@@ -26,7 +26,11 @@ final case class NiftiStagingLimits(
   * bounded JVM lock stripes coordinate publishers; lock files are retained.
   * Cancellation retains the interrupt flag and removes only this call's partials.
   */
-final class NiftiStagingCache private (val root: Path, val limits: NiftiStagingLimits):
+final class NiftiStagingCache private (
+    val root: Path,
+    val limits: NiftiStagingLimits,
+    usableSpace: () => Long
+):
   import NiftiStagingCache.*
 
   def stage(path: Path): Either[DatasetError, Path] =
@@ -94,9 +98,9 @@ final class NiftiStagingCache private (val root: Path, val limits: NiftiStagingL
             checkCancellation()
             if count > limits.maxExpandedBytes - total then
               throw new IllegalArgumentException(s"expanded NIfTI exceeds ${limits.maxExpandedBytes} byte limit")
-            if Files.getFileStore(root).getUsableSpace - count < limits.minimumFreeBytes then
+            if usableSpace() - count - ReceiptBytes < limits.minimumFreeBytes then
               throw new IllegalArgumentException(s"staging would cross ${limits.minimumFreeBytes} byte free-space floor")
-            if total > limits.maxCacheBytes - existingBytes - 65L - count then
+            if total > limits.maxCacheBytes - existingBytes - ReceiptBytes - count then
               throw new IllegalArgumentException(s"staging exceeds ${limits.maxCacheBytes} byte aggregate cache limit")
             output.write(buffer, 0, count)
             expandedDigest.update(buffer, 0, count)
@@ -111,7 +115,11 @@ final class NiftiStagingCache private (val root: Path, val limits: NiftiStagingL
         checkCancellation()
         val receiptTemp = Files.createTempFile(root, ".nifti-receipt-", ".partial")
         partials :+= receiptTemp
+        if usableSpace() - ReceiptBytes < limits.minimumFreeBytes then
+          throw new IllegalArgumentException(s"staging would cross ${limits.minimumFreeBytes} byte free-space floor")
         Files.writeString(receiptTemp, hex(expandedDigest.digest()) + "\n")
+        if usableSpace() < limits.minimumFreeBytes then
+          throw new IllegalArgumentException(s"staging would cross ${limits.minimumFreeBytes} byte free-space floor")
         publish(temporary, target)
         publish(receiptTemp, receipt)
         Right(target)
@@ -123,6 +131,7 @@ final class NiftiStagingCache private (val root: Path, val limits: NiftiStagingL
       Files.readString(receipt).trim == digestFile(target)
 
 object NiftiStagingCache:
+  private val ReceiptBytes = 65L
   private val stripes = Array.fill(64)(new ReentrantLock)
   private def stripe(path: Path): ReentrantLock = stripes((path.toString.hashCode & Int.MaxValue) % stripes.length)
   private def checkCancellation(): Unit =
@@ -152,10 +161,17 @@ object NiftiStagingCache:
   def make(root: Path): Either[DatasetError, NiftiStagingCache] = make(root, NiftiStagingLimits())
 
   def make(root: Path, limits: NiftiStagingLimits): Either[DatasetError, NiftiStagingCache] =
+    make(root, limits, () => Files.getFileStore(root).getUsableSpace)
+
+  private[io] def make(
+      root: Path,
+      limits: NiftiStagingLimits,
+      usableSpace: () => Long
+  ): Either[DatasetError, NiftiStagingCache] =
     val normalized = root.toAbsolutePath.normalize()
     try
       Files.createDirectories(normalized)
-      Right(new NiftiStagingCache(normalized.toRealPath(), limits))
+      Right(new NiftiStagingCache(normalized.toRealPath(), limits, usableSpace))
     catch
       case NonFatal(error) =>
         Left(DatasetError.StorageFailure(s"cannot create NIfTI staging root '$normalized': ${error.getMessage}"))

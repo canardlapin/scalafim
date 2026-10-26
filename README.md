@@ -1,7 +1,9 @@
 # scalafim
 
 This repository consolidates the Scala fMRI and neuroimaging libraries into one
-cross-compiled sbt build.
+cross-compiled sbt build over independently usable imaging, atlas, MVPA and
+surface providers. Start with the [direct-composition guide](docs/standalone-composition.md)
+when you need one library without the functional-analysis stack.
 
 > **Maturity:** `0.1-development` / pre-release research software. Module
 > ownership and workflow boundaries are still being consolidated; APIs may
@@ -9,67 +11,74 @@ cross-compiled sbt build.
 
 ## Modules
 
-- `locus-data`: ScalaFIM domain adapters, supported parcellations, and searchlights over standalone locus4s spaces and data; aggregation over parcellations uses `locus4s.data.Aggregation`.
 - `pipeline`: generic typed pipeline graphs, artifact references, deterministic staging, local execution, and receipts.
-- `response`: dependency-light response identity, axis-safe selections, owned time-by-sample `Double` blocks, source planning, provenance, and physical-read receipts.
+- `response`: dependency-light response identity, axis-safe selections, owned time-by-sample `Double` blocks, source planning and physical-read receipts. Source lineage uses the optional `locus4s-provenance` artifact directly.
 - `response-laws`: reusable JVM/Scala.js law checks for response ordering, shape, decode consistency, partitions, raw-bit persistence, receipts, and provenance.
 - `latent`: archive-independent fMRI response mathematics, inspectable applicative decode plans, explicit basis/loadings responses, coefficient projection, and locus-backed active/full-grid selections.
 - `ar`: checked run/censor-aware AR estimation, AR/ARMA whitening plans, diagnostics, and pure design/data prewhitening.
 - `hrf`: causal hemodynamic kernels with enforced causality and declared support, pulse-shaped neural drive (impulse, unit-height and unit-mass boxes), convergent box quadrature, response bases with typed dual coefficients and reported basis transforms, sampling, convolution, and regressors.
-- `hrf-laws`: reusable JVM/Scala.js law checks for kernel causality and support, event additivity, homogeneity, permutation invariance, translation equivariance, pulse and quadrature convergence, basis reconstruction and gauge invariance, and evaluation-plan equivalence.
-- `first-level-laws`: non-published generated JVM/Scala.js laws for constrained HRF, design, and fit workflows, with reproducible counterexample shrinking and separate PR/calibration budgets.
+- `first-level-laws`: HRF kernel and parametric-family law checks, plus non-published generated JVM/Scala.js laws for constrained HRF, design, and fit workflows, with reproducible counterexample shrinking and separate PR/calibration budgets.
 - `scenario-testkit`: non-published cross-built scenario verdicts, caveat policies, tolerances, and matrix/vector comparison views shared by design and fit tests.
 - `design`: fMRI event models, formulas, baselines, contrasts, and design matrices.
-- `image`: neuroimaging volumes, locus-backed masks/selections and volume domains, metric searchlight construction, world-space frame identity and toolkit coordinate conventions, provider-backed (image4s/reframe4s) resampling, statistics, clustering, and image IO.
-- `provider-spike`: unpublished JVM/Scala.js compile contract proving direct composition of image4s, image4s-locus, locus4s, Gale, Ravel, and reframe4s without a ScalaFIM wrapper algebra.
-- `image-view`: renderer-neutral world-space slice viewing, typed colorizers and layers, orthogonal scene compilation, and interaction receipts.
-- `image-view-canvas`: thin Scala.js Canvas host for image-view scenes and device-event translation.
-- `image-view-java2d`: thin JVM Java2D host with direct `Graphics2D` and `BufferedImage` rendering.
-- `image-view-javafx`: thin JVM JavaFX Canvas host behind the existing toolkit-free drawing contract.
+- `neuroim4s` (standalone): neuroimaging volumes and time series, masks and ordered selections, sampling, orientation, reslicing, image statistics and world binding. Optional JVM IO uses image4s codecs directly; ScalaFIM has no local `image` module.
+- `provider-contract`: unpublished JVM/Scala.js public-provider composition contracts and retained domain, partial-parcel, neighborhood and provider admission laws. Its production compile contract composes image4s, locus4s, Gale, Ravel and reframe4s directly; additional MVPA foundation providers stay in Test scope.
+- `neuroim4s-view` (standalone): renderer-neutral world-space slice viewing, typed colorizers and layers, orthogonal scene compilation, and interaction receipts. Optional `neuroim4s-view-canvas`, `neuroim4s-view-java2d` and `neuroim4s-view-javafx` modules provide the Scala.js Canvas, JVM Java2D and JVM JavaFX hosts. See [the volume viewer guide](docs/image-viewer.md).
 - `threshold`: spatial inference over statistic maps — locus-backed active support, LR-MFT set scoring, maxT/stepdown correction, octree candidates, and thresholding primitives.
 - `motion`: fMRI rigid-motion traces, baseline rigid estimation, motion QC metrics, and one-pass motion application over 4D runs.
-- `surface`: surface-mesh data structures, frame-typed surfaces, cortical-ribbon fill and masks, exact locus domains, topology, vertex fields, region-backed ROIs, quotient-backed labels, geodesic searchlights, parcel operations, and JVM surface IO.
-- `surface-test-fixtures`: unpublished JVM fsLR asset locks, independent oracles, qualification helpers and their tests; atlas tests consume its Compile configuration.
-- `surface-view`: renderer-neutral surface layers, thresholds, layouts, cameras, interaction, projection/network primitives, scene documents, and versioned render plans.
-- `surface-view-raster`: deterministic JVM/Scala.js CPU raster, depth, clipping, compositing, and picking oracle.
-- `surface-view-javafx`: retained JVM JavaFX Scene3D backend, controller, picking, snapshots, and resource/timing receipts.
-- `surface-view-three`: retained Scala.js Three.js/WebGL backend, browser picking/snapshots, and optional GPU volume projection.
+- [neurosurf4s](https://github.com/canardlapin/neurosurf4s) (standalone): surface anatomy, intrinsic geometry, fields, exact topology/domain ownership and GIFTI/FreeSurfer IO over mesh4s/locus4s/spatial4s plus small neuroim4s world declarations. Optional transport, mixed anatomical routing, volume projection, scenes, CPU raster, JavaFX and Three.js modules stay above core; fixtures, examples and parity tools live with their owners.
 - `surface-view-connectivity`: cross-platform adapter from typed connectivity edge spaces into surface network render resources.
-- `transform`: reads ITK/ANTs, FSL (FLIRT, FNIRT fields and cubic/quadratic spline coefficients), AFNI and FreeSurfer (LTA, xfm, register.dat) registration files and X5, interprets them as typed world-space transforms, converts between toolkits, and writes all but ITK `.h5`, X5 and FNIRT coefficients (read-only). Generic transform algebra stays in reframe4s. Guide: `docs/spatial-transforms.md`; design: `docs/plans/spatial-transform-parity.md`.
-- `spatial`: spatial-functor infrastructure — typed domains with locus packages, sampled geometries, exact/crisp/sampled transport, selections, lazy fields, and graph/operator compilation.
-- `atlas`: typed standard-atlas metadata plus locus parcellations, registry, transform plans, parcel/network lookup, one-pass reduction, explicit-alignment overlap, and quotient adjacency.
+- `neuroim4s-transform` (standalone): reads ITK/ANTs, FSL (FLIRT, FNIRT fields and cubic/quadratic spline coefficients), AFNI and FreeSurfer (LTA, xfm, register.dat) registration files and X5, interprets them as typed world-space transforms, converts between toolkits, and writes all but ITK `.h5`, X5 and FNIRT coefficients (read-only). Generic transform algebra stays in reframe4s. Guide: `docs/spatial-transforms.md`; design: `docs/plans/spatial-transform-parity.md`.
+- `spatial`: functional sample-by-observation fields, ordered demand, source revisions, caches, value stages and materialization over provider-owned anatomical domains and operators.
+- Atlas metadata, publication, volume/surface realizations, loaders and template routes belong to standalone [neuroatlas4s](https://github.com/canardlapin/neuroatlas4s). Optional modules keep catalog and surface-only use free of the volume/rendering stacks; ScalaFIM examples compose the public APIs with functional analysis.
 - `archive`: format-neutral revisions and publication state, separately versioned normalized manifests, exact canonical encoding, transactional write orchestration, and typed resource-backed payload execution and receipts.
 - `estimates`: fit-independent estimate catalogs, scientific identities, product/validity/uncertainty metadata and bounded read/write contracts.
 - `estimates-io`: shared development-schema JSON codecs and a JVM local NIfTI sink, verified reader and immutable collection publication. See [implementation scope](docs/estimate-sets.md).
-- `fit-estimates`: physical-IO-independent shared-OLS effects and joint-uncertainty producer, plus the eager direct-fit group adapter.
 - `archive-lna`: typed LNA 2 schema, pure manifest normalization, validation, shared-basis artifacts, payload codecs, JVM HDF5 stores, and the eager physical driver; no scientific reconstruction.
 - `interop-archived-response`: typed representation-to-archive lowering for LNA and Zarr, LNA pipeline reconstruction, archive-aware dataset adapters, first-class narrow representation envelopes, canonical dense-BOLD response binding, explicit registries, and resource-safe runtime assembly.
 - `dataset`: pure fMRI descriptions and queries, explicit synchronous readers, checked effectful response attachment, acquisition locus domains, typed study/run indexing, segmented reads, evidence propagation, and series adapters.
-- `model`: fMRI model composition and typed fitting plans/configuration.
-- `fit`: portable fit kernels plus explicit synchronous-reader and effectful opened-dataset execution boundaries.
+- `fit`: fMRI model composition and typed fitting plans/configuration plus
+  portable fit kernels and explicit synchronous-reader and effectful
+  opened-dataset execution boundaries. The retained model APIs remain in their
+  `scalafim.fmri.model` package.
+- `design-view`: renderer-neutral design review graphics and raster exports.
 - `phrf-comparison`: unpublished comparative-evaluation preparation and scoring on JVM/Scala.js, with JVM runners and custody tooling. [Pilot integration scope](modules/phrf-comparison/README.md) excludes the pending S10 launch and rehearsal.
-- `mvpa`: portable MVPA engine primitives, fold plans, ROI feature sets, and RDM/crossnobis kernels.
+- MVPA core (identified evidence, relational/pattern analyses, measurement and execution contracts) lives in standalone [`mvpa4s`](https://github.com/canardlapin/mvpa4s), pinned by `mvpa4sRevision`, with optional Alder predictive adapters in `mvpa4s-predictive` locus measurement/scatter adapters in `mvpa4s-locus`, and optional mesh/atlas adapters in `mvpa4s-surface`/`mvpa4s-atlas`; the `mvpa-*` modules below are ScalaFIM integrations over it.
+- `mvpa-pipeline`: optional ScalaFIM pipeline interpreter for MVPA work units; the core runs directly and owns resource/commit semantics.
 - `mvpa-fit`: shared composition of fit-owned trial readouts with MVPA pattern operators, run metadata, and leave-one-run-out execution.
 - Multivariate perturbation inference now lives in standalone [`multivar-inference`](https://github.com/canardlapin/multivar/tree/main/modules/inference); ScalaFIM keeps only downstream domain adapters.
 - `connectivity`: shared typed connectivity algebra, locus-backed node/edge domains and masks, explicit vectorization orders, static/dynamic containers, and inspectable estimator plans.
-- `mvpa-dataset`: typed synchronous-reader and effectful opened-dataset adapters into MVPA pattern sources.
+- `mvpa-dataset`: typed synchronous-reader and effectful opened-dataset adapters into identified MVPA evidence; reusable soft-LDA fitting and Alder execution live in `mvpa4s-predictive`.
 - `mvpa-artifacts`: bounded, fitter-independent pattern profiles with verified external Float64 payloads over existing archive IO; durable fitter checkpoints are unsupported.
-- `mvpa-spatial`: adapters from locus regions, selections, parcellations, and searchlights plus image/surface/atlas objects into MVPA feature-set plans.
+- `mvpa-spatial`: functional threshold policy and fMRI spatial scenario checks. Generic neighborhoods/scatter live in `mvpa4s-locus`; anatomical mesh graphs and atlas measurement adapters live in optional `mvpa4s-surface` and `mvpa4s-atlas`.
 - `group`: second-level (group) analysis — group GLM, fixed/random-effects meta-analysis, group contrasts, and FDR over subjects-by-samples effect maps.
 - `mvpa-group`: identified subject-coordinate and full-covariance adapters into group inputs, preserving first-level uncertainty/df and explicit admission limits.
-- `fmri-workflow`: typed, payload-free study plans and catalogs that compose BIDS ingest, first-level fitting, durable results, group analysis, and scheduler-neutral orchestration.
+- `fmri-workflow`: estimate production and the eager fit-to-group adapter, plus typed, payload-free study plans and catalogs that compose BIDS ingest, first-level fitting, durable results, group analysis, and scheduler-neutral orchestration.
 - Generic Zarr mechanics and the optional Blosc/Zstandard provider now live in the standalone `zarr4s` repository. ScalaFIM consumes its core through a pinned source build and retains only neuroimaging-specific adapters.
 - `archive-zarr`: NeuroArchive Zarr 0.1 refinement with canonical BOLD archive metadata, immutable publication, measured sharded layout policy, and resource-safe typed async payload execution with exact object/range evidence.
 - `dataset-zarr`: JVM NeuroArchive-to-`FmriDataset` composition, bounded reads, regular-timing refinement, streaming NIfTI import, and BIDS/NIfTI export over NeuroArchive Zarr revisions.
 
+Anatomical volume routing, provider-map admission, sampling and scoped reads live
+in optional `neuroim4s-routing` and `neuroim4s-routing-io` modules. ScalaFIM's
+`spatial` module composes them with surface, hybrid and functional field policy.
+`neuroimRoutingTestAll` runs the standalone JVM/JS consumers and optional JVM
+NIfTI source tests. See the [routing ownership map](docs/verification/neuroim-routing-20261020/ownership.md).
+
+Triangle topology and primitive surface point storage are owned by standalone
+[`mesh4s`](https://github.com/canardlapin/mesh4s). Surface sets share one ordered
+topology across white, pial, inflated and spherical realizations. Surface semantics
+and unchanged persisted encodings now live in neurosurf4s; ScalaFIM keeps functional
+neuroimaging integrations. The
+`scalafim.mesh4s.build` property supports an explicit sibling source override.
+
 Each module is built for both the JVM and Scala.js with `sbt-crossproject`.
 
-The unified MVPA replacement has an unpublished
-[foundation admission court](modules/mvpa-foundation-spike/README.md) in the
-root build. It pins and exercises the accepted external provider graph and
-typed-axis laws while M1 migrates those laws into production APIs; it is not a
-shipping module or an alternate MVPA engine. See the
-[implementation epic](docs/plans/unified-mvpa-epic.md).
+The former MVPA foundation prototype and `locus-data` facades have been retired.
+Their retained provider admission and algebra witnesses run in `provider-contract`;
+production axis/reindexing witnesses live in mvpa4s. See the
+[ownership and test-custody ledger](docs/verification/eco-u6-cleanup-20261022/ownership.md).
+`ecosystemBoundaries` checks production source ownership and the actual transitive
+Compile classpaths of provider cores and optional MVPA adapters on JVM and JS.
+It runs before `scalafimCompileAll` and the bounded repository test campaign.
 
 The immutable typed dataframe work formerly incubated here now lives in the
 standalone [`frame4s`](https://github.com/canardlapin/frame4s) repository.
@@ -87,11 +96,11 @@ neuroimaging integrations.
 
 Nonlinear registration and the experimental HalfFlow engine now live in
 standalone [`reframe4s`](https://github.com/canardlapin/reframe4s). ScalaFIM
-does not retain a registration module. Its `image` and `transform` modules
+does not retain a registration module. Its standalone neuroim4s core and optional transform dependencies
 consume the reframe4s `lie`, `field` and `resample` capabilities (generic
 spatial maps, dense fields, numerical inverses and resampling execution)
 through an immutable source revision; the HalfFlow and registration modules
-are not dependencies. `provider-spike` composes `lie` and `resample` directly.
+are not dependencies. `provider-contract` composes `lie` and `resample` directly.
 
 Renderer-neutral graphics, plotting, and the SVG/Canvas/Java2D/JavaFX backends
 live in standalone [`Intaglio`](https://github.com/canardlapin/intaglio).
@@ -101,16 +110,19 @@ only the smallest required Intaglio core or backend project.
 Generic graph topology and algorithms formerly incubated here now live in
 standalone [`graph4s`](https://github.com/canardlapin/graph4s). ScalaFIM pins an
 immutable source revision. The optional `graph4s-gale` module now owns indexed
-numerical graph operators, spectra, embeddings, and similarities. Pipeline,
-surface, atlas, and connectivity retain only ScalaFIM domain metadata and
-adapters.
+numerical graph operators, spectra, embeddings, and similarities. ScalaFIM
+pipeline and connectivity retain domain metadata and adapters; surface and
+atlas semantics live upstream.
 
 Generic finite domains, points, regions, selections, maps, relations, indexed
 fields, and their laws formerly incubated here now live in standalone
 [`locus4s`](https://github.com/canardlapin/locus4s). ScalaFIM pins an immutable
-source revision; `locus-data` retains only ScalaFIM-specific adapters and
-higher-level parcellation and searchlight policy. Aggregation over
-parcellations is owned by `locus4s.data.Aggregation`.
+source revision and uses its registry/ephemeral constructors directly at functional
+admission boundaries. Partial parcels use `PartialSurjection`; compact neighborhoods
+use `NeighborhoodSystem` with separate centered evidence. Aggregation is owned
+by `locus4s.data.Aggregation`. Source-lineage DAGs,
+their identifiers and canonical digest framing are owned by the optional
+`locus4s-provenance` artifact, shared directly by `response` and `mvpa4s`.
 
 Generic dense and sparse matrices, linear operators, factorizations, and
 spectral algorithms now live in standalone
@@ -136,9 +148,13 @@ sbt \
 ```
 
 `build.sbt` also honours `scalafim.ravel.build`, `scalafim.multivar.build`,
-`scalafim.intaglio.build`, `scalafim.bids4s.build` and `scalafim.zarr4s.build`.
-An image4s override is forwarded to a local reframe4s checkout; with the pinned
-reframe4s URI, reframe4s loads its own image4s pin.
+`scalafim.intaglio.build`, `scalafim.bids4s.build`, `scalafim.zarr4s.build`,
+`scalafim.spatial4s.build`, `scalafim.mesh4s.build`, `scalafim.neuroim4s.build`,
+`scalafim.neurosurf4s.build`, `scalafim.neuroatlas4s.build` and `scalafim.mvpa4s.build`.
+Shared overrides are forwarded explicitly into dependent provider builds, including
+pinned Git builds: image4s receives locus4s, spatial4s and Intaglio overrides;
+reframe4s receives image4s and spatial4s; extracted libraries receive their shared
+providers. A local URI does not certify that checkout's revision or cleanliness.
 
 The override applies only to that sbt process. Removing the properties restores
 the immutable GitHub source dependencies.
@@ -182,40 +198,39 @@ batches, as described in `AGENTS.md`. The
 [local sbt/Mill comparison](docs/benchmarks/build-tools-20261005.md) records
 the rationale for retaining the current build.
 
-The warm server uses a 3 GB heap by default. For `reload` followed by `set`
-or repeated settings changes, use the explicitly qualified 4 GB profile:
+The warm server uses a 6 GB heap by default. Its launch profile is fixed while
+it runs. For an explicit profile or changed startup options, stop the worktree's
+server first:
 
 ```sh
 python3 tools/build/sbt-warm --shutdown
-SBT_WARM_HEAP=4g python3 tools/build/sbt-warm reload 'set atlasJVM / Test / envVars += ("MY_TEST_OPTION" -> "value")'
-SBT_WARM_HEAP=4g python3 tools/build/sbt-warm hrfJVM/test hrfJS/test
-python3 tools/build/sbt-warm --shutdown
+SBT_WARM_HEAP=6g python3 tools/build/sbt-warm hrfJVM/test hrfJS/test
+python3 tools/build/sbt-warm --status
 ```
 
-Keep the same profile for commands while that server runs. The wrapper refuses
-an unknown or differing recorded startup profile; restart after changing heap,
-processor count or idle timeout. `--status` reports requested and recorded
-startup values. An existing server from an older wrapper needs one shutdown
-before reuse. See the [reconfiguration evidence](docs/verification/sbt-reconfiguration-20261006/README.md)
-for measured limits; source pins and the ordinary 3 GB default are preserved.
+The wrapper refuses a differing recorded heap, processor count or idle timeout.
+`--status` distinguishes requested settings from a verified live startup profile.
+The older [reconfiguration evidence](docs/verification/sbt-reconfiguration-20261006/README.md)
+records its historical 3/4 GB measurements; it is not the current default.
 
 On a fresh machine, first run `./tools/prepare-pinned-dependencies.sh`.
 Multivar consumes Gale and Resample4s through revision-tagged artifacts that
 are not yet on Maven Central. This helper checks out the exact pinned Multivar
 revision and runs both provider bootstraps into the local artifact cache.
-The helper requires Multivar's Gale revision to match ScalaFIM's source pin;
-mixing revisions can compile but fail at JavaScript linking or JVM invocation.
-Repeat after changing the Gale, Resample4s, or Multivar pins. Ordinary builds
+Before publishing, the helper validates 41 shared default-pin edges plus the
+image4s spatial4s anchor, including the extracted MVPA/atlas/surface graph.
+`./tools/prepare-pinned-dependencies.sh --check-only` performs that admission
+without publishing artifacts. Mixing revisions can compile but fail at JS
+linking or JVM invocation. Repeat after provider-pin changes. Ordinary builds
 then use the committed source pins; no sibling checkout or provider override
 is needed.
 
 ```sh
 sbt scalafimCompileAll
-sbt scalafimTestAll
-sbt mvpaFoundationAdmissionJVM/test
-sbt mvpaFoundationAdmissionJS/test
-sbt locusDataJVM/test
-sbt locusDataJS/test
+bash tools/ci/full-repository-tests.sh
+sbt ecosystemBoundaries
+sbt providerContractJVM/test
+sbt providerContractJS/test
 sbt pipelineJVM/test
 sbt pipelineJS/test
 sbt responseJVM/test
@@ -232,35 +247,31 @@ sbt scenarioTestkitJVM/test
 sbt scenarioTestkitJS/test
 sbt designJVM/test
 sbt designJS/test
-sbt imageJVM/test
-sbt imageJS/test
-sbt imageViewJVM/test
-sbt imageViewJS/test
-sbt imageViewCanvasJS/test
-sbt imageViewJava2dJVM/test
-sbt imageViewJavafxJVM/test
+sbt designViewJVM/test
+sbt designViewJS/test
+sbt neuroimTestAll  # provider core JVM/JS and optional JVM IO
+# Optional volume-view tests run in the pinned neuroim4s provider.
+sbt neuroimViewJvmTestAll
+sbt neuroimViewJsTestAll
 sbt thresholdJVM/test
 sbt thresholdJS/test
 sbt motionJVM/test
 sbt motionJS/test
-sbt surfaceJVM/test
-sbt surfaceJS/test
-sbt surfaceTestFixturesJVM/test
-sbt surfaceTestFixturesJS/test
-sbt surfaceViewJVM/test
-sbt surfaceViewJS/test
-sbt surfaceViewRasterJVM/test
-sbt surfaceViewRasterJS/test
-sbt surfaceViewJavafxJVM/test
-sbt surfaceViewThreeJS/test
+sbt neurosurfCoreTestAll
+sbt neurosurfSpatialTestAll
+sbt neurosurfFixtureTestAll
+sbt neurosurfViewJvmTestAll
+sbt neurosurfViewJsTestAll
+sbt neurosurfBrowserTestAll
+# Native JavaFX tests require a display and are separate from the headless campaign.
+sbt neurosurfNativeTestAll
 sbt surfaceViewConnectivityJVM/test
 sbt surfaceViewConnectivityJS/test
-sbt transformJVM/test
-sbt transformJS/test
+sbt neuroimTransformTestAll
 sbt spatialJVM/test
 sbt spatialJS/test
-sbt atlasJVM/test
-sbt atlasJS/test
+sbt neuroatlasSurfaceTestAll
+sbt neuroatlasRoutingTestAll
 sbt archiveJVM/test
 sbt archiveJS/test
 sbt archiveLnaJVM/test
@@ -269,16 +280,14 @@ sbt archivedResponseInteropJVM/test
 sbt archivedResponseInteropJS/test
 sbt datasetJVM/test
 sbt datasetJS/test
-sbt modelJVM/test
-sbt modelJS/test
 sbt fitJVM/test
 sbt fitJS/test
 sbt archiveZarrJVM/test
 sbt archiveZarrJS/test
 sbt datasetZarrJVM/test
 sbt datasetZarrJS/test
-sbt mvpaJVM/test
-sbt mvpaJS/test
+sbt mvpaPipelineJVM/test
+sbt mvpaPipelineJS/test
 sbt mvpaFitJVM/test
 sbt mvpaFitJS/test
 sbt connectivityJVM/test
@@ -302,7 +311,7 @@ with smoke tests:
 
 ```sh
 sbt examplesTest
-sbt surfaceViewExamplesJVM/test surfaceViewExamplesJS/test
+sbt neurosurfExamplesJvmTestAll neurosurfBrowserTestAll
 sbt "atlasExamplesJVM/runMain scalafim.examples.atlas.describeStandardAtlases"
 ```
 

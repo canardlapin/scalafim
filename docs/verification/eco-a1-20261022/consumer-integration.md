@@ -1,0 +1,9 @@
+# External surface and atlas consumer integration
+
+The known PLSNeuro caller now consumes neurosurf4s and neuroatlas4s public APIs directly. Runtime source `f0c66f37a0802a2902a10b73a78ecd6039608d0b` and evidence `d01f3cf1a065ad6979febec1a498023bc10f8e9b` are on `canardlapin/plsneuro` branch `eco/surface-atlas-20261022`. The candidate includes current remote main; the separate main-adoption evidence branch was preserved. No main merge occurred.
+
+A fresh compile-isolated 14-provider build passed all 113 headless cases with zero skips. Eleven selected scene/cursor/reverse-lookup, provider, bilateral-transaction and renderer-policy cases passed against the same frozen runtime. All 68 tooling tests passed. Independent review approved the bounded integration closure after verifying 124 case logs, 714 captured source inputs and 164 runtime inputs (34,420 files). Provider pins and before/after hashes match.
+
+The existing integration source/caller and deletion-custody receipts, plus this external consumer, satisfy U5 and A1 integration scope. Generic surface and atlas MVPA adapters remain assigned to U6. The catalog-matching repair in Root `6a587c7` passed 133 JVM/JS workflow cases; adopted BIDS4s `5dafc800` passed 176 JVM/JS cases and the unchanged downstream catalog/anatomy probes.
+
+`consumer-integration.json` binds exact source, evidence and archive identities. Complete raw receipts and the independent verdict are in PLSNeuro `docs/verification/eco-surface-atlas-20261022/`. Final and adverse archives retain copied runtime/source bytes and failed attempts. Selected native evidence used macOS ARM64 JDK22/JavaFX24.0.1 with the recorded compatibility component and legacy ES2 path. Headless visual review remains pending. Full native/brain-view lanes, prior I1 performance limits, U4 calibration gaps, new scientific acceptance, U6 completion and main adoption are separate.

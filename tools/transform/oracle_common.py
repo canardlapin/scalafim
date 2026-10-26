@@ -1,7 +1,7 @@
 """Shared helpers for ScalaFIM transform oracle generators.
 
 Every generator writes one directory under
-modules/transform/shared/src/test/resources/scalafim/transform/oracle/<set>/ containing its fixtures and a
+the explicitly selected neuroim4s transform oracle directory, <set>/ containing its fixtures and a
 manifest.json produced by `write_manifest`. Tests on the JVM and in Scala.js read the same files
 (see OracleFixtures.scala), so nothing here emits Scala source.
 
@@ -21,22 +21,19 @@ import sys
 from typing import Iterable, Sequence
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-ORACLE_ROOT = os.path.join(
-    REPO,
-    "modules",
-    "transform",
-    "shared",
-    "src",
-    "test",
-    "resources",
-    "scalafim",
-    "transform",
-    "oracle",
-)
+def transform_oracle_root() -> str:
+    """Explicit output/input root for the transform corpus now owned by neuroim4s."""
+    path = os.environ.get("NEUROIM4S_TRANSFORM_ORACLE_ROOT")
+    if not path:
+        raise ValueError(
+            "set NEUROIM4S_TRANSFORM_ORACLE_ROOT to neuroim4s/modules/"
+            "neuroim4s-transform/shared/src/test/resources/scalafim/transform/oracle"
+        )
+    return os.path.abspath(path)
 
 
 def oracle_dir(name: str) -> str:
-    path = os.path.join(ORACLE_ROOT, name)
+    path = os.path.join(transform_oracle_root(), name)
     os.makedirs(path, exist_ok=True)
     return path
 

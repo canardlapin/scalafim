@@ -1,10 +1,14 @@
 package scalafim.spatial
 
-import scalafim.image.world.SubjectId
+import neurosurf4s.routing.*
 
-import scalafim.image.{SampleSpaces, SomeSampleSpace, SpatialAxis, VoxelCoord}
-import scalafim.image.SampleSpaces.*
-import scalafim.surface.{Hemisphere, SurfaceGeometry, SurfaceKind, TriangleMesh}
+import neuroim4s.spatial.SamplingPolicy
+
+import neuroim4s.spaces.SubjectId
+
+import neuroim4s.image.{SampleSpaces, SpatialAxis, VoxelCoord}
+import neuroim4s.image.SampleSpaces.*
+import neurosurf4s.surface.{Hemisphere, SurfaceGeometry, SurfaceKind, TriangleMesh}
 
 class DemandSuite extends munit.FunSuite:
 

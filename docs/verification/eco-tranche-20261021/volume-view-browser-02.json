@@ -1,0 +1,204 @@
+{
+  "runnerSha256": "793000c944bdc381e057b9a2e554e824d1383828668d9f0c0f2de1746b90b1aa",
+  "browserProfile": "lean-browser-playwright",
+  "browserVersion": "151.0.7922.34",
+  "startedAt": "2026-10-21T02:59:34.688Z",
+  "artifactSha256": "7305bca67292a57d9eabf11f821d317df61e4c6490e04b7e5cb62f1e9e98e775",
+  "htmlSha256": "475cff3441aef33eb2974bb20218a772a64ac7508acaca082a9764cdb44f652b",
+  "benchmark": {
+    "schema": "scalafim-image-view-browser-benchmark-v1",
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.7922.34 Safari/537.36",
+    "canvasWidth": 960,
+    "canvasHeight": 720,
+    "affineShape": [
+      160,
+      192,
+      128
+    ],
+    "nonlinearShape": [
+      80,
+      80,
+      64
+    ],
+    "coldSourceReads": 16,
+    "cold": {
+      "scenario": "cold-render",
+      "repetitions": 8,
+      "medianMs": 38.399999998509884,
+      "p95Ms": 47,
+      "minMs": 37.79999999701977,
+      "maxMs": 47,
+      "viewer": {
+        "layerRequests": 6,
+        "rasterHits": 0,
+        "rasterMisses": 6,
+        "sampleHits": 0,
+        "sampleMisses": 6,
+        "sampledPixels": 151552,
+        "colorizedPixels": 151552,
+        "sourceReads": 2
+      },
+      "canvas": {
+        "imageRequests": 6,
+        "cacheHits": 0,
+        "cacheMisses": 6,
+        "uploadedBytes": 2997968
+      }
+    },
+    "warm": {
+      "scenario": "warm-redraw",
+      "repetitions": 80,
+      "medianMs": 0.20000000298023224,
+      "p95Ms": 0.3999999985098839,
+      "minMs": 0.09999999403953552,
+      "maxMs": 0.7000000029802322,
+      "viewer": {
+        "layerRequests": 6,
+        "rasterHits": 6,
+        "rasterMisses": 0,
+        "sampleHits": 0,
+        "sampleMisses": 0,
+        "sampledPixels": 0,
+        "colorizedPixels": 0,
+        "sourceReads": 0
+      },
+      "canvas": {
+        "imageRequests": 6,
+        "cacheHits": 6,
+        "cacheMisses": 0,
+        "uploadedBytes": 0
+      }
+    },
+    "warmCompileOnly": {
+      "scenario": "warm-compile-only",
+      "repetitions": 1000,
+      "elapsedMs": 87.90000000596046,
+      "meanMs": 0.08790000000596046
+    },
+    "warmDrawOnly": {
+      "scenario": "warm-draw-only",
+      "repetitions": 1000,
+      "elapsedMs": 719.5999999940395,
+      "meanMs": 0.7195999999940396
+    },
+    "scroll": {
+      "scenario": "axial-scroll",
+      "repetitions": 24,
+      "medianMs": 16.900000005960464,
+      "p95Ms": 17.900000005960464,
+      "minMs": 15.200000002980232,
+      "maxMs": 18.399999998509884,
+      "viewer": {
+        "layerRequests": 6,
+        "rasterHits": 4,
+        "rasterMisses": 2,
+        "sampleHits": 0,
+        "sampleMisses": 2,
+        "sampledPixels": 61440,
+        "colorizedPixels": 61440,
+        "sourceReads": 2
+      },
+      "canvas": {
+        "imageRequests": 6,
+        "cacheHits": 4,
+        "cacheMisses": 2,
+        "uploadedBytes": 764784
+      }
+    },
+    "prefetchedScroll": {
+      "scenario": "prefetched-axial-scroll",
+      "repetitions": 24,
+      "medianMs": 2,
+      "p95Ms": 2.3000000044703484,
+      "minMs": 1.8000000044703484,
+      "maxMs": 157.30000000447035,
+      "viewer": {
+        "layerRequests": 6,
+        "rasterHits": 6,
+        "rasterMisses": 0,
+        "sampleHits": 0,
+        "sampleMisses": 0,
+        "sampledPixels": 0,
+        "colorizedPixels": 0,
+        "sourceReads": 0
+      },
+      "canvas": {
+        "imageRequests": 6,
+        "cacheHits": 4,
+        "cacheMisses": 2,
+        "uploadedBytes": 764784
+      }
+    },
+    "window": {
+      "scenario": "window-recolor",
+      "repetitions": 24,
+      "medianMs": 7.100000001490116,
+      "p95Ms": 9.5,
+      "minMs": 6.700000002980232,
+      "maxMs": 27.700000002980232,
+      "viewer": {
+        "layerRequests": 6,
+        "rasterHits": 3,
+        "rasterMisses": 3,
+        "sampleHits": 3,
+        "sampleMisses": 0,
+        "sampledPixels": 0,
+        "colorizedPixels": 75776,
+        "sourceReads": 0
+      },
+      "canvas": {
+        "imageRequests": 6,
+        "cacheHits": 3,
+        "cacheMisses": 3,
+        "uploadedBytes": 1498984
+      }
+    },
+    "nonlinear": {
+      "scenario": "nonlinear-scroll",
+      "repetitions": 16,
+      "medianMs": 49.600000001490116,
+      "p95Ms": 50.30000000447035,
+      "minMs": 48.899999998509884,
+      "maxMs": 50.30000000447035,
+      "viewer": {
+        "layerRequests": 3,
+        "rasterHits": 2,
+        "rasterMisses": 1,
+        "sampleHits": 0,
+        "sampleMisses": 1,
+        "sampledPixels": 6400,
+        "colorizedPixels": 6400,
+        "sourceReads": 1
+      },
+      "canvas": {
+        "imageRequests": 3,
+        "cacheHits": 2,
+        "cacheMisses": 1,
+        "uploadedBytes": 458328
+      }
+    },
+    "interactive": {
+      "applicationWorkflow": true,
+      "orthogonalOrientationAndHandedness": true,
+      "axialSliceDirection": true,
+      "allPass": true
+    },
+    "contracts": {
+      "coldSourceReadCoalescing": true,
+      "warmZeroSamplingColorizationAndUpload": true,
+      "axialScrollReusesTwoPlanesPerLayer": true,
+      "prefetchedAxialScrollHasNoVisibleSampling": true,
+      "windowChangeReusesSamples": true,
+      "nonlinearScrollReusesTwoPlanes": true,
+      "interactiveViewerWorkflow": true,
+      "orthogonalOrientationAndHandedness": true,
+      "axialSliceDirection": true,
+      "checksumPresent": true
+    },
+    "allContractsPass": true,
+    "canvasChecksum": "5bec4f18"
+  },
+  "errors": [],
+  "auditBefore": "No automated top-level browser processes found.\n",
+  "auditAfter": "No automated top-level browser processes found.\n"
+}

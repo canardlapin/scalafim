@@ -1,0 +1,176 @@
+{
+  "schema_version": 1,
+  "recorded_utc": "2026-10-19T23:16:53.107269+00:00",
+  "baseline_scalafim_commit": "f878d6bcc6fc1ec4512336a5ebe56d46b05674c0",
+  "provider": {
+    "repository": "canardlapin/neuroim4s",
+    "candidate": "9780bcab6c061284a3c8864d9599b0534c71a97f",
+    "parent": "3b7a8441e0fcdfd20428835f8eaec7688b73a9ef",
+    "remote_main_observed": "3b7a8441e0fcdfd20428835f8eaec7688b73a9ef",
+    "observed_utc": "2026-10-19T23:14:58.119674+00:00",
+    "clean": true,
+    "published": false,
+    "branch": "eco/core-affine-20261019",
+    "clone": "/private/tmp/scalafim-neuroim-core-20261019"
+  },
+  "qualified_provider_blobs": {
+    "build.sbt": "ff97b65ef3dc1b4f838509ead352afab511a62a4",
+    "modules/neuroim4s-core/shared/src/main/scala/neuroim4s/image/NeuroAffineSyntax.scala": "5cb79ea84098d49ae8b18eef9a8204bed1c5b326",
+    "modules/neuroim4s-core/shared/src/test/scala/external/neuroim/consumer/NeuroAffineSyntaxSuite.scala": "384f2a69f7a1dbac0ffbac2c42b439b8ccfb8fa2"
+  },
+  "qualified_consumer_blobs": {
+    "build.sbt": "193ce50674e61a9b23395b788a972eb2ab65ce80",
+    "modules/dataset-zarr/jvm/src/main/scala/scalafim/dataset/zarr/BidsNiftiExporter.scala": "d7174242f86fd0e5dac94319589a1bef54f6e882",
+    "modules/dataset-zarr/jvm/src/main/scala/scalafim/dataset/zarr/ZarrResponseBlockSource.scala": "522d10a4463258f46e8b8abaa6ed78b1f8fd922e",
+    "modules/image-view/shared/src/main/scala/scalafim/image/view/ViewerScene.scala": "08f8f558247a416aa39a8dc7fb84bdd399938073",
+    "modules/image/jvm/src/main/scala/scalafim/image/io/Nifti.scala": "61e81f0b1a9c028d2e4d9023f4e27b2aa44814a5",
+    "modules/image/shared/src/main/scala/scalafim/image/NeuroAffineSyntax.scala": null,
+    "modules/image/shared/src/main/scala/scalafim/image/SampleSpaces.scala": "a3de1dfcdef3d010e4bae3ca20d3ea060d12fa18",
+    "modules/image/shared/src/main/scala/scalafim/image/SliceGeometry.scala": "07e751c91713d357a0d662c7f430d7912aad1648",
+    "modules/image/shared/src/main/scala/scalafim/image/Transforms.scala": "cb74b3eb46941b92356dedfc161aff2e98aec1c4",
+    "modules/image/shared/src/test/scala/scalafim/image/CoreSuite.scala": "fd1f3aea11bba38ef9337a6e60e120f3700713e4",
+    "modules/image/shared/src/test/scala/scalafim/image/ProviderAffineContractSuite.scala": "630e9837303480e5781e73b0d82a7c1918aebe55",
+    "modules/image/shared/src/test/scala/scalafim/image/SpaceUtilsSuite.scala": "e285c427577704e97a9f7f8766dad2c133351fb4"
+  },
+  "source_inputs_unchanged_during_gates": true,
+  "implementation_change": "Package declaration only; all other bytes identical",
+  "implementation_body_sha256": "401626bf2509944de41d551ed5ef98890db3971596371df8f71987300efda2f2",
+  "provider_tests": 62,
+  "consumer_tests": 794,
+  "skips": 0,
+  "provider_compile_all": "passed JVM and JS",
+  "scalafim_compile_all": "passed JVM and JS",
+  "scala_source_warnings": [],
+  "qualified_override": "-Dscalafim.neuroim4s.build=/private/tmp/scalafim-neuroim-core-20261019",
+  "prepared_patch_sha256": "cea24fd29da47deaee6047aa9029696313fd345e7caec795d0f9008de8d96ff8",
+  "prepared_build_blob": "facbad6b955800f9acee1c6c18b081cfc65cf89e",
+  "prepared_patch_only_additional_unqualified_change": "neuroim4sRevision switched from published parent to local candidate; override qualification used the same candidate source",
+  "default_remote_pin_gate_required_after_publication": true,
+  "cutover_active": false,
+  "scalafim_source_restored": true,
+  "workspace_impact_tool": {
+    "command": "python3 tools/workspace.py impact neuroim4s",
+    "exit_code": 1,
+    "reason": "Existing workspace catalog lacks multiple top-level entries including neuroim4s; unchanged and outside this slice",
+    "fallback": "Direct source caller audit and all affected ScalaFIM consumer tests and compilation"
+  },
+  "checks": [
+    {
+      "name": "provider-tests.log",
+      "sha256": "b9300b726eedde0d894c2ee0b4ed5b34178d6519b91d703e00d7e0774aef6410",
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-19T23:11:30.223066+00:00",
+        "finished_utc": "2026-10-19T23:12:22.910683+00:00",
+        "duration_seconds": 52.687304,
+        "command": [
+          "sbt",
+          "neuroim4sTestAll",
+          "neuroim4sCompileAll"
+        ],
+        "cwd": "/private/tmp/scalafim-neuroim-core-20261019",
+        "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/neuroim-core-affine-20261019/provider-tests.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 1800.0,
+        "log_bytes": 12279
+      },
+      "test_totals": [
+        {
+          "total": 26,
+          "failed": 0,
+          "errors": 0,
+          "passed": 26
+        },
+        {
+          "total": 26,
+          "failed": 0,
+          "errors": 0,
+          "passed": 26
+        },
+        {
+          "total": 5,
+          "failed": 0,
+          "errors": 0,
+          "passed": 5
+        },
+        {
+          "total": 5,
+          "failed": 0,
+          "errors": 0,
+          "passed": 5
+        }
+      ]
+    },
+    {
+      "name": "consumer-gates.log",
+      "sha256": "42bfef0c55ca73c2cf55793f2a29f1cd309d8d551f4e0e77bc21a39fc1f40fa0",
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-19T23:12:38.285155+00:00",
+        "finished_utc": "2026-10-19T23:16:24.600847+00:00",
+        "duration_seconds": 226.314869,
+        "command": [
+          "sbt",
+          "-Dsbt.global.base=/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+          "-Dscalafim.neuroim4s.build=/private/tmp/scalafim-neuroim-core-20261019",
+          "imageJVM/test",
+          "imageJS/test",
+          "imageViewJVM/test",
+          "imageViewJS/test",
+          "datasetZarrJVM/test",
+          "datasetZarrJS/test",
+          "scalafimCompileAll"
+        ],
+        "cwd": "/private/tmp/scalafim-simplify-a-20261019",
+        "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/neuroim-core-affine-20261019/consumer-gates.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 2400.0,
+        "log_bytes": 84362
+      },
+      "test_totals": [
+        {
+          "total": 359,
+          "failed": 0,
+          "errors": 0,
+          "passed": 359
+        },
+        {
+          "total": 329,
+          "failed": 0,
+          "errors": 0,
+          "passed": 329
+        },
+        {
+          "total": 42,
+          "failed": 0,
+          "errors": 0,
+          "passed": 42
+        },
+        {
+          "total": 42,
+          "failed": 0,
+          "errors": 0,
+          "passed": 42
+        },
+        {
+          "total": 15,
+          "failed": 0,
+          "errors": 0,
+          "passed": 15
+        },
+        {
+          "total": 7,
+          "failed": 0,
+          "errors": 0,
+          "passed": 7
+        }
+      ]
+    }
+  ]
+}

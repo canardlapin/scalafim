@@ -1,0 +1,16 @@
+{
+  "schema": "scalafim-scenario-registration-checks/v1",
+  "command": "python3 -S -m unittest tools/ci/test_pinned_dependencies.py tools/scenarios/test_validate_manifest.py tools/ci/test_scenario_registration.py",
+  "exec_session": 84463,
+  "exit_code": 0,
+  "tests": 16,
+  "test_seconds": 162.07,
+  "manifest_entries": 38,
+  "inventory": {
+    "supported_test_targets": 89,
+    "bounded_batches": 37
+  },
+  "diff_check_exit_code": 0,
+  "evidence_kind": "completed execution tool output; summarized, not a raw log",
+  "scala_execution": "pending"
+}

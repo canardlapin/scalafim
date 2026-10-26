@@ -1,0 +1,422 @@
+{
+  "schema": "scalafim.eco-completed-resume-prefix.v1",
+  "status": "Interrupted",
+  "source_commit": "616860a2e14eb42b800462cd3d2f4fe4203f641a",
+  "completed_batches": [
+    {
+      "source_commit": "616860a2e14eb42b800462cd3d2f4fe4203f641a",
+      "expanded_test_targets": [
+        "mvpa4s:surfaceJVM/test",
+        "mvpa4s:surfaceJS/test",
+        "mvpa4s:atlasJVM/test",
+        "mvpa4s:atlasJS/test",
+        "mvpa4s:imagingConsumerJVM/test",
+        "mvpa4s:imagingConsumerJS/test"
+      ],
+      "expected_behavioral_summaries": 6,
+      "success_markers": 6,
+      "known_empty_targets": {},
+      "batch": "mvpa4s-imaging",
+      "summaries": [
+        {
+          "total": 3,
+          "failed": 0,
+          "errors": 0,
+          "passed": 3,
+          "skipped": 0
+        },
+        {
+          "total": 3,
+          "failed": 0,
+          "errors": 0,
+          "passed": 3,
+          "skipped": 0
+        },
+        {
+          "total": 7,
+          "failed": 0,
+          "errors": 0,
+          "passed": 7,
+          "skipped": 0
+        },
+        {
+          "total": 7,
+          "failed": 0,
+          "errors": 0,
+          "passed": 7,
+          "skipped": 0
+        },
+        {
+          "total": 2,
+          "failed": 0,
+          "errors": 0,
+          "passed": 2,
+          "skipped": 0
+        },
+        {
+          "total": 2,
+          "failed": 0,
+          "errors": 0,
+          "passed": 2,
+          "skipped": 0
+        }
+      ],
+      "passed": 24,
+      "skipped": 0,
+      "declared_nonexecutions": [],
+      "no_test_messages": []
+    },
+    {
+      "source_commit": "616860a2e14eb42b800462cd3d2f4fe4203f641a",
+      "expanded_test_targets": [
+        "neurosurf4s:coreJVM/test",
+        "neurosurf4s:coreJS/test",
+        "neurosurf4s:ioJVM/test",
+        "neurosurf4s:ioJS/test"
+      ],
+      "expected_behavioral_summaries": 4,
+      "success_markers": 4,
+      "known_empty_targets": {},
+      "batch": "neurosurf-Core",
+      "summaries": [
+        {
+          "total": 156,
+          "failed": 0,
+          "errors": 0,
+          "passed": 156,
+          "skipped": 0
+        },
+        {
+          "total": 153,
+          "failed": 0,
+          "errors": 0,
+          "passed": 153,
+          "skipped": 0
+        },
+        {
+          "total": 73,
+          "failed": 0,
+          "errors": 0,
+          "passed": 73,
+          "skipped": 0
+        },
+        {
+          "total": 37,
+          "failed": 0,
+          "errors": 0,
+          "passed": 37,
+          "skipped": 0
+        }
+      ],
+      "passed": 419,
+      "skipped": 0,
+      "declared_nonexecutions": [],
+      "no_test_messages": []
+    },
+    {
+      "source_commit": "616860a2e14eb42b800462cd3d2f4fe4203f641a",
+      "expanded_test_targets": [
+        "neurosurf4s:spatialJVM/test",
+        "neurosurf4s:spatialJS/test",
+        "neurosurf4s:spatialIoJVM/test",
+        "neurosurf4s:volumeJVM/test",
+        "neurosurf4s:volumeJS/test",
+        "neurosurf4s:volumeIoJVM/test",
+        "neurosurf4s:routingJVM/test",
+        "neurosurf4s:routingJS/test",
+        "neurosurf4s:routingIoJVM/test"
+      ],
+      "expected_behavioral_summaries": 8,
+      "success_markers": 9,
+      "known_empty_targets": {
+        "neurosurf4s:spatialIoJVM/test": "No tracked test sources in pinned modules/neurosurf4s-spatial-io; platform IO capability compiled as prerequisite."
+      },
+      "batch": "neurosurf-Spatial",
+      "summaries": [
+        {
+          "total": 19,
+          "failed": 0,
+          "errors": 0,
+          "passed": 19,
+          "skipped": 0
+        },
+        {
+          "total": 20,
+          "failed": 0,
+          "errors": 0,
+          "passed": 19,
+          "skipped": 1
+        },
+        {
+          "total": 82,
+          "failed": 0,
+          "errors": 0,
+          "passed": 82,
+          "skipped": 0
+        },
+        {
+          "total": 83,
+          "failed": 0,
+          "errors": 0,
+          "passed": 82,
+          "skipped": 1
+        },
+        {
+          "total": 5,
+          "failed": 0,
+          "errors": 0,
+          "passed": 5,
+          "skipped": 0
+        },
+        {
+          "total": 109,
+          "failed": 0,
+          "errors": 0,
+          "passed": 109,
+          "skipped": 0
+        },
+        {
+          "total": 105,
+          "failed": 0,
+          "errors": 0,
+          "passed": 105,
+          "skipped": 0
+        },
+        {
+          "total": 14,
+          "failed": 0,
+          "errors": 0,
+          "passed": 14,
+          "skipped": 0
+        }
+      ],
+      "passed": 435,
+      "skipped": 2,
+      "declared_nonexecutions": [
+        "==> s P6-JS: real-field pointwise placement of both hemispheres matches the oracle within budget skipped",
+        "==> s synthetic same-size hemisphere: placement at admission and prepare+map timings skipped"
+      ],
+      "no_test_messages": []
+    },
+    {
+      "source_commit": "616860a2e14eb42b800462cd3d2f4fe4203f641a",
+      "expanded_test_targets": [
+        "neurosurf4s:fixturesJVM/test",
+        "neurosurf4s:fixturesJS/test"
+      ],
+      "expected_behavioral_summaries": 2,
+      "success_markers": 2,
+      "known_empty_targets": {},
+      "batch": "neurosurf-Fixture",
+      "summaries": [
+        {
+          "total": 21,
+          "failed": 0,
+          "errors": 0,
+          "passed": 21,
+          "skipped": 0
+        },
+        {
+          "total": 7,
+          "failed": 0,
+          "errors": 0,
+          "passed": 7,
+          "skipped": 0
+        }
+      ],
+      "passed": 28,
+      "skipped": 0,
+      "declared_nonexecutions": [],
+      "no_test_messages": []
+    },
+    {
+      "source_commit": "616860a2e14eb42b800462cd3d2f4fe4203f641a",
+      "expanded_test_targets": [
+        "neurosurf4s:viewJVM/test",
+        "neurosurf4s:viewLinkJVM/test",
+        "neurosurf4s:viewVolumeJVM/test",
+        "neurosurf4s:viewRasterJVM/test"
+      ],
+      "expected_behavioral_summaries": 4,
+      "success_markers": 4,
+      "known_empty_targets": {},
+      "batch": "neurosurf-ViewJvm",
+      "summaries": [
+        {
+          "total": 256,
+          "failed": 0,
+          "errors": 0,
+          "passed": 256,
+          "skipped": 0
+        },
+        {
+          "total": 4,
+          "failed": 0,
+          "errors": 0,
+          "passed": 4,
+          "skipped": 0
+        },
+        {
+          "total": 15,
+          "failed": 0,
+          "errors": 0,
+          "passed": 15,
+          "skipped": 0
+        },
+        {
+          "total": 70,
+          "failed": 0,
+          "errors": 0,
+          "passed": 70,
+          "skipped": 0
+        }
+      ],
+      "passed": 345,
+      "skipped": 0,
+      "declared_nonexecutions": [],
+      "no_test_messages": []
+    },
+    {
+      "source_commit": "616860a2e14eb42b800462cd3d2f4fe4203f641a",
+      "expanded_test_targets": [
+        "neurosurf4s:viewJS/test",
+        "neurosurf4s:viewLinkJS/test",
+        "neurosurf4s:viewVolumeJS/test",
+        "neurosurf4s:viewRasterJS/test"
+      ],
+      "expected_behavioral_summaries": 4,
+      "success_markers": 4,
+      "known_empty_targets": {},
+      "batch": "neurosurf-ViewJs",
+      "summaries": [
+        {
+          "total": 256,
+          "failed": 0,
+          "errors": 0,
+          "passed": 256,
+          "skipped": 0
+        },
+        {
+          "total": 4,
+          "failed": 0,
+          "errors": 0,
+          "passed": 4,
+          "skipped": 0
+        },
+        {
+          "total": 15,
+          "failed": 0,
+          "errors": 0,
+          "passed": 15,
+          "skipped": 0
+        },
+        {
+          "total": 70,
+          "failed": 0,
+          "errors": 0,
+          "passed": 70,
+          "skipped": 0
+        }
+      ],
+      "passed": 345,
+      "skipped": 0,
+      "declared_nonexecutions": [],
+      "no_test_messages": []
+    },
+    {
+      "source_commit": "616860a2e14eb42b800462cd3d2f4fe4203f641a",
+      "expanded_test_targets": [
+        "neurosurf4s:viewThreeJS/test",
+        "neurosurf4s:viewThreeVolumeJS/test",
+        "neurosurf4s:viewExamplesJS/test"
+      ],
+      "expected_behavioral_summaries": 3,
+      "success_markers": 3,
+      "known_empty_targets": {},
+      "batch": "neurosurf-Browser",
+      "summaries": [
+        {
+          "total": 51,
+          "failed": 0,
+          "errors": 0,
+          "passed": 51,
+          "skipped": 0
+        },
+        {
+          "total": 7,
+          "failed": 0,
+          "errors": 0,
+          "passed": 7,
+          "skipped": 0
+        },
+        {
+          "total": 29,
+          "failed": 0,
+          "errors": 0,
+          "passed": 29,
+          "skipped": 0
+        }
+      ],
+      "passed": 87,
+      "skipped": 0,
+      "declared_nonexecutions": [],
+      "no_test_messages": []
+    },
+    {
+      "source_commit": "616860a2e14eb42b800462cd3d2f4fe4203f641a",
+      "expanded_test_targets": [
+        "neurosurf4s:viewExamplesJVM/test",
+        "neurosurf4s:surfaceExamplesJVM/test"
+      ],
+      "expected_behavioral_summaries": 2,
+      "success_markers": 2,
+      "known_empty_targets": {},
+      "batch": "neurosurf-ExamplesJvm",
+      "summaries": [
+        {
+          "total": 30,
+          "failed": 0,
+          "errors": 0,
+          "passed": 30,
+          "skipped": 0
+        },
+        {
+          "total": 3,
+          "failed": 0,
+          "errors": 0,
+          "passed": 3,
+          "skipped": 0
+        }
+      ],
+      "passed": 33,
+      "skipped": 0,
+      "declared_nonexecutions": [],
+      "no_test_messages": []
+    }
+  ],
+  "completed_prior_batches": 17,
+  "failed_batch": "threshold-motion-jvm",
+  "raw_log_sha256": "fec0e23ee3cf991bf7064289b38c1ce0f6520b9746d15f31f81b37002b2ede9e",
+  "meta": {
+    "schema_version": 1,
+    "started_utc": "2026-10-22T07:45:43.199935+00:00",
+    "finished_utc": "2026-10-22T08:05:16.277039+00:00",
+    "duration_seconds": 1173.041845,
+    "command": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "/tmp/scalafim-eco-resume-51.py"
+    ],
+    "cwd": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/acceptance-clone-25",
+    "log": "/tmp/scalafim-eco-u6-resume-51.log",
+    "exit_code": 1,
+    "child_returncode": 1,
+    "reason": "exited",
+    "detail": null,
+    "timeout_seconds": 14400.0,
+    "log_bytes": 296515
+  },
+  "resume_inputs_sha256": "c9213e2c5eba2ce145de2ba1476eaa525b3bf7b2a96f460e78c6d13dcd56ac97",
+  "counted_passed": 1716,
+  "counted_skipped": 2,
+  "failed_partial_batch_qualification": "thresholdJVM succeeded, motionJVM104passed/1failed; neither partial batch task counted toward accepted25-batch prefix; rerun complete affectedbatch after repair."
+}

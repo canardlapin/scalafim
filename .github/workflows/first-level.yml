@@ -45,7 +45,25 @@ jobs:
           node-version: "24"
           package-manager-cache: false
 
+      - name: Read the immutable surface provider pin
+        id: surface-provider
+        run: |
+          python3 - <<'PYCODE'
+          import os, pathlib, re
+          revision = re.search(r'lazy val neurosurf4sRevision = "([0-9a-f]{40})"', pathlib.Path('build.sbt').read_text()).group(1)
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              output.write(f'revision={revision}\n')
+          PYCODE
+
+      - name: Check out the pinned surface qualification tools
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: canardlapin/neurosurf4s
+          ref: ${{ steps.surface-provider.outputs.revision }}
+          path: .providers/neurosurf4s
+
       - name: Check surface display qualification contracts and comparator controls
+        working-directory: .providers/neurosurf4s
         run: node --test tools/surface-view/parity/*.test.mjs
 
       - name: Prepare exact pinned provider artifacts

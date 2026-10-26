@@ -1,11 +1,11 @@
 package scalafim.fmri.workflow
 
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 
 import munit.FunSuite
 import scalafim.dataset.{DatasetId, DatasetShape, RunId, SpaceId, SubjectId, TaskId}
 import scalafim.fmri.group.InterceptPolicy
-import scalafim.image.SomeSampleSpace
+import image4s.SomeSampleSpace
 
 class WorkflowTypesSuite extends FunSuite:
   test("workflow identifiers and artifact locations validate at construction") {

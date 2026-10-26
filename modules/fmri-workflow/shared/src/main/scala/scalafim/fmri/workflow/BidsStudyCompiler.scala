@@ -189,10 +189,9 @@ object BidsStudyCompiler:
     compiled.foreach(result => issues ++= result._1)
 
     val candidates = compiled.flatMap(_._2)
-    val aliasCollisions = candidates.groupBy(run => normalizedUnitKey(run)).toVector
-      .collect { case (key, runs) if runs.size > 1 => key -> runs.sortBy(_.bold.path.value) }
-      .sortBy(_._1.sortKey)
-    aliasCollisions.foreach { case (_, runs) =>
+    val aliasCollisions = boldAliasGroups(candidates).filter(_.size > 1)
+      .map(_.sortBy(_.bold.path.value)).sortBy(_.head.bold.path.value)
+    aliasCollisions.foreach { runs =>
       val paths = runs.map(_.bold.path.value)
       issues += CatalogIssue(
         CatalogIssueCode.DuplicateRun,
@@ -200,7 +199,7 @@ object BidsStudyCompiler:
         s"numeric-equivalent BOLD aliases collide: ${paths.mkString(", ")}"
       )
     }
-    val collidingPaths = aliasCollisions.flatMap(_._2.map(_.bold.path)).toSet
+    val collidingPaths = aliasCollisions.flatten.map(_.bold.path).toSet
     val grouped = candidates.filterNot(run => collidingPaths.contains(run.bold.path))
       .groupBy(run => unitKey(run, recipe.runGrouping)).toVector.sortBy(_._1.sortKey)
     val units = Vector.newBuilder[FirstLevelUnit]
@@ -519,12 +518,25 @@ object BidsStudyCompiler:
       run = if grouping == RunGrouping.OneUnitPerRun then Some(run.runId.value) else None
     )
 
-  private def normalizedUnitKey(run: CandidateRun): UnitKey =
-    val key = unitKey(run, RunGrouping.OneUnitPerRun)
-    key.copy(
-      echo = key.echo.map(normalizedDecimalIndex),
-      run = key.run.map(normalizedDecimalIndex)
-    )
+  /** Compare run/echo aliases through their BIDS owner, without rewriting persisted identities.
+    * Exact non-index entities first partition the study into small independent run cohorts.
+    */
+  private def boldAliasGroups(runs: Vector[CandidateRun]): Vector[Vector[CandidateRun]] =
+    runs.groupBy(run => unitKey(run, RunGrouping.BySubjectSessionTask).copy(echo = None)).values.toVector
+      .flatMap { cohort =>
+        cohort.foldLeft(Vector.empty[Vector[CandidateRun]]) { (groups, run) =>
+          val index = groups.indexWhere { group =>
+            val other = group.head
+            EntityKey.Run.equivalentValue(run.runId.value, other.runId.value) &&
+              ((run.echo, other.echo) match
+                case (Some(left), Some(right)) => EntityKey.Echo.equivalentValue(left, right)
+                case (None, None) => true
+                case _ => false)
+          }
+          if index < 0 then groups :+ Vector(run)
+          else groups.updated(index, groups(index) :+ run)
+        }
+      }
 
   private def requiredEntity(
       file: BidsFile,
@@ -605,31 +617,10 @@ object BidsStudyCompiler:
       requirePipeline: Boolean
   ): Boolean =
     val entitiesMatch = keys.forall { key =>
-      candidate.entities.get(key).forall(value => target.entities.get(key).exists(
-        targetValue => equivalentEntityValue(key, value, targetValue)
-      ))
+      candidate.entities.get(key).forall(value => target.entities.get(key).exists(key.equivalentValue(value, _)))
     }
     val pipelineMatches = !requirePipeline || candidate.pipeline == target.pipeline
     entitiesMatch && pipelineMatches
-
-  /** `run` and `echo` are BIDS index entities. Match their decimal spelling without numeric conversion,
-    * without changing persisted labels or admitting the same rule for BIDS label entities.
-    */
-  private def equivalentEntityValue(key: EntityKey, left: String, right: String): Boolean =
-    if key == EntityKey.Run || key == EntityKey.Echo then
-      (decimalIndex(left), decimalIndex(right)) match
-        case (Some(a), Some(b)) => a == b
-        case _ => left == right
-    else left == right
-
-  private def decimalIndex(value: String): Option[String] =
-    if value.nonEmpty && value.forall(character => character >= '0' && character <= '9') then
-      val withoutLeadingZeros = value.dropWhile(_ == '0')
-      Some(if withoutLeadingZeros.isEmpty then "0" else withoutLeadingZeros)
-    else None
-
-  private def normalizedDecimalIndex(value: String): String =
-    decimalIndex(value).getOrElse(value)
 
   private def artifactRef[A](recipe: DatasetRecipe, file: BidsFile): WorkflowArtifactRef[A] =
     new WorkflowArtifactRef[A](recipe.project.location.resolve(file.path.value))

@@ -1,9 +1,9 @@
 package scalafim.latent.scenarios
 
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 
 import scalafim.archive.lna.TransformParams
-import scalafim.image.SomeSampleSpace
+import image4s.SomeSampleSpace
 import scalafim.latent.*
 import gale.linalg.{DMat, DVec, LinAlgError}
 

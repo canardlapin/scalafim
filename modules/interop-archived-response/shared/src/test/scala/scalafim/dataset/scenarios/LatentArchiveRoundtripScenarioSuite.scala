@@ -1,10 +1,10 @@
 package scalafim.dataset.scenarios
 
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 
 import scalafim.archive.RunLabel
 import scalafim.dataset.*
-import scalafim.image.SomeSampleSpace
+import image4s.SomeSampleSpace
 import scalafim.latent.{
   DctNorm,
   ExplicitLatentArchiveCodec,

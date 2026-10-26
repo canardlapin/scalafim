@@ -105,3 +105,40 @@ class EventRolesSuite extends munit.FunSuite:
               assertEqualsDouble(b.designMatrix(row, column), a.designMatrix(row, column), 1e-12)
           case (Left(a), Left(b)) => assertEquals(b, a)
           case other => fail(s"Role changed degenerate policy outcome: $other")
+
+  test("continuous rejects numeric-looking string labels without parsing"):
+    val numericStrings = table(amplitude = Column.Strings(Vector("2.0", "3", "-1")))
+    assert(build("onset ~ hrf(continuous(amplitude), id = task)", numericStrings).isLeft)
+
+  test("explicit roles compose after derived drops and formula subsets without renumbering source rows"):
+    import scalafim.fmri.design.formula.{DerivedEventPlan, DerivedMissingRows}
+    import EventModelBuilder.{BlockPlan, EventDesignRequest}
+    val data = DataTable.fromColumns(
+      "onset" -> Column.Doubles(Vector(1.0, 3.0, 5.0, 7.0)),
+      "condition" -> Column.Ints(Vector(1, 2, 1, 2)),
+      "amplitude" -> Column.Doubles(Vector(2.0, Double.NaN, -1.0, 4.0)),
+      "keep" -> Column.Bools(Vector(true, true, true, false))
+    )
+    val derived = DerivedEventPlan.parse(Vector("gain: number = amplitude * 2"), DerivedMissingRows.Drop)
+      .fold(error => fail(error.message), identity)
+    val request = EventDesignRequest.fromText(
+      "onset ~ hrf(categorical(condition), continuous(gain), subset = keep, id = task)",
+      data,
+      frame,
+      BlockPlan.explicit(Vector(0, 0, 0, 0)),
+      derived = derived,
+      options = options
+    ).fold(error => fail(error.message), identity)
+    val model = checked(EventModelBuilder.buildEither(request))
+    val term = model.terms.collectFirst { case (_, value: ConvolvedTerm) => value.term }
+      .getOrElse(fail("missing convolved term"))
+    assertEquals(term.sourceRowIndices, Vector(0, 2))
+    assertEquals(model.designSchema.audit.sourceEvents.map(_.sourceRow), Vector(0, 2))
+    assertEquals(model.designSchema.audit.sourceEvents.map(_.eventIndex), Vector(0, 1))
+    assertEquals(model.designMatrix.cols, 1)
+    val expected = Vector.tabulate(12): scan =>
+      if scan == 1 || scan == 2 then 4.0
+      else if scan == 5 || scan == 6 then -2.0
+      else 0.0
+    expected.zipWithIndex.foreach: (value, scan) =>
+      assertEqualsDouble(model.designMatrix(scan, 0), value, 1e-12)

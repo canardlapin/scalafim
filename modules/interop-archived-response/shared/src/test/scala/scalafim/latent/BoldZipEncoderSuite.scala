@@ -1,8 +1,8 @@
 package scalafim.latent
 
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 
-import scalafim.image.SomeSampleSpace
+import image4s.SomeSampleSpace
 import gale.linalg.DMat
 
 class BoldZipEncoderSuite extends munit.FunSuite:

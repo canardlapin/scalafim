@@ -1,12 +1,18 @@
 package scalafim.spatial
 
-import scalafim.image.world.{SpaceEvidence, SubjectId, WorldSpace}
+import neurosurf4s.routing.*
+
+import neuroim4s.spatial.io.NiftiVolumeSourceStats
+
+import image4s.SomeSampleSpace
+
+import neuroim4s.spaces.{SpaceEvidence, SubjectId, WorldSpace}
 
 import com.sun.management.ThreadMXBean
-import scalafim.image.io.Nifti
-import scalafim.image.{SampleSpaces, PrimitiveBuffers, SomeSampleSpace, SomeScalarSeries}
-import scalafim.image.SampleSpaces.*
-import scalafim.spatial.io.{NiftiFieldSource, NiftiFieldSourceStats}
+import neuroim4s.image.io.Nifti
+import neuroim4s.image.{SampleSpaces, SomeScalarSeries}
+import neuroim4s.image.SampleSpaces.*
+import scalafim.spatial.io.NiftiFieldSource
 
 import java.lang.management.ManagementFactory
 import java.nio.file.{Files, Path}
@@ -154,13 +160,13 @@ class SpatialLazyPerformanceSuite extends munit.FunSuite:
       )
     )
     val fileValues =
-      PrimitiveBuffers.tabulate[Double](rows * observations) { index =>
+      Array.tabulate[Double](rows * observations) { index =>
         val frame = index % observations
         val row = index / observations
         frame.toDouble * 1000.0 + row.toDouble
       }
     Nifti
-      .writeSeries(path, SomeScalarSeries.unsafeCopyFromCanonicalArray(fileValues, space.addDim(ProviderAxes.time(observations)), "benchmark"))
+      .writeSeries(path, SomeScalarSeries.unsafeCopyFromCanonicalArray(fileValues, space.typed.appendNonSpatial(ProviderAxes.time(observations)).fold(error => throw new IllegalArgumentException(error.message), value => value), "benchmark"))
       .fold(error => fail(error.message), _ => ())
 
     val bean = allocationBean()
@@ -181,7 +187,7 @@ class SpatialLazyPerformanceSuite extends munit.FunSuite:
         index += 1
       current.getOrElse(fail("benchmark did not construct a view"))
     }
-    assertEquals(source.stats, NiftiFieldSourceStats(0L, 0L, 0L, 0L, 0L, 0L))
+    assertEquals(source.stats, NiftiVolumeSourceStats(0L, 0L, 0L, 0L, 0L, 0L))
 
     val planCache = InMemoryEvaluationPlanCache.empty
     val resultCache = InMemoryFieldResultCache.empty

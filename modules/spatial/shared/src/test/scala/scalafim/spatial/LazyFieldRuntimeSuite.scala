@@ -1,10 +1,14 @@
 package scalafim.spatial
 
-import scalafim.image.world.SubjectId
+import neurosurf4s.routing.*
+
+import neuroim4s.spatial.SamplingPolicy
+
+import neuroim4s.spaces.SubjectId
 
 import image4s.geometry.{Affine, D3}
-import scalafim.image.{SampleSpaces, SomeSampleSpace}
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.{SampleSpaces}
+import neuroim4s.image.SampleSpaces.*
 
 class LazyFieldRuntimeSuite extends munit.FunSuite:
 

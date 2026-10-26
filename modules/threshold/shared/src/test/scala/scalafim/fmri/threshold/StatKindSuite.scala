@@ -1,7 +1,7 @@
 package scalafim.fmri.threshold
 
 import gale.linalg.{DMat, Matrix}
-import scalafim.image.{PrimitiveBuffers, SampleSpaces, SomeScalarVolume, valueAtCanonicalOrdinal}
+import neuroim4s.image.{SampleSpaces, SomeScalarVolume, valueAtCanonicalOrdinal}
 
 /** `StatKind` carries no degrees of freedom and no p-value sidedness.
   *
@@ -177,7 +177,7 @@ class StatKindSuite extends munit.FunSuite:
     Matrix.tabulate(rows.length, rows.head.length)((r, c) => rows(r)(c))
 
   private def volume(data: Array[Double]): SomeScalarVolume[Double] =
-    SomeScalarVolume.unsafeCopyFromCanonicalArray(PrimitiveBuffers.fromArray(data), SampleSpaces(dims))
+    SomeScalarVolume.unsafeCopyFromCanonicalArray((data).clone(), SampleSpaces(dims))
 
   private final class FixedNullDraw(rows: Vector[Array[Double]]) extends NullDraw:
     override val nPermutations: PermutationCount = PermutationCount.unsafe(rows.length)

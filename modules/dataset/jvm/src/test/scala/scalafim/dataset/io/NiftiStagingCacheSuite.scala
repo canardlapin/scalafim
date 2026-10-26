@@ -74,6 +74,27 @@ class NiftiStagingCacheSuite extends FunSuite:
     }
   }
 
+  test("receipt reservation and publication recheck preserve the free-space floor") {
+    fixture { root =>
+      val (source, bytes) = compressed(root, 3.5)
+      val floor = 100L
+      def cache(name: String, probes: Vector[Long]): NiftiStagingCache =
+        val remaining = scala.collection.mutable.Queue.from(probes)
+        NiftiStagingCache.make(root.resolve(name), NiftiStagingLimits(minimumFreeBytes = floor),
+          () => if remaining.nonEmpty then remaining.dequeue() else floor).fold(error => fail(error.message), identity)
+      def noPublishedEntries(value: NiftiStagingCache): Unit =
+        assert(entries(value.root).forall(_.getFileName.toString.endsWith(".lock")))
+
+      val receiptBoundary = cache("receipt", Vector(floor + bytes.length + 65L, floor + 64L))
+      assert(receiptBoundary.stage(source).isLeft)
+      noPublishedEntries(receiptBoundary)
+
+      val publicationBoundary = cache("publication", Vector(floor + bytes.length + 65L, floor + 65L, floor - 1L))
+      assert(publicationBoundary.stage(source).isLeft)
+      noPublishedEntries(publicationBoundary)
+    }
+  }
+
   test("cancelled staging preserves interruption and publishes nothing") {
     fixture { root =>
       val (source, _) = compressed(root, 4.0)

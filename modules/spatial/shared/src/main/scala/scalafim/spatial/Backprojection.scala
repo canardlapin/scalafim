@@ -1,5 +1,7 @@
 package scalafim.spatial
 
+import neurosurf4s.routing.*
+
 import gale.linalg.DMat
 
 /** Data in a view's domain carried back to its root domain by the adjoint of the view's operator.
@@ -29,11 +31,11 @@ object Backprojection:
           allowInverses = intent.allowInverses
         )
       for
-        operator <- OperatorCompiler.compile(graph, request)
+        operator <- FunctionalRouting.compile(graph, request)
         _ <-
           if operator.rows == data.rows then Right(())
           else Left(SpatialError.FieldShapeMismatch(operator.rows, data.rows))
-        backprojected <- operator.map.transposeApplyTo(data).left.map(SpatialQc.linearError)
+        backprojected <- operator.map.transposeApplyTo(data).left.map(error => SpatialError.OperatorAssemblyFailed(error.getMessage))
       yield Backprojection(
         Field.fromMatrix(view.root, backprojected, s"${view.data.label}:backprojected"),
         backprojected,

@@ -1,16 +1,17 @@
 package scalafim.fmri.mvpa.spatial
 
+import mvpa4s.locus.*
+
 import alder.kernel.DataFingerprint
 import gale.linalg.DMat
-import locus4s.{Relation, Region, Selection}
+import locus4s.{CenteredNeighborhoodSystem, Relation, Region, Selection}
 import multivar.core.{SemanticSpace, SpaceRole, ValueId, ValueIdentity}
 import resample4s.core.DigestAlgorithm
-import scalafim.fmri.mvpa.*
-import scalafim.fmri.mvpa.dataset.predictive.*
-import scalafim.fmri.mvpa.measurement.*
-import scalafim.image.ExactVolumeSearchlight
-import scalafim.locus.{CenteredSearchlight, Searchlight}
-import scalafim.response.{Provenance, ProvenanceId, SourceId}
+import mvpa4s.*
+import mvpa4s.predictive.*
+import mvpa4s.measurement.*
+import neuroim4s.image.ExactVolumeSearchlight
+import locus4s.provenance.{Provenance, ProvenanceId, SourceId}
 
 class SpatialPredictiveAcceptanceSuite extends munit.FunSuite:
   given DigestAlgorithm = DigestAlgorithm.fnv1a64
@@ -129,10 +130,10 @@ class SpatialPredictiveAcceptanceSuite extends munit.FunSuite:
 
   test("nonempty centered surface patches run native prediction and preserve successful overlap denominators"):
     val fixture = new Fixture
-    val centers = right(Region.fromOrdinals(fixture.neural.locus, Vector(0, 1, 2)))
-    val relation = right(Relation.fromOrdinalRows(fixture.neural.locus, fixture.neural.locus,
-      Vector(Vector(0, 1), Vector(1), Vector(1, 2), Vector.empty, Vector.empty).iterator.map(_.iterator)))
-    val patches = right(CenteredSearchlight.validate(right(Searchlight.make(centers, relation))))
+    val centers = right(Selection.fromOrdinals(fixture.neural.locus, Vector(0, 1, 2)))
+    val relation = right(Relation.fromOrdinalRows(centers.positions, fixture.neural.locus,
+      Vector(Vector(0, 1), Vector(1), Vector(1, 2)).iterator.map(_.iterator)))
+    val patches = right(CenteredNeighborhoodSystem.fromSelection(centers, relation))
     val names = Vector("first", "failure", "last")
     val frame = right(SpatialMeasurementFrames.surfacePatches(fixture.neural, declaration, patches, index => Some(names(index.ordinal))))
     fixture.assertScatter(fixture.run(frame, Map("first" -> Vector(0, 1), "failure" -> Vector(1), "last" -> Vector(1, 2))))

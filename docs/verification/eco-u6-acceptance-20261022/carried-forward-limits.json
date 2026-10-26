@@ -1,0 +1,39 @@
+{
+  "qualification_scope": "Preserve existing adverse evidence and exclusions; these are carried-forward limits, not new measurements or scientific acceptance.",
+  "legacy_provider_affine_v1": {
+    "JVM": "bb8ad63b",
+    "JS": "ecef2863",
+    "reason": "existing platform-dependent Double.hashCode",
+    "policy": "retain both platformgoldens; no portable v1 identity claim or silent identity rewrite"
+  },
+  "atlas_route_real_asset_boundary": {
+    "reverse_residual_mm": 0.139,
+    "itk_forward_residual_mm": 0.0104,
+    "flags": "OFF",
+    "missing_qualification": "15-map P4 replay remains unavailable",
+    "policy": "do not infer95percent target or general route qualification from the synthetic admitted-route scenario",
+    "prior_evidence": "neuroatlas4s docs/verification/eco-a1-20261022; Root published-pin-cutover qualification"
+  },
+  "u4_scientific_boundary": {
+    "LWU_observed_percent": [
+      93,
+      81
+    ],
+    "nominal_target_percent": 95,
+    "policy": "below target; keep scientificflagsOFF and opt-in/ignored GLS cases explicit; no scientificcalibration claim",
+    "prior_evidence": "existing U4 campaign qualification",
+    "final_campaign_observations": "scientific-observations.json; prior93/81percent values are historical and must not be described as current measurements."
+  },
+  "native_browser_boundary": {
+    "evidence": "historical-display-review.md",
+    "policy": "retain exact historical source/runtime/bundle IDs and failed attempts; no final73a native/WebGL execution claim"
+  },
+  "current_fixtures": {
+    "measurement": "synthetic centered locus supports",
+    "surface": "synthetic GIFTI/FreeSurfer triangle and scalar; FSgeometryJVM-only",
+    "projection": "fixture-declared world, software raster, unique off-tie witness",
+    "volume": "synthetic NIfTI4D/ITK/Java2D specimen",
+    "atlas": "synthetic volume realization with real available FreeSurfer affine; planned routes refused"
+  },
+  "hosting": "No hosted Actions run for published topic branch was present; local commands and completed assertions are separately recorded. Main not merged."
+}

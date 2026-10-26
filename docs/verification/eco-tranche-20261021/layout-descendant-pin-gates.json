@@ -1,0 +1,94 @@
+{
+  "base": "3569d229e",
+  "buildSha256": "a468f52ac99d8e72c475687201023b1e406729eb7e8745c4d8d757d31c477243",
+  "pins": {
+    "neuroim4s": "21df6416e4e28e97cfbe39e20d7303349be7e4cf",
+    "neuroatlas4s": "fe1e8f29942e7f0bc3b570e63b8ec4b4b5d8cd98"
+  },
+  "gates": [
+    {
+      "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/root-layout-pins-jvm-03.log",
+      "sha256": "49e8f2a550580b76ee8279f3401aef537033fba9f0195e215e520cf3bfa56b61",
+      "passedInCommandOrder": [
+        81,
+        39,
+        47,
+        2,
+        2
+      ],
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-21T04:03:23.414814+00:00",
+        "finished_utc": "2026-10-21T04:07:10.032004+00:00",
+        "duration_seconds": 226.61467,
+        "command": [
+          "env",
+          "TMPDIR=/Volumes/My Passport for Mac/e01tmp",
+          "sbt",
+          "-batch",
+          "-J-Xmx4g",
+          "-J-Djava.io.tmpdir=/Volumes/My Passport for Mac/e01tmp",
+          "-Dsbt.supershell=false",
+          "-Dsbt.log.noformat=true",
+          "-Dsbt.global.base=/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+          "atlasJVM/test",
+          "fmriWorkflowJVM/test",
+          "neuroimViewJvmTestAll"
+        ],
+        "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020",
+        "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/root-layout-pins-jvm-03.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 900.0,
+        "log_bytes": 36453
+      }
+    },
+    {
+      "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/root-layout-pins-js-01.log",
+      "sha256": "dd13b00183becaca2037a0a554d6a300bbc8cc8770df906a1181afa6b181fb31",
+      "passedInCommandOrder": [
+        61,
+        31,
+        47,
+        8
+      ],
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-21T04:08:38.689915+00:00",
+        "finished_utc": "2026-10-21T04:11:03.834672+00:00",
+        "duration_seconds": 145.143107,
+        "command": [
+          "env",
+          "TMPDIR=/Volumes/My Passport for Mac/e01tmp",
+          "sbt",
+          "-batch",
+          "-J-Xmx4g",
+          "-J-Djava.io.tmpdir=/Volumes/My Passport for Mac/e01tmp",
+          "-Dsbt.supershell=false",
+          "-Dsbt.log.noformat=true",
+          "-Dsbt.global.base=/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+          "atlasJS/test",
+          "fmriWorkflowJS/test",
+          "neuroimViewJsTestAll"
+        ],
+        "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020",
+        "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/root-layout-pins-js-01.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 900.0,
+        "log_bytes": 28306
+      }
+    }
+  ],
+  "passingExecutions": 318,
+  "sourceOverrides": false,
+  "adverseAttemptsRetained": [
+    "root-layout-pins-jvm-01.log: system temp ENOSPC during project loading; no tests ran",
+    "root-layout-pins-jvm-02.log: native sbt socket overflow before output; no tests ran"
+  ],
+  "environmentRepair": "Short external temp directory /Volumes/My Passport for Mac/e01tmp; no threshold/test changes"
+}

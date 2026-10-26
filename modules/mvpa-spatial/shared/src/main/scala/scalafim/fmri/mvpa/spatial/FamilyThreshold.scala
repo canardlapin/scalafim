@@ -1,6 +1,6 @@
 package scalafim.fmri.mvpa.spatial
 
-import scalafim.fmri.mvpa.pattern.{CompletedVoxelFamily, FrozenVoxelOmnibusReference, VoxelFamilyError, VoxelFamilyReferenceMode}
+import mvpa4s.pattern.{CompletedVoxelFamily, FrozenVoxelOmnibusReference, VoxelFamilyError, VoxelFamilyReferenceMode}
 import scalafim.fmri.threshold.{AdjustedP, Alpha, MaxNull, MaxNullDistribution, NullReference, ThresholdAlternative, ThresholdCutoff, ThresholdError}
 
 enum FamilyThresholdError:

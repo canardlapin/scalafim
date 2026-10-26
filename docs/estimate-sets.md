@@ -1,6 +1,6 @@
 # Estimate sets: native implementation progress
 
-The `estimates`, `estimates-io` and `fit-estimates` modules implement a first
+The `estimates`, `estimates-io` and `fmri-workflow` modules implement a first
 vertical slice of the [native implementation plan](plans/estimate-set-implementation.md).
 They are **development APIs, not a claim of full estimate-set V0 conformance**.
 The scientific target remains [V0 0.2.0](../../plsneuro/docs/first-level-artifact-spec.md).
@@ -78,7 +78,7 @@ preserve pinned input receipts, participant/estimand/sample order and validity;
 unavailable cells refuse the block rather than silently reduce the cohort. One unit
 is opened, fully verified and closed at a time. Repeated integrity scans are a
 documented cost, not a qualified cohort-performance policy. The old eager bridge
-moved to `fit-estimates.FitGroupAdapter`, with its tests.
+lives in `scalafim.fmri.fit.estimates.FitGroupAdapter` in `fmri-workflow`, with its tests.
 
 Variance and standard-error products may bind a
 `MarginalUncertaintyDescriptor` to their effect. The origin is explicitly known,
@@ -125,8 +125,8 @@ shrinking a cohort. Its `unitsPublished` flag is not scientific admission or com
 requested-product coverage.
 
 Executable examples and regression evidence live in
-[`FitEstimateProducerSuite`](../modules/fit-estimates/shared/src/test/scala/scalafim/fmri/fit/estimates/FitEstimateProducerSuite.scala),
-[`FitEstimateReadbackSuite`](../modules/fit-estimates/jvm/src/test/scala/scalafim/fmri/fit/estimates/FitEstimateReadbackSuite.scala), and
+[`FitEstimateProducerSuite`](../modules/fmri-workflow/shared/src/test/scala/scalafim/fmri/fit/estimates/FitEstimateProducerSuite.scala),
+[`FitEstimateReadbackSuite`](../modules/fmri-workflow/jvm/src/test/scala/scalafim/fmri/fit/estimates/FitEstimateReadbackSuite.scala), and
 [`LocalEstimateStoreSuite`](../modules/estimates-io/jvm/src/test/scala/scalafim/estimates/io/LocalEstimateStoreSuite.scala).
 
 ## Provider prerequisite

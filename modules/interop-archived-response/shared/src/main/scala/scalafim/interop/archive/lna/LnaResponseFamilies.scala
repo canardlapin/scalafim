@@ -19,7 +19,6 @@ import scalafim.response.{
   CalibrationState,
   DecodeConsistency,
   DomainId,
-  DomainReference,
   InMemoryResponseSource,
   NonFinitePolicy,
   ReconstructionContract,
@@ -30,10 +29,13 @@ import scalafim.response.{
   SampleDomain,
   SampleDomainKind,
   SignalSchema,
-  SourceId,
   TimeAxis,
   TimeDomain,
   UnitId
+}
+import locus4s.provenance.{
+  DomainReference,
+  SourceId
 }
 
 final class TemporalDctLnaRepresentationFamily[F[_]] private (

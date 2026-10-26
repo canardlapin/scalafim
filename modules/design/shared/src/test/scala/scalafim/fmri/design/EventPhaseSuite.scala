@@ -130,3 +130,18 @@ class EventPhaseSuite extends munit.FunSuite:
     val result = MultiphaseEventTerm.validated(factors, Vector(phase, other))
     assert(result.left.toOption.exists(_.message.contains("same run ordering")))
   }
+
+  test("ordinary formula subsets preserve original run-scoped parent labels and caller rows"):
+    import scalafim.fmri.design.data.{Column, DataTable}
+    import scalafim.fmri.design.formula.EventModelBuilder
+    val table = DataTable.fromColumns(
+      "onset" -> Column.Doubles(Vector(1.0, 3.0, 1.0, 3.0)),
+      "condition" -> Column.Strings(Vector.fill(4)("A")),
+      "trial" -> Column.Strings(Vector("one", "two", "one", "two")),
+      "keep" -> Column.Ints(Vector(1, 0, 1, 0)))
+    val sampling = SamplingFrame(blockLens = Seq(12, 12), tr = Seq(1.0))
+    val model = EventModelBuilder.build(
+      "onset ~ hrf(condition, parent = trial, phase = stimulus, subset = keep > 0, id = task)",
+      table, sampling, blockIds = Vector(0, 0, 1, 1))
+    assertEquals(model.designSchema.audit.eventProvenance.map(p => (p.blockId, p.parent.value, p.sourceRow)),
+      Vector((0, "one", 0), (1, "one", 2)))

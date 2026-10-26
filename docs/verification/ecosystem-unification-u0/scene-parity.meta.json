@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-16T11:53:47.362002+00:00",
+  "finished_utc": "2026-10-16T11:53:47.818366+00:00",
+  "duration_seconds": 0.456086,
+  "command": [
+    "sh",
+    "-c",
+    "node --test tools/surface-view/parity/*.test.mjs"
+  ],
+  "cwd": "/Users/bbuchsbaum/code/scala/scalafim",
+  "log": "/tmp/scalafim-unification-u0-20261016/scene-parity.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 300.0,
+  "log_bytes": 4177
+}

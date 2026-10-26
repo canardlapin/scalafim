@@ -1,17 +1,19 @@
 package scalafim.fmri.motion
 
+import image4s.SomeSampleSpace
+
 import scalafim.fmri.motion.fixtures.VolreggerFixtures
-import scalafim.image.*
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.*
+import neuroim4s.image.SampleSpaces.*
 
 class MotionMetricsSuite extends munit.FunSuite:
 
   private def vec1x1x1(values: Vector[Double]): SomeScalarSeries[Double] =
-    val data = PrimitiveBuffers.tabulate[Double](values.length)(values)
-    SomeScalarSeries.unsafeCopyFromCanonicalArray(data, SampleSpaces(Vector(1, 1, 1)).addDim(ProviderAxes.time(values.length)), "dvars-fixture")
+    val data = Array.tabulate[Double](values.length)(values)
+    SomeScalarSeries.unsafeCopyFromCanonicalArray(data, SampleSpaces(Vector(1, 1, 1)).typed.appendNonSpatial(ProviderAxes.time(values.length)).fold(error => throw new IllegalArgumentException(error.message), value => value), "dvars-fixture")
 
   private def maskAll(space: SomeSampleSpace): SomeMaskVolume =
-    SomeMaskVolume.unsafeCopyFromCanonicalArray(PrimitiveBuffers.fillConst[Boolean](space.spatialDims.product, true), space.spatialSpace, "mask")
+    SomeMaskVolume.unsafeCopyFromCanonicalArray(Array.fill[Boolean](space.grid.shape.product)(true), space.typed.spatialOnly, "mask")
 
   test("framewise displacement matches volregger convention") {
     val trace = MotionTrace.unsafe(VolreggerFixtures.fdTrace)

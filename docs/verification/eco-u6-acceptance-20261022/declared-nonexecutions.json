@@ -1,0 +1,121 @@
+{
+  "skipped": 18,
+  "ignored": 5,
+  "entries": [
+    {
+      "batch": "phrf-comparison-jvm",
+      "source": "31a42a69004c6282e01ad939c370f249fdf5e604",
+      "entry": "==> s scalafim.phrfcmp.run.GlmSingleBridgeSuite.real GLMsingle on T-TX-fast: E-trial in input order equals the converter output bit for bit; scratch gone skipped 0.006s"
+    },
+    {
+      "batch": "phrf-comparison-jvm",
+      "source": "31a42a69004c6282e01ad939c370f249fdf5e604",
+      "entry": "==> s scalafim.phrfcmp.run.GlmSingleBridgeSuite.disk leak: no file created during a real bridge run contains a beta value (planted sentinel and real betas) skipped 0.001s"
+    },
+    {
+      "batch": "phrf-comparison-jvm",
+      "source": "31a42a69004c6282e01ad939c370f249fdf5e604",
+      "entry": "==> s scalafim.phrfcmp.run.GlmSingleBridgeSuite.F3/F4: a successful attempt reports both CPU figures and the output hash; guard is rusage, timing is the sidecar skipped 0.002s"
+    },
+    {
+      "batch": "phrf-comparison-jvm",
+      "source": "31a42a69004c6282e01ad939c370f249fdf5e604",
+      "entry": "==> s scalafim.phrfcmp.prep.RhoBiasHeavySuite.frozen rho bias criterion over 50 harness datasets: trial and condition cells (opt-in) skipped 0.001s"
+    },
+    {
+      "batch": "mvpa4s-core",
+      "source": "31a42a69004c6282e01ad939c370f249fdf5e604",
+      "entry": "==> s mvpa4s.inference.RankV2ResourceProbeSuite.opt-in complete-adapter resource probe preserves each assigned method result skipped 0.005s"
+    },
+    {
+      "batch": "mvpa4s-core",
+      "source": "31a42a69004c6282e01ad939c370f249fdf5e604",
+      "entry": "==> s mvpa4s.inference.RankPairedPilotSuite.opt-in paired exploratory cell retains every assigned method result skipped 0.0s"
+    },
+    {
+      "batch": "mvpa4s-core",
+      "source": "31a42a69004c6282e01ad939c370f249fdf5e604",
+      "entry": "==> s mvpa4s.inference.RankDiagnosticReplaySuite.opt-in diagnostic exports actual residual and stepwise kernels without Monte Carlo skipped 0.001s"
+    },
+    {
+      "batch": "mvpa4s-core",
+      "source": "31a42a69004c6282e01ad939c370f249fdf5e604",
+      "entry": "==> s mvpa4s.inference.RankConfirmationSuite.opt-in case uses the production rank procedure and reports actual completed B skipped 0.001s"
+    },
+    {
+      "batch": "mvpa4s-core",
+      "source": "31a42a69004c6282e01ad939c370f249fdf5e604",
+      "entry": "==> s mvpa4s.inference.RankPortabilityTraceSuite.opt-in retained fixture traces nuisance QR, residual coordinates and every accepted draw skipped 0.0s"
+    },
+    {
+      "batch": "mvpa4s-core",
+      "source": "31a42a69004c6282e01ad939c370f249fdf5e604",
+      "entry": "==> s opt-in diagnostic exports actual residual and stepwise kernels without Monte Carlo skipped"
+    },
+    {
+      "batch": "mvpa4s-core",
+      "source": "31a42a69004c6282e01ad939c370f249fdf5e604",
+      "entry": "==> s opt-in retained fixture traces nuisance QR, residual coordinates and every accepted draw skipped"
+    },
+    {
+      "batch": "mvpa4s-core",
+      "source": "31a42a69004c6282e01ad939c370f249fdf5e604",
+      "entry": "==> s opt-in paired exploratory cell retains every assigned method result skipped"
+    },
+    {
+      "batch": "mvpa4s-core",
+      "source": "31a42a69004c6282e01ad939c370f249fdf5e604",
+      "entry": "==> s opt-in complete-adapter resource probe preserves each assigned method result skipped"
+    },
+    {
+      "batch": "mvpa4s-core",
+      "source": "31a42a69004c6282e01ad939c370f249fdf5e604",
+      "entry": "==> s opt-in case uses the production rank procedure and reports actual completed B skipped"
+    },
+    {
+      "batch": "neurosurf-Spatial",
+      "source": "616860a2e14eb42b800462cd3d2f4fe4203f641a",
+      "entry": "==> s P6-JS: real-field pointwise placement of both hemispheres matches the oracle within budget skipped"
+    },
+    {
+      "batch": "neurosurf-Spatial",
+      "source": "616860a2e14eb42b800462cd3d2f4fe4203f641a",
+      "entry": "==> s synthetic same-size hemisphere: placement at admission and prepare+map timings skipped"
+    },
+    {
+      "batch": "analysis-jvm",
+      "source": "92154d81c39b6a384be195dde0e933ed0dff29ca",
+      "entry": "==> s scalafim.fmri.laws.FglsCmrgSuite.opt-in full external CMRG control packet preserves all five cells and every dataset skipped 0.004s"
+    },
+    {
+      "batch": "analysis-js",
+      "source": "92154d81c39b6a384be195dde0e933ed0dff29ca",
+      "entry": "==> i <unknown> ignored"
+    },
+    {
+      "batch": "analysis-js",
+      "source": "92154d81c39b6a384be195dde0e933ed0dff29ca",
+      "entry": "==> i <unknown> ignored"
+    },
+    {
+      "batch": "analysis-js",
+      "source": "92154d81c39b6a384be195dde0e933ed0dff29ca",
+      "entry": "==> i <unknown> ignored"
+    },
+    {
+      "batch": "analysis-js",
+      "source": "92154d81c39b6a384be195dde0e933ed0dff29ca",
+      "entry": "==> i <unknown> ignored"
+    },
+    {
+      "batch": "analysis-js",
+      "source": "92154d81c39b6a384be195dde0e933ed0dff29ca",
+      "entry": "==> i <unknown> ignored"
+    },
+    {
+      "batch": "analysis-js",
+      "source": "92154d81c39b6a384be195dde0e933ed0dff29ca",
+      "entry": "==> s opt-in full external CMRG control packet preserves all five cells and every dataset skipped"
+    }
+  ]
+}

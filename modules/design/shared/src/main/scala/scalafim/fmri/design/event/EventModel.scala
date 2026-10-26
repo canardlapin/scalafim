@@ -69,10 +69,11 @@ final case class EventModel(
       case row if row.disposition == EventSupportDisposition.Excluded =>
         EventExclusion(row.sourceRow, "response-support-unobserved", receipt.term.map(TermId.unsafe))
     })
-    val audit = schema.audit.copy(eventsSeen = schema.audit.eventsSeen + exclusions.length,
-      excludedEvents = schema.audit.excludedEvents ++ exclusions,
-      responseSupport = schema.audit.responseSupport ++ receipts)
-    DesignSchema.validated(schema.matrix, schema.rows, schema.columns, audit)
+    DesignSchema.validated(schema.matrix, schema.rows, schema.columns,
+      schema.audit.copy(
+        eventsSeen = schema.audit.eventsSeen + exclusions.length,
+        excludedEvents = schema.audit.excludedEvents ++ exclusions,
+        responseSupport = schema.audit.responseSupport ++ receipts))
       .map(value => copy(compiledSchema = Some(value)))
 
   /** Compatibility wrapper over [[withDiagnosticsEither]]. Compiler paths use
@@ -109,8 +110,8 @@ final case class EventModel(
       case _ => Vector.empty
     ) ++ designSchema.audit.responseSupport.flatMap(_.decisions.map(_.sourceRow)) ++
       designSchema.audit.excludedEvents.filter(_.reason == "response-support-unobserved").map(_.eventIndex) ++
-      designSchema.audit.sourceEvents.map(_.sourceRow) ++
-      designSchema.audit.eventProvenance.map(_.sourceRow) ++ degenerateModulatorReceipts.flatMap(_.sourceRows) ++
+      designSchema.audit.eventProvenance.map(_.sourceRow) ++ designSchema.audit.sourceEvents.map(_.sourceRow) ++
+      degenerateModulatorReceipts.flatMap(_.sourceRows) ++
       orthogonalizationReceipts.flatMap(_.steps.flatMap(_.groups.flatMap(_.sourceRows)))).find(row => row < 0 || row >= rows.length)
     outside match
       case Some(row) => Left(DesignError.InvalidSchema(s"compiled source row $row has no retained caller row"))
@@ -127,7 +128,7 @@ final case class EventModel(
         val schema0 = designSchema
         val audit0 = schema0.audit.copy(
           eventProvenance = schema0.audit.eventProvenance.map(provenance),
-          sourceEvents = schema0.audit.sourceEvents.map(event => event.copy(sourceRow = rows(event.sourceRow))),
+          sourceEvents = schema0.audit.sourceEvents.map(value => value.copy(sourceRow = rows(value.sourceRow))),
           responseSupport = schema0.audit.responseSupport.map(receipt => receipt.copy(
             decisions = receipt.decisions.map(row => row.copy(sourceRow = rows(row.sourceRow))))),
           excludedEvents = schema0.audit.excludedEvents.map(event =>
@@ -393,16 +394,6 @@ object EventModel:
   ): DesignAudit =
     val convolved = terms.collect { case (_, ct: ConvolvedTerm) => ct }
     val seen = convolved.map(_.term.onsets.length).sum
-    // Signed finite onsets can contribute after the acquisition starts.
-    // Counts describe retained schedule rows, not numerical response support.
-    val sources = terms.flatMap {
-      case (key, ct: ConvolvedTerm) =>
-        ct.term.sourceRowIndices.zipWithIndex.map { (source, index) =>
-          SourceEventRow(TermId.unsafe(key), index, source, ct.term.blockIds0(index),
-            ct.term.onsets(index), ct.term.durations0(index))
-        }
-      case _ => Vector.empty
-    }
     val policies = convolved.map { ct =>
       val sources =
         if ct.columnHrfs.isEmpty then Vector(ct.hrf)
@@ -412,16 +403,22 @@ object EventModel:
         s"sources=${sources.map(hrf => HrfAssignment.token(HrfAssignment.hrfCanonical(hrf))).mkString("[", ",", "]")}"
       )
     }
+    val sourceEvents = terms.flatMap:
+      case (key, ct: ConvolvedTerm) =>
+        ct.term.sourceRowIndices.zipWithIndex.map: (sourceRow, eventIndex) =>
+          SourceEventRow(TermId.unsafe(key), eventIndex, sourceRow, ct.term.blockIds0(eventIndex),
+            ct.term.onsets(eventIndex), ct.term.durations0(eventIndex))
+      case _ => Vector.empty
     DesignAudit(
       eventsSeen = seen,
       eventsUsed = seen,
-      sourceEvents = sources,
       eventProvenance = convolved.flatMap(_.term.eventProvenance),
-      policyReceipts = policies ++ terms.flatMap {
-        case (key, ct: ConvolvedTerm) => ct.convolutionRecipe.map(recipe =>
-          PolicyReceipt("convolution", s"term=$key;${recipe.canonical}"))
+      sourceEvents = sourceEvents,
+      convolutionReceipts = terms.flatMap {
+        case (key, ct: ConvolvedTerm) => ct.convolutionRecipe.map(recipe => ConvolutionReceipt(key, recipe.canonical))
         case _ => None
       },
+      policyReceipts = policies,
       diagnostics = diagnostics.map(toDesignDiagnostic),
       eventResponseScales = eventResponseScales(terms)
     )

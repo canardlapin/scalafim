@@ -1,0 +1,164 @@
+{
+  "candidate": "3488cfbc2121137e4d0f17b1cf47a44571b652d5",
+  "limit": "Iterative logs precede the frozen qualification run; failures are preserved. Only the full-suite source manifest binds all final checks to one immutable source/input snapshot.",
+  "gates": [
+    {
+      "log": "iterative-gates/scalafim-u3-01-compile.log",
+      "sha256": "ffcf9e15eee218a488d35312e6cc17f3e5e9d31847679b54841664e969e20c92",
+      "exit_code": 1,
+      "reason": "exited",
+      "duration_seconds": 31.220972,
+      "summaries": [
+        "[sbt-warm] surfaceJVM/compile: exit 1 in 31.1s"
+      ]
+    },
+    {
+      "log": "iterative-gates/scalafim-u3-02-compile.log",
+      "sha256": "1996b644c7353e3ef250f09917b6bdce0eaa0e98e531660ce9d180a55c77d809",
+      "exit_code": 1,
+      "reason": "exited",
+      "duration_seconds": 83.51013,
+      "summaries": [
+        "[sbt-warm] surfaceJVM/compile: exit 1 in 63.6s"
+      ]
+    },
+    {
+      "log": "iterative-gates/scalafim-u3-03-surface.log",
+      "sha256": "3fb6fe715d3f5eb521ab270a4280c32971ad58feed79cb6d1d61d2483f6742bc",
+      "exit_code": 1,
+      "reason": "exited",
+      "duration_seconds": 15.622948,
+      "summaries": [
+        "[sbt-warm] surfaceJVM/test: exit 1 in 15.5s"
+      ]
+    },
+    {
+      "log": "iterative-gates/scalafim-u3-04-surface.log",
+      "sha256": "c5fa82c9eaf28b852f04154802441954b7fa83e258c88980864235f1182f6b69",
+      "exit_code": 1,
+      "reason": "exited",
+      "duration_seconds": 11.402378,
+      "summaries": [
+        "[sbt-warm] surfaceJVM/test: exit 1 in 11.3s"
+      ]
+    },
+    {
+      "log": "iterative-gates/scalafim-u3-05-surface.log",
+      "sha256": "02cb9ba825f3816c08a72d1d967cc4061495bbc9ff78d65f61c0df3f0414fdf5",
+      "exit_code": 1,
+      "reason": "exited",
+      "duration_seconds": 77.320907,
+      "summaries": [
+        "[sbt-warm] surfaceJVM/test: exit 1 in 77.2s"
+      ]
+    },
+    {
+      "log": "iterative-gates/scalafim-u3-06-surface.log",
+      "sha256": "c88b9b9b8ceaa26a648708495a9549b3866677070fe79fcf63778c30b3f47782",
+      "exit_code": 1,
+      "reason": "exited",
+      "duration_seconds": 126.721635,
+      "summaries": [
+        "[sbt-warm] surfaceJVM/test: exit 1 in 126.6s"
+      ]
+    },
+    {
+      "log": "iterative-gates/scalafim-u3-07-surface.log",
+      "sha256": "31746bce6466799aa85897215224fe6258031b9b5c3dcf642c0d8f8d726ed67d",
+      "exit_code": 0,
+      "reason": "exited",
+      "duration_seconds": 125.182524,
+      "summaries": [
+        "[info] Passed: Total 316, Failed 0, Errors 0, Passed 316",
+        "[sbt-warm] surfaceJVM/test: exit 0 in 88.9s",
+        "[info] Passed: Total 276, Failed 0, Errors 0, Passed 274, Skipped 2",
+        "[sbt-warm] surfaceJS/test: exit 0 in 36.1s"
+      ]
+    },
+    {
+      "log": "iterative-gates/scalafim-u3-08-compile-all.log",
+      "sha256": "b5453a45da7d7cc491a54a278324de8908cfa28a4fa682294129a48708d46eb7",
+      "exit_code": 0,
+      "reason": "exited",
+      "duration_seconds": 205.160885,
+      "summaries": [
+        "[sbt-warm] scalafimCompileAll: exit 0 in 205.1s"
+      ]
+    },
+    {
+      "log": "iterative-gates/scalafim-u3-09-consumers-jvm.log",
+      "sha256": "1f5278abc5de09dedf2e706b991d7d24c18641939610fd8e0a41722c8ca09243",
+      "exit_code": 1,
+      "reason": "exited",
+      "duration_seconds": 3.14791,
+      "summaries": [
+        "[sbt-warm] surfaceJVM/testOnly scalafim.surface.MeshPrimitiveAccessSuite: exit 1 in 3.0s"
+      ]
+    },
+    {
+      "log": "iterative-gates/scalafim-u3-10-consumers-jvm.log",
+      "sha256": "63f9f6bd5b6321565ac947bfa18e5f195d69158bae08215d625a76b4c34d599d",
+      "exit_code": 1,
+      "reason": "exited",
+      "duration_seconds": 6.608816,
+      "summaries": [
+        "[info] Passed: Total 1, Failed 0, Errors 0, Passed 1",
+        "[sbt-warm] surfaceJVM/testOnly scalafim.surface.MeshPrimitiveAccessSuite: exit 0 in 3.3s",
+        "[sbt-warm] surfaceViewJVM/test: exit 1 in 3.2s"
+      ]
+    },
+    {
+      "log": "iterative-gates/scalafim-u3-11-consumers-jvm.log",
+      "sha256": "0230f7703a8ddbbfd2e19530afa8e0e3465a9b0da1f463d7f41c66ad5ff443ba",
+      "exit_code": 1,
+      "reason": "exited",
+      "duration_seconds": 11.10562,
+      "summaries": [
+        "[info] Passed: Total 256, Failed 0, Errors 0, Passed 256",
+        "[sbt-warm] surfaceViewJVM/test: exit 0 in 7.8s",
+        "[sbt-warm] spatialJVM/test: exit 1 in 3.2s"
+      ]
+    },
+    {
+      "log": "iterative-gates/scalafim-u3-12-consumers-jvm.log",
+      "sha256": "82110835e83b94627a38184a7422a4864ffc589bbc6e487c63559ca0217a308a",
+      "exit_code": 0,
+      "reason": "exited",
+      "duration_seconds": 122.628781,
+      "summaries": [
+        "[info] Passed: Total 229, Failed 0, Errors 0, Passed 229",
+        "[sbt-warm] spatialJVM/test: exit 0 in 7.1s",
+        "[info] Passed: Total 120, Failed 0, Errors 0, Passed 120",
+        "[sbt-warm] atlasJVM/test: exit 0 in 109.8s",
+        "[info] Passed: Total 24, Failed 0, Errors 0, Passed 24",
+        "[sbt-warm] mvpaSpatialJVM/test: exit 0 in 5.6s"
+      ]
+    },
+    {
+      "log": "iterative-gates/scalafim-u3-13-consumers-js.log",
+      "sha256": "16617e455d876e3a53018943830ff35c31d2e59149a7ff7772d10b3d1fd3a189",
+      "exit_code": 0,
+      "reason": "exited",
+      "duration_seconds": 77.186952,
+      "summaries": [
+        "[info] Passed: Total 256, Failed 0, Errors 0, Passed 256",
+        "[sbt-warm] surfaceViewJS/test: exit 0 in 64.6s",
+        "[info] Passed: Total 204, Failed 0, Errors 0, Passed 204",
+        "[sbt-warm] spatialJS/test: exit 0 in 12.4s"
+      ]
+    },
+    {
+      "log": "iterative-gates/scalafim-u3-14-atlas-mvpa-js.log",
+      "sha256": "262ab4a22d12b648f2605a28b09d2d4ce3ec69369e063240d8cc4b5d139624f7",
+      "exit_code": 0,
+      "reason": "exited",
+      "duration_seconds": 56.680492,
+      "summaries": [
+        "[info] Passed: Total 74, Failed 0, Errors 0, Passed 74",
+        "[sbt-warm] atlasJS/test: exit 0 in 48.3s",
+        "[info] Passed: Total 24, Failed 0, Errors 0, Passed 24",
+        "[sbt-warm] mvpaSpatialJS/test: exit 0 in 8.2s"
+      ]
+    }
+  ]
+}

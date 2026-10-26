@@ -9,7 +9,7 @@ import scalafim.fmri.fit.fixtures.MixedTrFixedEffectsRFixture as R
 import scalafim.fmri.hrf.*
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.model.*
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 import scalafim.fmri.fit.GaleTestMatrix
 
 /** Executes the exact guide helpers; numerical kernel admission lives in the

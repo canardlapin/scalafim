@@ -1,0 +1,61 @@
+{
+  "status": "PASS for actual adapter workflow; desktop handoff pending",
+  "plsRevision": "0855cb9fa8b81f5ff1dbe83967e3337494fb4400",
+  "scalafimRevision": "e4e55d59cb7599168c97739abf84c8ffc95d3c07",
+  "providerContractSha256": "cdf3ee4873b04e90bd266ec9f2545635760ed49e2a5af7220d88fb986ac98c23",
+  "productionSources": "All adapter production sources compiled; no production filtering or stubs",
+  "testSelection": [
+    "BidsWorkflowProbe.scala",
+    "SpatialFixtures.scala",
+    "CohortAdmissionChecks.scala",
+    "StudyPreflightChecks.scala",
+    "BehavioralResultAxisChecks.scala"
+  ],
+  "evidence": {
+    "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/pls-bids-workflow-06.log",
+    "sha256": "de10802bc5f3bdc4d43544431ff1339e454a1e73df1a64c70cd3230cb5e3b1e4",
+    "metadata": {
+      "schema_version": 1,
+      "started_utc": "2026-10-21T07:03:14.536043+00:00",
+      "finished_utc": "2026-10-21T07:06:56.183243+00:00",
+      "duration_seconds": 221.644009,
+      "command": [
+        "env",
+        "TMPDIR=/Volumes/My Passport for Mac/e01tmp",
+        "sbt",
+        "-batch",
+        "-J-Xmx4g",
+        "-J-Djava.io.tmpdir=/Volumes/My Passport for Mac/e01tmp",
+        "-Dsbt.supershell=false",
+        "-Dsbt.log.noformat=true",
+        "-Dsbt.global.base=/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/fresh-integration-global",
+        "-Dplsneuro.providers=/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/main-imaging-providers",
+        "set adapters / Test / unmanagedSources := Seq(\"BidsWorkflowProbe.scala\", \"SpatialFixtures.scala\", \"CohortAdmissionChecks.scala\", \"StudyPreflightChecks.scala\", \"BehavioralResultAxisChecks.scala\").map(name => file(\"modules/adapters/src/test/scala/plsneuro/adapters/\" + name))",
+        "adapters/Test/runMain plsneuro.adapters.BidsWorkflowProbe \"/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/first-level-consumer-fixture-06\""
+      ],
+      "cwd": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/plsneuro-main-qualified-05",
+      "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/pls-bids-workflow-06.log",
+      "exit_code": 0,
+      "child_returncode": 0,
+      "reason": "exited",
+      "detail": null,
+      "timeout_seconds": 1200.0,
+      "log_bytes": 16165
+    }
+  },
+  "fixture": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/first-level-consumer-fixture-06",
+  "coverage": [
+    "Actual two-subject/two-run condition and FIR estimates",
+    "Selected event/confound companions, nuisance and timing receipts",
+    "Same-size same-mtime mutation refusal",
+    "Independent signed/scaled named contrast and reversible group matrix oracles",
+    "Foreign affine/order refusal and detached map geometry",
+    "Latent, named and behavioral axes retained through JSON and binary",
+    "Corrupt digest/schema/geometry refusal and bounded atomic bundle refusal"
+  ],
+  "limits": [
+    "Does not prove complete desktop compilation or actual StudyPane handoff",
+    "Does not qualify full PLS scientific calibration or application performance",
+    "Provider candidate includes explicit declared BIDS metadata patch; no canonical landing claim"
+  ]
+}

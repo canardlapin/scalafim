@@ -10,8 +10,8 @@ import multivar.core.{
 }
 import gale.linalg.{DoubleLinearOperator, DVec, MutableDVec}
 import scala.util.control.NonFatal
-import scalafim.fmri.mvpa.{AxisDigest, AxisRef, EvidenceError, EvidenceOrigins}
-import scalafim.fmri.mvpa.relation.{EffectEstimability, Relation, RelationAccess, RelationOrigins, RelationSet, RelationSource, ScopeReplay}
+import mvpa4s.{AxisDigest, AxisRef, EvidenceError, EvidenceOrigins}
+import mvpa4s.relation.{EffectEstimability, Relation, RelationAccess, RelationOrigins, RelationSet, RelationSource, ScopeLease, ScopeReplay}
 
 /** The declared access mode belongs to the response provider, not to
   * `DoubleLinearOperator`. A callable operator alone establishes neither a
@@ -69,7 +69,7 @@ final class RunReadoutRelation private (
 ):
   private var closed = false
   private var consumed = false
-  private var scope: Option[ScopeReplay] = None
+  private var scope: Option[ScopeLease] = None
   private[fit] def acquire(): Either[String, RunTrialReadout] = synchronized:
     if closed then Left("relation source scope is closed")
     else if consumed then Left("relation source scope has already been consumed")
@@ -79,18 +79,24 @@ final class RunReadoutRelation private (
   private[fit] def mintScope(effects: AxisRef[?], neural: AxisRef[?]): Unit = synchronized:
     origins.access match
       case ReadoutRelationAccess.ScopedReplay(owner, revision) if scope.isEmpty =>
-        scope = Some(new ScopeReplay(owner, revision, origins.relationIdentity(effects, neural)))
+        scope = Some(
+          ScopeReplay
+            .acquire(owner, revision, origins.relationIdentity(effects, neural))
+            .fold(error => throw IllegalArgumentException(error.message), identity)
+        )
       case _ => ()
   private[fit] def liveAccess: RelationAccess = synchronized:
     origins.access match
       case ReadoutRelationAccess.OneShot => RelationAccess.OneShot
-      case ReadoutRelationAccess.ScopedReplay(_, _) => RelationAccess.ScopedReplay(scope.getOrElse(throw IllegalStateException("scoped replay was not acquired")))
+      case ReadoutRelationAccess.ScopedReplay(_, _) => scope.getOrElse(throw IllegalStateException("scoped replay was not acquired")).access
   private[fit] def close(): Either[String, Unit] = synchronized:
     if !consumed || closed then Right(())
     else
       closed = true
       scope.foreach(_.expire())
       resource.close()
+  /** The acquiring capability for a scoped relation, once minted. */
+  private[fit] def lease: Option[ScopeLease] = synchronized(scope)
   private[fit] def whileOpen(task: => Unit): Unit = synchronized:
     if closed then throw IllegalStateException("relation source scope is closed")
     task
@@ -228,6 +234,10 @@ object IdentifiedReadoutRelations:
             val estimability = run.readout.axis.estimability.map:
               case scalafim.fmri.fit.TrialEstimability.Estimable => EffectEstimability.Estimable
               case scalafim.fmri.fit.TrialEstimability.ZeroRegressor => EffectEstimability.NotEstimable("zero trial regressor")
-            Relation.fromAcquired(effects, neural, table, input.origins.relationOrigins(input.liveAccess), estimability)
+            val relationOrigins = input.origins.relationOrigins(input.liveAccess)
+            input.lease
+              .fold(Relation(effects, neural, table, relationOrigins, estimability))(
+                _.attach(effects, neural, table, relationOrigins, estimability)
+              )
               .left
               .map(IdentifiedReadoutRelationError.Axis.apply)

@@ -1,0 +1,152 @@
+{
+  "schema": "scalafim.eco-u6-cleanup.v1",
+  "source_commit": "d6273cdc21c6e42090b7c3d91a26c52ab8a2d04a",
+  "behavior_source_commit": "70f103509f6852768c120505ce6b38b97e279cab",
+  "post_behavior_delta": "Only guard/build metadata and ownership documentation; no production caller, provider pin, runtime or Scala test edits after full gate11.",
+  "full_cases": {
+    "providerSpikeJVM": 52,
+    "providerSpikeJS": 50,
+    "datasetJVM": 91,
+    "datasetJS": 68,
+    "connectivityJVM": 64,
+    "connectivityJS": 64,
+    "latentJVM": 45,
+    "latentJS": 45,
+    "spatialJVM": 115,
+    "spatialJS": 108,
+    "mvpaSpatialJVM": 12,
+    "mvpaSpatialJS": 12
+  },
+  "total_passed": 726,
+  "skips": 0,
+  "python_control_cases": 16,
+  "resolved_compile_closures": 24,
+  "production_source_files": 561,
+  "loaded_build_uris": 20,
+  "resolved_source_projects": 423,
+  "resolved_binary_entries": 121,
+  "compile_receipt_sha256": "36b2901cc88eb645f8e4782dfe31612823ab4a67e4b2402e2d41ebc4bda7e0b4",
+  "test_inventory": {
+    "supported_targets": 89,
+    "bounded_batches": 37,
+    "native_display_exclusion": "neurosurfNativeTestAll; extracted equivalent of retired local surface JavaFX test target"
+  },
+  "gates": [
+    {
+      "source_commit": "0f3a576248331c8c6b69da2500d9ab541ede1aea",
+      "meaning": "strict destination compiler refused two unused imports; no runtime cases",
+      "raw_log": {
+        "path": "scalafim-eco-u6-cleanup-08.log.gz",
+        "raw_sha256": "e8241372dd887f2a57676f8d22393a36861aa8e9b7569c58cd2b016c370dfa76",
+        "gzip_sha256": "03d3e509ba7c74a98f4463c726775e5031f7fd0db611844bb3a49055d594d8d9"
+      },
+      "execution_metadata": {
+        "path": "scalafim-eco-u6-cleanup-08.log.meta.json.gz",
+        "raw_sha256": "72707ee11f03ee91ac9712f485e6b808de06d8726790d8e6f0cf4fce4db279c1",
+        "gzip_sha256": "6ed5956bd723698c1c237f2bc754f884d9ec97184f14a8be8b15f0be13d0de35"
+      },
+      "exit_code": 1
+    },
+    {
+      "source_commit": "5771ae2a293ab79333d8b400c91c8c79aef90f87",
+      "meaning": "94 focused cases, both platforms",
+      "raw_log": {
+        "path": "scalafim-eco-u6-cleanup-09.log.gz",
+        "raw_sha256": "4bb4a521fd980120913bba8c5546a5808eddc798ed3ca5657c140be614962d8f",
+        "gzip_sha256": "b6b146664c1f996471da93ba980381a50670c39aa374d00a5cd8a0ad13715f80"
+      },
+      "execution_metadata": {
+        "path": "scalafim-eco-u6-cleanup-09.log.meta.json.gz",
+        "raw_sha256": "3015b3cca0e629f1dfc5fd5841411f6a9cdbc051fe807de845539fc9504ff17b",
+        "gzip_sha256": "a942ea9158ff9430e44807fed741410160d09709b8270ad561ff8170d04ef4ad"
+      },
+      "exit_code": 0
+    },
+    {
+      "source_commit": "70f103509f6852768c120505ce6b38b97e279cab",
+      "meaning": "726 full owning/consumer cases; original22closures",
+      "raw_log": {
+        "path": "scalafim-eco-u6-cleanup-11.log.gz",
+        "raw_sha256": "5116ae4b71e2f43c842f162bb400ae9817bd8d4aa845850ee5b8dda4395292cb",
+        "gzip_sha256": "21cec8981ae752ac6ccb280b9c4c70a123833fbde73f5fd3b09d81fbbe4dd0f0"
+      },
+      "execution_metadata": {
+        "path": "scalafim-eco-u6-cleanup-11.log.meta.json.gz",
+        "raw_sha256": "27863ca9c5b96a0519273d1cc16aa5d38d5d9c1e418b04c682ba5f9764d764dd",
+        "gzip_sha256": "b94a2ee3fdf99289b01528079367deec8875ca08a4321b65196818764c33e886"
+      },
+      "exit_code": 0
+    },
+    {
+      "source_commit": "4f60dd7844e3e7cd7ba0f5e8d9bd731ad195a29e",
+      "meaning": "build loading failed on nonexistent direct spatial4sBuild; no assertions",
+      "raw_log": {
+        "path": "scalafim-eco-u6-cleanup-12.log.gz",
+        "raw_sha256": "dca6b6586e496b28c40b6e37fe38ca69e7e7a6f7f6b4667460d48dc118cc3940",
+        "gzip_sha256": "0200f53df9300d01cbb1537c7db68deaba9da70d8ddbfcbf87ef83994b94c4aa"
+      },
+      "execution_metadata": {
+        "path": "scalafim-eco-u6-cleanup-12.log.meta.json.gz",
+        "raw_sha256": "0515235fde68c1a1f7e38777b88c3a534c2589c326c71e96538a6feac551345c",
+        "gzip_sha256": "8cff0a4a76da7a421f48469b7a809e761da5cd4d2793037f668abafd9ed15288"
+      },
+      "exit_code": 1
+    },
+    {
+      "source_commit": "4f60dd7844e3e7cd7ba0f5e8d9bd731ad195a29e",
+      "meaning": "eight negative guard controls",
+      "raw_log": {
+        "path": "scalafim-eco-u6-cleanup-controls-13.log.gz",
+        "raw_sha256": "948716cfc1d7e2d4bf92024057324c35afbe40c54714bcd32efca7288e2aa625",
+        "gzip_sha256": "c9410baf4251c5a65bb07f8be8d124490f52fa6c0828800303498a87f53761f0"
+      },
+      "execution_metadata": {
+        "path": "scalafim-eco-u6-cleanup-controls-13.log.meta.json.gz",
+        "raw_sha256": "d0d3446203ce4566d0834a6a43b1450ff6988dff0dfcb80e02a592cf05482baf",
+        "gzip_sha256": "f7ba445d8b42f5f412f83d744b9db829c2e6a5a82d5ac8ab29ac83089f1a2590"
+      },
+      "exit_code": 0
+    },
+    {
+      "source_commit": "4f60dd7844e3e7cd7ba0f5e8d9bd731ad195a29e",
+      "meaning": "eight inventory controls",
+      "raw_log": {
+        "path": "scalafim-eco-u6-cleanup-inventory-14.log.gz",
+        "raw_sha256": "32f24df2ebc72fca9e263d4928a67d08ae69725277b762f09145791334d70f4a",
+        "gzip_sha256": "5a3d719099c47e2e4a297459add677ebc2ec4188de4dc877dd7c8ac558e5c2db"
+      },
+      "execution_metadata": {
+        "path": "scalafim-eco-u6-cleanup-inventory-14.log.meta.json.gz",
+        "raw_sha256": "79c5cea9716cacab7162630e1f786cabf7cb4c9559318267e8cdfcedb0521150",
+        "gzip_sha256": "0a956c256d6608cef318ef80be4c485093c402d63a25878f32cc1099c25069c0"
+      },
+      "exit_code": 0
+    },
+    {
+      "source_commit": "d6273cdc21c6e42090b7c3d91a26c52ab8a2d04a",
+      "meaning": "final24resolvedCompileclosures, no behavioral test count",
+      "raw_log": {
+        "path": "scalafim-eco-u6-cleanup-15.log.gz",
+        "raw_sha256": "08d9b074dbff62969dfd5fddc6aecb1e9f91642cda4ee693c3049f98eb4a5273",
+        "gzip_sha256": "850545b25077c9abd948b4a720db2e81bb4bb29314578c108f2f802eca4c5347"
+      },
+      "execution_metadata": {
+        "path": "scalafim-eco-u6-cleanup-15.log.meta.json.gz",
+        "raw_sha256": "c4cf087603a1e3706c600a8f9171f4b432a715901151cc43814a93cae4fecd36",
+        "gzip_sha256": "93abd6d15788d2b0dc621891338273068a5f2e5eacb5dac51ecbb4261f84e845"
+      },
+      "exit_code": 0
+    }
+  ],
+  "limits": [
+    "Full final compile-all/bounded campaign and seven scenario families remain eco-u6-acceptance, not this cleanup result.",
+    "18 Intaglio lintUnused build keys are reported on startup; no warning-free build claim.",
+    "No main landing, release, hosted CI, new native/browser, numerical or performance qualification.",
+    "Known legacy provider-affine-v1 JVM/JS identity difference, U4 calibration gaps and prior adverse receipts remain unchanged."
+  ],
+  "publication_preflight": {
+    "remote_branch": "origin/eco/u5-surface-20261021",
+    "incoming_branch_commits": 0,
+    "main_divergence": "integration branch remains separate from origin/main; no main merge performed"
+  }
+}

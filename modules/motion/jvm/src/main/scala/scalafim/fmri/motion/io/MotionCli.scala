@@ -1,7 +1,7 @@
 package scalafim.fmri.motion.io
 
 import scalafim.fmri.motion.*
-import scalafim.image.world.{SpaceEvidence, WorldSpace}
+import neuroim4s.spaces.{SpaceEvidence, WorldSpace}
 
 import java.nio.file.{Path, Paths}
 

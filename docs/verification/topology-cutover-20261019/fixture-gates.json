@@ -1,0 +1,125 @@
+{
+  "scope": "Two full-suite admission failures and the focused fixture-only corrections. Assertions, thresholds, and visual hashes were not relaxed. These records are supplemental; the full qualification chain determines which successful target results are counted.",
+  "gates": [
+    {
+      "raw_log": "full-suite-3488cfbc2/16-image-surface-js.log",
+      "raw_log_sha256": "f58e1321e29685e4f2bee969b108c4ae34cea4c8c8edb3105b6bc5e16b048499",
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-19T16:21:44.989050+00:00",
+        "finished_utc": "2026-10-19T16:22:46.710317+00:00",
+        "duration_seconds": 61.721192,
+        "command": [
+          "/opt/homebrew/opt/python@3.14/bin/python3.14",
+          "/private/tmp/scalafim-simplify-a-20261019/tools/build/sbt-warm",
+          "surfaceViewRasterJS/test",
+          "surfaceViewThreeJS/test"
+        ],
+        "cwd": "/private/tmp/scalafim-simplify-a-20261019",
+        "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/topology-cutover-20261019/full-suite-3488cfbc2/16-image-surface-js.log",
+        "exit_code": 1,
+        "child_returncode": 1,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 3600.0,
+        "log_bytes": 29044
+      },
+      "summaries": [
+        "[info] Passed: Total 69, Failed 0, Errors 0, Passed 69",
+        "[sbt-warm] surfaceViewRasterJS/test: exit 0 in 54.4s",
+        "[error] Failed: Total 55, Failed 19, Errors 0, Passed 36",
+        "[sbt-warm] surfaceViewThreeJS/test: exit 1 in 7.2s"
+      ]
+    },
+    {
+      "raw_log": "three-fixture-correction.log",
+      "raw_log_sha256": "2b08be7bd5d46f26f402c11c7f474a47e30ce50508fdc4c8205315f50ed71b73",
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-19T16:23:30.501854+00:00",
+        "finished_utc": "2026-10-19T16:24:29.389468+00:00",
+        "duration_seconds": 58.887316,
+        "command": [
+          "python3",
+          "tools/build/sbt-warm",
+          "surfaceViewThreeJS/test"
+        ],
+        "cwd": "/private/tmp/scalafim-simplify-a-20261019",
+        "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/topology-cutover-20261019/three-fixture-correction.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 1200.0,
+        "log_bytes": 14983
+      },
+      "summaries": [
+        "[info] Passed: Total 55, Failed 0, Errors 0, Passed 55",
+        "[sbt-warm] surfaceViewThreeJS/test: exit 0 in 58.8s"
+      ]
+    },
+    {
+      "raw_log": "full-suite-resume-9c180664e/17-data-jvm.log",
+      "raw_log_sha256": "5eeb4966e51101a441564c58f6b51e9abde4d2bf3983b740b8f65bf7025840a1",
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-19T16:26:10.316346+00:00",
+        "finished_utc": "2026-10-19T16:26:59.257988+00:00",
+        "duration_seconds": 48.941369,
+        "command": [
+          "/opt/homebrew/opt/python@3.14/bin/python3.14",
+          "/private/tmp/scalafim-simplify-a-20261019/tools/build/sbt-warm",
+          "surfaceViewConnectivityJVM/test",
+          "surfaceViewExamplesJVM/test",
+          "transformJVM/test",
+          "spatialJVM/test",
+          "atlasJVM/test"
+        ],
+        "cwd": "/private/tmp/scalafim-simplify-a-20261019",
+        "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/topology-cutover-20261019/full-suite-resume-9c180664e/17-data-jvm.log",
+        "exit_code": 1,
+        "child_returncode": 1,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 3600.0,
+        "log_bytes": 46601
+      },
+      "summaries": [
+        "[info] Passed: Total 2, Failed 0, Errors 0, Passed 2",
+        "[sbt-warm] surfaceViewConnectivityJVM/test: exit 0 in 42.8s",
+        "[error] Failed: Total 30, Failed 3, Errors 0, Passed 27",
+        "[sbt-warm] surfaceViewExamplesJVM/test: exit 1 in 6.1s"
+      ]
+    },
+    {
+      "raw_log": "example-fixture-corrections.log",
+      "raw_log_sha256": "75d4933221f4bab695e8a3a1cd35c4dcb2c5bfe0369e24d0c621abb18aa75994",
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-19T16:29:08.120338+00:00",
+        "finished_utc": "2026-10-19T16:30:28.053264+00:00",
+        "duration_seconds": 79.932555,
+        "command": [
+          "python3",
+          "tools/build/sbt-warm",
+          "surfaceViewExamplesJVM/test",
+          "surfaceViewExamplesJS/test"
+        ],
+        "cwd": "/private/tmp/scalafim-simplify-a-20261019",
+        "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/topology-cutover-20261019/example-fixture-corrections.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 1800.0,
+        "log_bytes": 15892
+      },
+      "summaries": [
+        "[info] Passed: Total 30, Failed 0, Errors 0, Passed 30",
+        "[sbt-warm] surfaceViewExamplesJVM/test: exit 0 in 62.5s",
+        "[info] Passed: Total 29, Failed 0, Errors 0, Passed 29",
+        "[sbt-warm] surfaceViewExamplesJS/test: exit 0 in 17.3s"
+      ]
+    }
+  ]
+}

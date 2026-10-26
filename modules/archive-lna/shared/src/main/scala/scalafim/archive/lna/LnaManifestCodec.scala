@@ -1,8 +1,8 @@
 package scalafim.archive.lna
 
 import scalafim.archive.{ArchiveError, ArchivePath, RunLabel}
-import scalafim.image.{SampleSpaces, SomeSampleSpace}
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.{SampleSpaces}
+import neuroim4s.image.SampleSpaces.*
 
 import scala.collection.mutable
 import scala.util.control.NonFatal
@@ -60,7 +60,7 @@ object LnaManifestCodec:
   private def runJson(run: LnaRun): String =
     obj(
       "label" -> str(run.label.value),
-      "space_dims" -> arr(run.shape.space.spatialDims.map(_.toString)),
+      "space_dims" -> arr(run.shape.space.grid.shape.map(_.toString)),
       "timepoints" -> run.shape.timepoints.toString,
       "output" -> str(run.output.value),
       "mask" -> run.mask.fold("null")(path => str(path.value))

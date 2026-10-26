@@ -2,10 +2,10 @@ package scalafim.fmri.workflow
 
 import bids4s.{BidsFile, BidsPath, BidsProject, BidsValidationReport}
 import scalafim.dataset.DatasetShape
-import scalafim.image.SomeSampleSpace
-import scalafim.image.SampleSpaces.*
-import scalafim.image.io.Nifti
-import scalafim.image.world.{SpaceEvidence, WorldSpace}
+import image4s.SomeSampleSpace
+import neuroim4s.image.SampleSpaces.*
+import neuroim4s.image.io.Nifti
+import neuroim4s.spaces.{SpaceEvidence, WorldSpace}
 
 import java.nio.file.Path
 import scala.util.control.NonFatal
@@ -68,14 +68,14 @@ object BidsStudyCompilerJvm:
           case Some(value) if evidence.bidsSpace.exists(_ != value) => Left(s"evidence space ${evidence.bidsSpace} contradicts BIDS space-$value for ${file.path.value}")
           case _ => Right(())
         admitted = evidence.copy(bidsSpace = entity.orElse(evidence.bidsSpace))
-        header <- Nifti.readHeader(path).left.map(_.message)
-        placed <- header.spaceIn(admitted).left.map(_.message)
+        header <- image4s.nifti.Nifti.readHeader(path).left.map(_.message)
+        placed <- Nifti.spaceIn(header, admitted).left.map(_.message)
         descriptor <-
-          if header.dims.length < 3 || header.dims.length > 4 then
-            Left(s"expected a 3D or 4D NIfTI header, got ${header.dims.mkString("x")}")
+          if header.dimensions.length < 3 || header.dimensions.length > 4 then
+            Left(s"expected a 3D or 4D NIfTI header, got ${header.dimensions.mkString("x")}")
           else
-            val space = placed.spatialSpace
-            val timepoints = if header.dims.length == 4 then header.dims(3) else 1
+            val space = placed.typed.spatialOnly
+            val timepoints = if header.dimensions.length == 4 then header.dimensions(3) else 1
             DatasetShape.make(space, timepoints).left.map(_.message).map(ImageHeaderDescriptor.apply)
       yield descriptor
     catch

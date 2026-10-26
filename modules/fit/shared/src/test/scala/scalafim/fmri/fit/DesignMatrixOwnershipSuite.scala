@@ -7,7 +7,7 @@ import scalafim.fmri.design.baseline.Intercept
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{FitPlan, FitStrategy, FmriModel, FmriModelBuilder, ModelBuildSpec, ModelError}
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 
 class DesignMatrixOwnershipSuite extends munit.FunSuite:
   private def plan(trialwise: Boolean = false): FitPlan =

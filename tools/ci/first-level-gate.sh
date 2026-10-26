@@ -38,7 +38,7 @@ echo "[first-level-ci] JDK $java_version"
 
 echo "[first-level-ci] validating scenario manifest with Python stdlib only"
 python3 -S tools/ci/check_test_inventory.py --check
-python3 -S -m unittest tools/ci/test_pinned_dependencies.py
+python3 -S -m unittest tools/ci/test_pinned_dependencies.py tools/scenarios/test_validate_manifest.py tools/ci/test_scenario_registration.py
 python3 -S tools/scenarios/validate_manifest.py docs/scenarios/manifest.json
 
 echo "[first-level-ci] checking checked-in fixture coherence without external packages"
@@ -73,10 +73,10 @@ run_batch() {
 # accumulate across the whole first-level court.
 run_batch formatting firstLevelLawsJVM/Test/scalafmtCheck
 run_batch first-level-jvm \
-  scenarioTestkitJVM/test arJVM/test hrfJVM/test hrfLawsJVM/test \
-  designJVM/test modelJVM/test fitJVM/test firstLevelLawsJVM/test
+  scenarioTestkitJVM/test arJVM/test hrfJVM/test \
+  designJVM/test fitJVM/test firstLevelLawsJVM/test
 run_batch first-level-js-a \
-  scenarioTestkitJS/test arJS/test hrfJS/test hrfLawsJS/test
+  scenarioTestkitJS/test arJS/test hrfJS/test
 run_batch first-level-js-b \
-  designJS/test modelJS/test fitJS/test firstLevelLawsJS/test
+  designJS/test fitJS/test firstLevelLawsJS/test
 echo "[first-level-ci] focused first-level gates passed"

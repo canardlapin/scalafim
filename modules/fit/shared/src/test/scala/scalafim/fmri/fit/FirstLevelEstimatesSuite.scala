@@ -9,7 +9,7 @@ import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.hrf.*
 import scalafim.fmri.model.{FitEngine, FitPlan, FmriModel, FmriModelBuilder, ModelBuildSpec}
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 import scalafim.fmri.fit.GaleTestMatrix
 
 class FirstLevelEstimatesSuite extends munit.FunSuite:

@@ -26,7 +26,7 @@ import numpy as np
 sys.path.insert(0, os.path.dirname(__file__))
 import oracle_common as oc  # noqa: E402
 
-SOURCE = os.path.join(oc.ORACLE_ROOT, "itk_hdf5_simpleitk")
+SOURCE = os.path.join(oc.transform_oracle_root(), "itk_hdf5_simpleitk")
 OUT = oc.oracle_dir("itk_hdf5_simpleitk_dumps")
 NAMES = [
     "affine_only_forward_double.h5",

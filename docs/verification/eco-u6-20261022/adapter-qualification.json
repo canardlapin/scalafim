@@ -1,0 +1,92 @@
+{
+  "schema": "mvpa4s.eco-u6-imaging-qualification.v1",
+  "provider_source": "c27469484bf760c34cd896dabe4fe1c384a83b45",
+  "provider_production_source": "bb2940e059a26c6a1c6dd997ad6d410059c72f24",
+  "root_source": "70b3ee7bc0a35e28569ae6d68c5c88c8ff9cc599",
+  "jvm_cases": {
+    "locus": 20,
+    "surface": 3,
+    "atlas": 7,
+    "public_consumer": 2
+  },
+  "js_cases": {
+    "locus": 20,
+    "surface": 3,
+    "atlas": 7,
+    "public_consumer": 2
+  },
+  "root_cases": {
+    "mvpaSpatialJVM": 12,
+    "mvpaSpatialJS": 12,
+    "workflowExamplesJVM": 3,
+    "workflowExamplesJS": 2,
+    "atlasExamplesJVM": 5
+  },
+  "independent_cases": {
+    "surfaceJVM": 1,
+    "atlasJVM": 1,
+    "surfaceJS": 1,
+    "atlasJS": 1
+  },
+  "private_artifact_custody": {
+    "path": "/Volumes/My Passport for Mac/codex-work/mvpa4s-eco-u6-20261022/qualified-private-artifacts-06.tar.gz",
+    "bytes": 43095575,
+    "sha256": "404e7e79248faca4f87756c85c63947036e928e42053361222f269644fbf702d",
+    "regular_files": 120,
+    "contents_verified_against_receipt": true
+  },
+  "preserved_generic_surface_tests": 3,
+  "example_identity_change": "AtlasMvpaWorkflows intentionally adopts native complete parcel keys rather than region-N. Scientific supports, feature order and numerical outputs preserved; example frame IDs are not byte-identical. Generic frozen surface/frame goldens remain unchanged.",
+  "independent_build_diagnostics": "Unversioned temporary consumer emitted Git discovery diagnostics before settings loaded; actual seven provider commits, source files and private published artifacts were independently checked, four cases executed and exited0. Retain raw log; no warning-free claim.",
+  "retained_failed_gate": "independent03 failed resolving the missing private Gale legacy artifact before tests; private source-published artifact preparation05 repaired environment; independent06 passed.",
+  "limits": [
+    "No provider test dependencies or ScalaFIM in the independent Compile closure.",
+    "Own classpath02 evidence covers JVM only; independent06 also records atlasJS closure.",
+    "No main landing, Maven Central release, native/visual/performance or new scientific qualification.",
+    "Final four-library U6 acceptance and remaining deletion-ledger cleanup are separate."
+  ],
+  "independent_review": {
+    "reviewer": "volume_view_astra_review",
+    "verdict": "APPROVE",
+    "scope": "eco-u6-surface-mvpa closure",
+    "provider_source": "c27469484bf760c34cd896dabe4fe1c384a83b45",
+    "root_source": "70b3ee7bc0a35e28569ae6d68c5c88c8ff9cc599",
+    "consumer_inputs_verified": 6,
+    "private_artifacts_verified": 120,
+    "provider_heads_verified": 7
+  },
+  "independent_consumer_input_custody": {
+    ".jvmopts": {
+      "stored": "docs/verification/eco-u6-20261022/independent-consumer/.jvmopts.gz",
+      "source_sha256": "94cf28a80fb746b36ad1085ee5662bdabebfb9c4b0973dbb38679550619dd90e",
+      "gzip_sha256": "670b4ef6ea12e0fc68c3dd46a118666e9eba2aaf4cb4e1c0db228f0947653208"
+    },
+    "atlas/src/test/scala/example/AtlasConsumerSuite.scala": {
+      "stored": "docs/verification/eco-u6-20261022/independent-consumer/atlas/src/test/scala/example/AtlasConsumerSuite.scala.gz",
+      "source_sha256": "961a658b584df2379c8179974674fb975a7ab7ed0876d34df9524b551819e49b",
+      "gzip_sha256": "5f2ac57cde09f25ea41197ebbd77e553986efc127d9789d3d662967ba688f04e"
+    },
+    "build.sbt": {
+      "stored": "docs/verification/eco-u6-20261022/independent-consumer/build.sbt.gz",
+      "source_sha256": "86f18e5a1e88789b02da3ce72cf493de0a7deddfa33835e2e78f3d4d73e78b35",
+      "gzip_sha256": "7ed03286b55ca44a9735ecff07725aca7c89eb8893835022cc044ca4acaf9a5f"
+    },
+    "project/build.properties": {
+      "stored": "docs/verification/eco-u6-20261022/independent-consumer/project/build.properties.gz",
+      "source_sha256": "bc2e83307ba4a40cb286711cee6f644d9bca62ab2d791053000c7c9ce7a82bb2",
+      "gzip_sha256": "9b25ffebec56b6e0efcc4cadfcb55e1e831bfa7fbadcabf1eb06b267f06caa72"
+    },
+    "project/plugins.sbt": {
+      "stored": "docs/verification/eco-u6-20261022/independent-consumer/project/plugins.sbt.gz",
+      "source_sha256": "b0cd8165faf8b727643e5862040f92b6b4d3fad5af93a15986992dc85c00a0a3",
+      "gzip_sha256": "ddd79b187db52c3124b58fbb438cf00c0417edf0edc705a3da5adaee9e6c9e78"
+    },
+    "surface/src/test/scala/example/SurfaceConsumerSuite.scala": {
+      "stored": "docs/verification/eco-u6-20261022/independent-consumer/surface/src/test/scala/example/SurfaceConsumerSuite.scala.gz",
+      "source_sha256": "a8be24ad36c5be3bd100343d90ae0fc2489a7525665bd321f9dacd11d3022fd5",
+      "gzip_sha256": "50557f2eb10e96e38b232647573a0ae4e9713873807afe27d1bc0fc02c9fba2c"
+    }
+  },
+  "provider_evidence_commit": "a62919d8178f1b8b1a8ac1f9144f1dd0dc03a421",
+  "provider_evidence_url": "https://github.com/canardlapin/mvpa4s/tree/a62919d8178f1b8b1a8ac1f9144f1dd0dc03a421/docs/verification/eco-u6-20261022"
+}

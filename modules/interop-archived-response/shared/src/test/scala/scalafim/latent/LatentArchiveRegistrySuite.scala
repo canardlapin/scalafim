@@ -1,6 +1,6 @@
 package scalafim.latent
 
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 
 import scalafim.archive.{ArchiveError, RunLabel}
 import scalafim.archive.lna.{
@@ -15,7 +15,7 @@ import scalafim.archive.lna.{
   TransformKind,
   TransformParams
 }
-import scalafim.image.{Mask, SomeSampleSpace}
+import neuroim4s.image.{Mask}
 import gale.linalg.{DMat, DVec, LinAlgError}
 import scalafim.archive.lna.GaleArchiveTestData
 

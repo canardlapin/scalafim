@@ -1,0 +1,230 @@
+{
+  "root_source": "2198839d8",
+  "surface_cutover": "2010ebc77",
+  "mvpa_centered_neighborhood_repair": "bd4ae757c",
+  "provider_published_head": "4657ed670c496a36af6ebecef22ec95156529172",
+  "retired_roots": [
+    "modules/surface",
+    "modules/surface-test-fixtures",
+    "modules/surface-view",
+    "modules/surface-view-raster",
+    "modules/surface-view-javafx",
+    "modules/surface-view-three",
+    "examples/surface-view",
+    "examples/surface-jvm",
+    "tools/surface-view"
+  ],
+  "root_callers_passed": 613,
+  "tasks": [
+    {
+      "task": "surfaceViewConnectivityJVM/test",
+      "passed": 2,
+      "gate": "01"
+    },
+    {
+      "task": "surfaceViewConnectivityJS/test",
+      "passed": 2,
+      "gate": "01"
+    },
+    {
+      "task": "mvpaSpatialJVM/test",
+      "passed": 15,
+      "gate": "02"
+    },
+    {
+      "task": "mvpaSpatialJS/test",
+      "passed": 15,
+      "gate": "02"
+    },
+    {
+      "task": "spatialJVM/test",
+      "passed": 231,
+      "gate": "02"
+    },
+    {
+      "task": "spatialJS/test",
+      "passed": 206,
+      "gate": "02"
+    },
+    {
+      "task": "atlasJVM/test",
+      "passed": 81,
+      "gate": "05"
+    },
+    {
+      "task": "atlasJS/test",
+      "passed": 61,
+      "gate": "05"
+    }
+  ],
+  "root_compatibility_facades": false,
+  "atlas_oracle": {
+    "actual_numerical_inverse_executed": true,
+    "forward_vs_ITK_max_mm": 0.0104,
+    "round_trip_max_mm": 0.0102,
+    "unchanged_push_tolerance_mm": 0.05
+  },
+  "adverse": [
+    "01: actual centered locus4s neighborhoods replaced removed Root helper in SurfaceMeasurementFrames; no new duplicate neighborhood model.",
+    "02/03: atlas volume coordinates restored to SpatialPoint; actual raw surface coordinates Xyz; explicit scenarioTestkit test dependency;03 used stale build server before restart.",
+    "04: cancelled during build loading under measured host load400/swap11GB; no assertions executed and no code verdict."
+  ],
+  "logs": [
+    {
+      "path": "scalafim-eco-u5-callers-01.log.gz",
+      "raw_sha256": "63f57e3da411c9bb53302b7eb330cfbaed6af4dae823e4afbaf7e4e49c30f4ba",
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-21T18:54:37.901351+00:00",
+        "finished_utc": "2026-10-21T18:59:58.365703+00:00",
+        "duration_seconds": 320.461375,
+        "command": [
+          "env",
+          "-u",
+          "JAVA_TOOL_OPTIONS",
+          "JAVA_HOME=/Users/bbuchsbaum/Library/Java/JavaVirtualMachines/openjdk-22/Contents/Home",
+          "SBT_WARM_HEAP=6g",
+          "python3",
+          "tools/build/sbt-warm",
+          "surfaceViewConnectivityJVM/test",
+          "surfaceViewConnectivityJS/test",
+          "mvpaSpatialJVM/test",
+          "mvpaSpatialJS/test",
+          "spatialJVM/test",
+          "spatialJS/test",
+          "atlasJVM/test",
+          "atlasJS/test"
+        ],
+        "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021",
+        "log": "/tmp/scalafim-eco-u5-callers-01.log",
+        "exit_code": 1,
+        "child_returncode": 1,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 5400.0,
+        "log_bytes": 35819
+      }
+    },
+    {
+      "path": "scalafim-eco-u5-callers-02.log.gz",
+      "raw_sha256": "27ae14ad9e9d12914561d0ba81903efff2cc2e6028620edfeeff8b6540f428ac",
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-21T19:01:50.635086+00:00",
+        "finished_utc": "2026-10-21T19:03:24.273394+00:00",
+        "duration_seconds": 93.637385,
+        "command": [
+          "env",
+          "-u",
+          "JAVA_TOOL_OPTIONS",
+          "JAVA_HOME=/Users/bbuchsbaum/Library/Java/JavaVirtualMachines/openjdk-22/Contents/Home",
+          "SBT_WARM_HEAP=6g",
+          "python3",
+          "tools/build/sbt-warm",
+          "mvpaSpatialJVM/test",
+          "mvpaSpatialJS/test",
+          "spatialJVM/test",
+          "spatialJS/test",
+          "atlasJVM/test",
+          "atlasJS/test"
+        ],
+        "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021",
+        "log": "/tmp/scalafim-eco-u5-callers-02.log",
+        "exit_code": 1,
+        "child_returncode": 1,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 5400.0,
+        "log_bytes": 64029
+      }
+    },
+    {
+      "path": "scalafim-eco-u5-atlas-03.log.gz",
+      "raw_sha256": "e63022a5c62fec437853637970af90cfdc82cac37c62498502d7b0c20df6bcc0",
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-21T19:12:19.330307+00:00",
+        "finished_utc": "2026-10-21T19:13:25.410989+00:00",
+        "duration_seconds": 66.077022,
+        "command": [
+          "env",
+          "-u",
+          "JAVA_TOOL_OPTIONS",
+          "JAVA_HOME=/Users/bbuchsbaum/Library/Java/JavaVirtualMachines/openjdk-22/Contents/Home",
+          "SBT_WARM_HEAP=6g",
+          "python3",
+          "tools/build/sbt-warm",
+          "atlasJVM/test",
+          "atlasJS/test"
+        ],
+        "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021",
+        "log": "/tmp/scalafim-eco-u5-atlas-03.log",
+        "exit_code": 1,
+        "child_returncode": 1,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 1800.0,
+        "log_bytes": 3375
+      }
+    },
+    {
+      "path": "scalafim-eco-u5-atlas-04.log.gz",
+      "raw_sha256": "56ccf60cecd96d22752ad7230176c831d877997d76307dbd9bcb767ae405097c",
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-21T19:16:52.457042+00:00",
+        "finished_utc": "2026-10-21T20:59:46.286331+00:00",
+        "duration_seconds": 677.399466,
+        "command": [
+          "env",
+          "-u",
+          "JAVA_TOOL_OPTIONS",
+          "JAVA_HOME=/Users/bbuchsbaum/Library/Java/JavaVirtualMachines/openjdk-22/Contents/Home",
+          "SBT_WARM_HEAP=6g",
+          "python3",
+          "tools/build/sbt-warm",
+          "atlasJVM/test",
+          "atlasJS/test"
+        ],
+        "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021",
+        "log": "/tmp/scalafim-eco-u5-atlas-04.log",
+        "exit_code": 1,
+        "child_returncode": 1,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 1800.0,
+        "log_bytes": 2103
+      }
+    },
+    {
+      "path": "scalafim-eco-u5-atlas-05.log.gz",
+      "raw_sha256": "a9228e542a514f21da8087b3230c5172626b3aa7a7ee9febc60971dd7a92b05c",
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-21T21:07:18.268529+00:00",
+        "finished_utc": "2026-10-21T21:10:03.094494+00:00",
+        "duration_seconds": 164.824268,
+        "command": [
+          "env",
+          "-u",
+          "JAVA_TOOL_OPTIONS",
+          "JAVA_HOME=/Users/bbuchsbaum/Library/Java/JavaVirtualMachines/openjdk-22/Contents/Home",
+          "SBT_WARM_HEAP=6g",
+          "python3",
+          "tools/build/sbt-warm",
+          "atlasJVM/test",
+          "atlasJS/test"
+        ],
+        "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021",
+        "log": "/tmp/scalafim-eco-u5-atlas-05.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 1800.0,
+        "log_bytes": 25115
+      }
+    }
+  ],
+  "limits": "This is affected-caller evidence, not U5 full-epic or hosted CI acceptance. Published provider native/browser proofs live in neurosurf4s docs/verification/eco-u5-20261021; next gate compiles all Root/provider modules at published4657 pin."
+}

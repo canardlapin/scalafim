@@ -1,0 +1,57 @@
+{
+  "scope": "All files in this follow-up receipt directory except this manifest. Source/runtime and evidence-only descendants remain distinguished.",
+  "files": {
+    "README.md": {
+      "sha256": "3b3b5c8f7fe6e9b8e342e625fc04f3789dbd5740a6d32b14d1fcbda23f5d103a",
+      "bytes": 2056
+    },
+    "acceptance-summary.json": {
+      "sha256": "e07045c13fe09b7902561ebdff418f89643d8bb37e0060dd4d83f0723a9f0403",
+      "bytes": 3808
+    },
+    "cleanup.json": {
+      "sha256": "9460e4c75b25d837a66553247973497a523be1b5ce8e8839f0cdc040c10c4be3",
+      "bytes": 4777
+    },
+    "eco-followups-readiness-07.json.gz": {
+      "sha256": "fbf1addf4a58ad5f91a64531240c463acb44499639787f767527a1e3583694d3",
+      "bytes": 16213
+    },
+    "eco-followups-readiness-07.log.gz": {
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20
+    },
+    "eco-followups-readiness-07.log.meta.json.gz": {
+      "sha256": "bc666ce12ace7fcd896c7431627a9c5e37ea3a35ad5db75ce2bfaf549d34feca",
+      "bytes": 327
+    },
+    "eco-followups-root-05.log.gz": {
+      "sha256": "8d3e39dd98444f14ad3a6434873d26671cf206506891a38ffd4d1fce930b1187",
+      "bytes": 6274
+    },
+    "eco-followups-root-05.log.meta.json.gz": {
+      "sha256": "33614265c54675a582004d9801a8087d59b5c8f00fd2cbf96fb3fb456ee8b000",
+      "bytes": 346
+    },
+    "final-provider-review.md": {
+      "sha256": "8348a66780b54aa2cdc8bb2e5a9a215b8d4b504bc91b4ad596f6e47a5bbb8744",
+      "bytes": 1390
+    },
+    "gale-alignment.json": {
+      "sha256": "1b416bd046c7997ea8d7ba676a4e8eabcf6e0b637c22ee3b20064eb180ff3ebe",
+      "bytes": 1576
+    },
+    "pls-adoption.json": {
+      "sha256": "4d6d2a07a451b1641ca8d4c145db9015522ad08f5147c3fd5044e0df32979423",
+      "bytes": 4630
+    },
+    "source-owners.json": {
+      "sha256": "b3589162d20f70c0844ca914dbd9285ab71bc53735e48854b61c5861c6b92bc5",
+      "bytes": 4643
+    },
+    "tracker-status.json": {
+      "sha256": "4feec745b9b1007c672ad6493d1729572bfee2c6fbf0fbd41ce74799dac1223c",
+      "bytes": 1303
+    }
+  }
+}

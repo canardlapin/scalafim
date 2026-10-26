@@ -1,5 +1,7 @@
 package scalafim.spatial
 
+import neurosurf4s.routing.*
+
 class SpatialLazyContractSuite extends munit.FunSuite with SpatialLazyContractLaws:
 
   override val spatialLazyAdapter: SpatialLazyContractAdapter =
