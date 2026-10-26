@@ -130,10 +130,8 @@ adjacent checkout is selected automatically during extraction; an explicit
 | `fit` | Inspectable fMRI model and fit plans plus numerical fit engines, with explicit synchronous `DatasetSeriesReader` and effectful `OpenedDataset[F]` execution boundaries. Packages remain `scalafim.fmri.model` and `scalafim.fmri.fit`. | `design`, `dataset`, `ar`; standalone Gale | Dataset storage, hidden blocking readers, or group inference. |
 | `design-view` | Renderer-neutral design review graphics and raster exports. | `design`; standalone Intaglio core and platform renderers | Design construction, model/fit policy, or application UI ownership. |
 | `mvpa4s` (standalone, pinned) | Identified MVPA evidence, axes and reindexing, relational/pattern analyses, measurement and execution contracts; `mvpa4s-testkit` supplies test-scope fixture identities and R parity reference data. | standalone Gale, locus4s core/provenance, Multivar, Multivar inference, Resample4s | Response, pipeline, imaging, surface, atlas, dataset or fMRI-fit types; ScalaFIM dependencies of any kind. |
-| `mvpa-pipeline` | Optional synchronous interpretation of MVPA unit evaluation through the existing local pipeline runner. | `mvpa4s`, `pipeline` | Scientific scheduling, seeds, resource cleanup, retry/commit policy or a second execution engine. |
-| `mvpa-fit` | Shared run-local composition of fit-owned trial readouts with MVPA pattern operators, checked common feature axes, trial/run metadata, fold restriction, and local task/result collection. | `fit`, `mvpa4s`; standalone multivar | QR/GLM kernels, classifier numerics, a second feature-set abstraction, workflow scheduling, or platform IO. |
+| `mvpa-fmri` | Typed dataset/response adapters and shared run-local composition of fit-owned trial readouts with MVPA pattern operators, checked common feature axes, trial/run metadata, fold restriction, and local task/result collection. | `fit`, `dataset`, `mvpa4s`, `mvpa4s-predictive`; standalone Multivar and Alder | QR/GLM kernels, classifier numerics, a second feature-set abstraction, workflow scheduling, or platform IO. |
 | `connectivity` | Shared connectivity algebra and portable kernels: ordered node axes with scientific provenance, graph4s-projected topology, locus node/edge spaces and masks, parcel time series, explicit vectorization orders, static/dynamic containers, estimator plans, ETS/event-weighted correlation, partial correlation, connectivity-set inference, dynamic stacks, diagnostics, and workflow receipts. | standalone graph4s, standalone locus4s core; Gale on each platform | Dataset backends, atlas/BIDS adapters, plotting, JVM IO, multivar execution bridges, TVGL/SRLC/phase/HMM internals, native optimizer backends, or scheduler/runtime execution. |
-| `mvpa-dataset` | Typed dataset/response adapters into identified evidence; generic soft-LDA and Alder lifecycles live in `mvpa4s-predictive`. | `mvpa4s`, `mvpa4s-predictive`, `mvpa-fit`, `dataset`; Alder | Classifier algorithms, dataset storage backends, hidden blocking readers, or spatial feature-set construction. |
 | `mvpa-spatial` | Functional threshold policy and fMRI spatial scenario checks; generic locus/mesh/atlas adapters live in optional mvpa4s artifacts. | `mvpa4s-core`, `threshold`; locus, surface and predictive providers in Test scope | Classifier algorithms, atlas loading, or a second searchlight/window model. |
 | `group` | Second-level/group GLM, meta-analysis, group contrasts, FDR over subjects-by-samples maps. | standalone `neuroim4s-core`, `dataset`, `design`, `estimates`; standalone Gale | First-level model fitting or thresholding internals. |
 | `mvpa-group` | Source-bound subject-coordinate and full joint uncertainty bridges into the existing group model; eager inputs retain covariance and df provenance. | `mvpa4s`, `group` (including adopted estimates contracts) | A second group engine, invented uncertainty, generic covariance storage disguised as anatomical geometry, or unqualified joint inference. |
@@ -252,16 +250,16 @@ fit -> group -> threshold
 image --------^       ^
 dataset -------------+
 
-dataset -> mvpa-dataset -> mvpa4s
+dataset -> mvpa-fmri -> mvpa4s
 neurosurf4s/neuroatlas4s core -> optional mvpa4s surface/atlas adapters
 mvpa-spatial -> mvpa4s core + threshold
-fit + mvpa4s -> mvpa-fit
+fit + mvpa4s -> mvpa-fmri
 mvpa4s + group -> mvpa-group
 standalone multivar-inference (external)
 ```
 
 `threshold` consumes statistic maps and masks; it is deliberately not a group
-modeling module. `mvpa4s` core is spatially agnostic; `mvpa-dataset` converts selected
+modeling module. `mvpa4s` core is spatially agnostic; `mvpa-fmri` converts selected
 dataset rows into identified evidence. Optional mvpa4s locus/surface/atlas modules
 compose measurements and scatter; `mvpa-spatial` retains fMRI threshold policy.
 
@@ -415,11 +413,11 @@ There are intentionally two layers:
   atlas, BIDS, plotting, IO, multivar execution bridges, native optimizer
   backends, phase/HMM/TVGL/SRLC internals, and scheduler-specific execution
   outside this structural core.
-- Put dataset/sample adapters for MVPA in `mvpa-dataset`; put spatial feature
+- Put dataset/sample adapters for MVPA in `mvpa-fmri`; put spatial feature
   adapters for MVPA in optional `mvpa4s-locus`, `mvpa4s-surface` and `mvpa4s-atlas`;
   keep fMRI threshold policy in `mvpa-spatial` and `mvpa4s` core over plain sample-by-feature
   matrices and linear operators. Put fit-owned time-to-trial readout composition,
-  run stacking, and trial/run metadata in `mvpa-fit` so neither lower module
+  run stacking, and trial/run metadata in `mvpa-fmri` so neither lower module
   depends back on the other.
 
 If a change wants a new dependency edge, stop and check whether the code belongs
@@ -430,7 +428,7 @@ workflow-neutral.
 
 `mvpa-artifacts` owns a finite completed-pattern profile and a JVM adapter to
 `archive.io.LocalObjectStore`. It depends on MVPA artifact types and existing
-estimate IO, never on `fit` or `mvpa-fit`. Its reader restores declared axes,
+estimate IO, never on `fit` or `mvpa-fmri`. Its reader restores declared axes,
 policies, lineage and coverage without the fitter. Matrices are individually
 hash-pinned external Float64 leaves. Other profiles and resumable optimizer
 checkpoints are explicitly unsupported; there is no codec registry or upload.

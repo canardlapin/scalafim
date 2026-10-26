@@ -1,0 +1,65 @@
+{
+  "base": "c98148fab2dbcb168b99019ec01cff86f56eb1e5",
+  "moves": 27,
+  "modules_before": 34,
+  "modules_after": 32,
+  "tests": {
+    "mvpaFmriJVM": 55,
+    "mvpaFmriJS": 55,
+    "workflowExamplesJVM": 8,
+    "workflowExamplesJS": 6
+  },
+  "review": "Independent lean_expert source/dependency/move review: qualified approval, no blockers",
+  "logs": [
+    {
+      "path": "/private/tmp/scalafim-simplify-20261026-d-tests.log",
+      "sha256": "f00ae73788d95d3e511ad365d4018ee4e44daf609f2fbb50ea43cb2414dacb24",
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-26T21:02:14.959314+00:00",
+        "finished_utc": "2026-10-26T21:08:15.916577+00:00",
+        "duration_seconds": 360.954791,
+        "command": [
+          "python3",
+          "tools/build/sbt-warm",
+          "mvpaFmriJVM/test",
+          "workflowExamplesJVM/test",
+          "mvpaFmriJS/test",
+          "workflowExamplesJS/test"
+        ],
+        "cwd": "/private/tmp/scalafim-simplify-20261026",
+        "log": "/private/tmp/scalafim-simplify-20261026-d-tests.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 3600.0,
+        "log_bytes": 72100
+      }
+    },
+    {
+      "path": "/private/tmp/scalafim-simplify-20261026-d-compile.log",
+      "sha256": "18c9de1e7e0a3847388c6e20b784b873cf22bb419b72f09c008b40aba5f89d1a",
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-26T21:08:29.619134+00:00",
+        "finished_utc": "2026-10-26T21:12:35.609316+00:00",
+        "duration_seconds": 245.988467,
+        "command": [
+          "python3",
+          "tools/build/sbt-warm",
+          "scalafimCompileAll",
+          "examplesCompile"
+        ],
+        "cwd": "/private/tmp/scalafim-simplify-20261026",
+        "log": "/private/tmp/scalafim-simplify-20261026-d-compile.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 3600.0,
+        "log_bytes": 14308
+      }
+    }
+  ]
+}

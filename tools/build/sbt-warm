@@ -10,7 +10,7 @@ same dependency pins, and keeps one resident sbt server per worktree reached
 through `sbt --client`, so repeat gates cost about a second.
 
 usage:
-  python3 tools/build/sbt-warm [--] 'mvpaDatasetJVM/test' 'mvpaDatasetJS/test'   run commands, in order
+  python3 tools/build/sbt-warm [--] 'mvpaFmriJVM/test' 'mvpaFmriJS/test'   run commands, in order
   python3 tools/build/sbt-warm --status                          show this worktree's base/server
   python3 tools/build/sbt-warm --shutdown                        stop this worktree's server
   python3 tools/build/sbt-warm --gc [--apply]                    list (or delete) orphaned bases
