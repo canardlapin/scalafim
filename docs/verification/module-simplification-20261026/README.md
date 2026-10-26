@@ -123,10 +123,10 @@ volume UUID, pin references and recursive activity under the base lock.
 [c-template-gc.json](c-template-gc.json) records all removals/retentions and
 postconditions; [c-template-custody.json](c-template-custody.json) binds every
 mirror. The restore helper and instructions also live beside the external
-copies. The collector's 78 executed unit tests passed; one environment-specific
-live-observation test skipped in its sandbox, with a successful separate-child
-positive control in the actual apply context. Eight archive restoration tests
-passed. The source checkout's historical Git objects and other worktrees were
+copies. The final integrated Python check passed all 78 tooling tests and eight archive
+restoration tests, with zero skips. An earlier staged sandbox observation was
+unavailable; the final test and the actual apply's separate-child positive
+control both succeeded. The source checkout's historical Git objects and other worktrees were
 retained; this operation does not claim physical disk savings from logical sizes.
 
 
@@ -182,3 +182,6 @@ Final integration: `scalafimCompileAll` and `examplesCompile` passed on both
 platforms. The boundary gate checked 559 production files and 24 compile
 closures with zero errors. Logs include the collector-lock wait separately
 from the reported compile execution times. No source warnings were emitted.
+
+Exact local source commits and delivery boundaries are recorded in
+[delivery.json](delivery.json). The branch is committed locally and was not pushed.

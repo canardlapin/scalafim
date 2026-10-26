@@ -17,8 +17,9 @@
       "unreadable base references failclosed; readable external links protected",
       "resolve mount root before diskutil"
     ],
-    "unit_tests_skipped": 1,
-    "actual_template_deletion": "36 removed after verified custody;18 referenced retained"
+    "unit_tests_skipped": 0,
+    "actual_template_deletion": "36 removed after verified custody;18 referenced retained",
+    "final_integrated_check": "78 tooling tests plus8 archive tests:86 passed, zero skips, exit0"
   },
   "publication": "local only",
   "actual_template_deletion": "pending full custody batch"

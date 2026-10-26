@@ -1,0 +1,23 @@
+{
+  "branch": "simplify/remaining-20261026",
+  "code_commit": "44b23dce7c5455f2aba26e03f12be95e3d1db560",
+  "stages": {
+    "D": "fe6fe70bb",
+    "A": "a6abc2fb9",
+    "C": "1ba80c17241506e6074293ecfdb7059296c22635",
+    "E": "44b23dce7c5455f2aba26e03f12be95e3d1db560"
+  },
+  "publication": "local only; no push or merge",
+  "scope": "requested MVPA merge/delete steps plus remaining A,C,E",
+  "external_custody": "/Volumes/My Passport for Mac/codex-work/module-simplification-20261026",
+  "volume_uuid": "51B72C66-64BB-3C5F-8853-2219CA2FFA9F",
+  "final_python_check": {
+    "command": "python3 -m unittest tools/build/test_sbt_warm.py tools/build/test_template_custody.py tools/verification/test_evidence_archive.py",
+    "passed": 86,
+    "skipped": 0,
+    "exit": 0
+  },
+  "verification": "full JVM/JS owning and consumer gates, unchanged literal identities, final compile/examples and boundary checks; retained opt-in/ignored law cases and advisory profile shortfall",
+  "server": "worktree sbt server shut down",
+  "canonical_checkout": "unrelated tracked changes preserved; only authorized target-only directories retired and Mote operations added"
+}
