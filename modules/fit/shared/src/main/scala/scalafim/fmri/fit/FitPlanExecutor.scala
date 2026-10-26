@@ -3,8 +3,7 @@ package scalafim.fmri.fit
 import scalafim.dataset.{
   DataSelection,
   DatasetSeriesReader,
-  FmriSeries,
-  SynchronousFmriDataset
+  FmriSeries
 }
 import scalafim.fmri.design.event.{ConvolvedTerm, EventTermColumnRole}
 import scalafim.fmri.design.{RunCoefficientProjection, RunIndex as DesignRunIndex, ScanIndex}
@@ -24,7 +23,7 @@ object FitPlanExecutor:
       plan: FitPlan,
       selection: DataSelection
   ): Either[FitError, FmriFitResult] =
-    legacyReader(plan).flatMap(fit(_, plan, selection))
+    legacyDatasetReader(plan).flatMap(fit(_, plan, selection))
 
   def fit(
       reader: DatasetSeriesReader,
@@ -125,7 +124,7 @@ object FitPlanExecutor:
       selection: DataSelection,
       chunking: FitChunkingStrategy
   ): Either[FitError, FmriFitResult] =
-    legacyReader(plan).flatMap(fitChunked(_, plan, selection, chunking))
+    legacyDatasetReader(plan).flatMap(fitChunked(_, plan, selection, chunking))
 
   def fitChunked(
       reader: DatasetSeriesReader,
@@ -193,21 +192,11 @@ object FitPlanExecutor:
       chunking: FitChunkingStrategy,
       parallelism: FitParallelism
   )(using ExecutionContext): Future[Either[FitError, FmriFitResult]] =
-    legacyReader(plan) match
+    legacyDatasetReader(plan) match
       case Left(error) =>
         Future.successful(Left(error))
       case Right(reader) =>
         fitChunkedFuture(reader, plan, selection, chunking, parallelism)
-
-  private def legacyReader(
-      plan: FitPlan
-  ): Either[FitError, SynchronousFmriDataset] =
-    SynchronousFmriDataset
-      .readerFor(plan.model.dataset)
-      .left
-      .map(error =>
-        FitError.InvalidFitAxis("dataset reader", error.message)
-      )
 
   private def requireDense(result: FmriFitResult): Either[FitError, DenseFmriFitResult] =
     result match

@@ -1,0 +1,749 @@
+{
+  "scope": "Current modules, examples, and maintained PLSNeuro Scala sources; selected candidates additionally checked against documentation. Lexical names do not prove all overloads/call semantics.",
+  "candidates": [
+    {
+      "file": "modules/archive-lna/shared/src/main/scala/scalafim/archive/lna/LnaModel.scala",
+      "line": 22,
+      "name": "isFloat",
+      "declaration": "def isFloat: Boolean =",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/archive-lna/shared/src/main/scala/scalafim/archive/lna/LnaModel.scala",
+      "line": 25,
+      "name": "isInteger",
+      "declaration": "def isInteger: Boolean =",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/archive-lna/shared/src/main/scala/scalafim/archive/lna/LnaModel.scala",
+      "line": 389,
+      "name": "outputPorts",
+      "declaration": "def outputPorts: Vector[TransformPort] =",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/archive-lna/shared/src/main/scala/scalafim/archive/lna/LnaModel.scala",
+      "line": 486,
+      "name": "creatorId",
+      "declaration": "def creatorId: CreatorId =",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/archive-lna/shared/src/main/scala/scalafim/archive/lna/LnaModel.scala",
+      "line": 489,
+      "name": "lnaHeader",
+      "declaration": "def lnaHeader: LnaMetadata =",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/latent/shared/src/main/scala/scalafim/latent/Transport.scala",
+      "line": 153,
+      "name": "coefficientBlock",
+      "declaration": "def coefficientBlock: CoefficientBlock =",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/latent/shared/src/main/scala/scalafim/latent/BoldZipPayload.scala",
+      "line": 177,
+      "name": "fromOptional",
+      "declaration": "def fromOptional(",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/fmri-workflow/shared/src/main/scala/scalafim/fmri/workflow/AnalysisPlan.scala",
+      "line": 94,
+      "name": "resultBundles",
+      "declaration": "def resultBundles: Vector[ResultBundleRef] =",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/provider-contract/shared/src/main/scala/providercontract/ProviderCapabilityCompileContract.scala",
+      "line": 42,
+      "name": "checkedAffine",
+      "declaration": "def checkedAffine(",
+      "decision": "retain",
+      "reason": "Compile-only public-provider capability witness; runtime callers are not required."
+    },
+    {
+      "file": "modules/provider-contract/shared/src/main/scala/providercontract/ProviderCapabilityCompileContract.scala",
+      "line": 47,
+      "name": "exactSelection",
+      "declaration": "def exactSelection[S](",
+      "decision": "retain",
+      "reason": "Compile-only public-provider capability witness; runtime callers are not required."
+    },
+    {
+      "file": "modules/provider-contract/shared/src/main/scala/providercontract/ProviderCapabilityCompileContract.scala",
+      "line": 53,
+      "name": "selectedSampling",
+      "declaration": "def selectedSampling[",
+      "decision": "retain",
+      "reason": "Compile-only public-provider capability witness; runtime callers are not required."
+    },
+    {
+      "file": "modules/provider-contract/shared/src/main/scala/providercontract/ProviderCapabilityCompileContract.scala",
+      "line": 73,
+      "name": "resamplingPlan",
+      "declaration": "def resamplingPlan[",
+      "decision": "retain",
+      "reason": "Compile-only public-provider capability witness; runtime callers are not required."
+    },
+    {
+      "file": "modules/ar/shared/src/main/scala/scalafim/fmri/ar/WhiteningPlan.scala",
+      "line": 76,
+      "name": "precomputedScale",
+      "declaration": "def precomputedScale(scale: Double): Either[ArError, InitialConditionPolicy] =",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/ar/shared/src/main/scala/scalafim/fmri/ar/ArmaCoefficients.scala",
+      "line": 12,
+      "name": "typedArOrder",
+      "declaration": "def typedArOrder: ArOrderValue = ArOrderValue.unsafe(phi.length)",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/ar/shared/src/main/scala/scalafim/fmri/ar/ArmaCoefficients.scala",
+      "line": 13,
+      "name": "typedMaOrder",
+      "declaration": "def typedMaOrder: ArOrderValue = ArOrderValue.unsafe(theta.length)",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/ar/shared/src/main/scala/scalafim/fmri/ar/ArmaCoefficients.scala",
+      "line": 14,
+      "name": "isIid",
+      "declaration": "def isIid: Boolean = phi.isEmpty && theta.isEmpty",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/ar/shared/src/main/scala/scalafim/fmri/ar/TimeSegment.scala",
+      "line": 173,
+      "name": "unsafeFromRunLabels",
+      "declaration": "def unsafeFromRunLabels[A](labels: IndexedSeq[A]): Vector[TimeSegment] =",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/phrf-comparison/jvm/src/main/scala/scalafim/phrfcmp/exec/Fs.scala",
+      "line": 56,
+      "name": "moveAtomic",
+      "declaration": "def moveAtomic(from: Path, to: Path): Unit =",
+      "decision": "remove",
+      "reason": "No source, test, documentation or maintained PLSNeuro caller; redundant wrapper or private obsolete implementation. Independent caller audit confirms."
+    },
+    {
+      "file": "modules/phrf-comparison/jvm/src/main/scala/scalafim/phrfcmp/exec/CpuClock.scala",
+      "line": 26,
+      "name": "childSeconds",
+      "declaration": "def childSeconds: Double = children.sum",
+      "decision": "remove",
+      "reason": "No source, test, documentation or maintained PLSNeuro caller; redundant wrapper or private obsolete implementation. Independent caller audit confirms."
+    },
+    {
+      "file": "modules/mvpa-fmri/shared/src/main/scala/scalafim/fmri/mvpa/fit/CanonicalArtifacts.scala",
+      "line": 103,
+      "name": "fitNonnegative",
+      "declaration": "def fitNonnegative[P <: SemanticSpace, N <: SemanticSpace](",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/mvpa-fmri/shared/src/main/scala/scalafim/fmri/mvpa/fit/CanonicalArtifacts.scala",
+      "line": 160,
+      "name": "fitManova",
+      "declaration": "def fitManova[P <: SemanticSpace, N <: SemanticSpace](",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/mvpa-fmri/shared/src/main/scala/scalafim/fmri/mvpa/dataset/DatasetObservationEvidence.scala",
+      "line": 322,
+      "name": "fromFeatures",
+      "declaration": "def fromFeatures(",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/mvpa-fmri/shared/src/main/scala/scalafim/fmri/mvpa/dataset/DatasetObservationEvidence.scala",
+      "line": 353,
+      "name": "estimateId",
+      "declaration": "def estimateId: Option[EstimateId] =",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/mvpa-fmri/shared/src/main/scala/scalafim/fmri/mvpa/dataset/DatasetObservationEvidence.scala",
+      "line": 375,
+      "name": "fromEstimateId",
+      "declaration": "def fromEstimateId(id: EstimateId, rowIndex: SampleRowIndex): Either[MvpaDatasetError, SampleOrigin] =",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/mvpa-fmri/shared/src/main/scala/scalafim/fmri/mvpa/dataset/DatasetObservationEvidence.scala",
+      "line": 384,
+      "name": "fromRowIndex",
+      "declaration": "def fromRowIndex(rowIndex: SampleRowIndex): Either[MvpaDatasetError, SampleOrigin] =",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/mvpa-fmri/shared/src/main/scala/scalafim/fmri/mvpa/dataset/DatasetObservationEvidence.scala",
+      "line": 595,
+      "name": "unsafeEstimate",
+      "declaration": "def unsafeEstimate(",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/motion/shared/src/main/scala/scalafim/fmri/motion/Units.scala",
+      "line": 48,
+      "name": "forCurrent",
+      "declaration": "def forCurrent(current: FrameIndex): Either[MotionError, FramePair] =",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/motion/jvm/src/main/scala/scalafim/fmri/motion/io/MotionBids.scala",
+      "line": 57,
+      "name": "loadRun",
+      "declaration": "def loadRun(scan: MotionBidsScan, evidence: SpaceEvidence): Either[MotionIoError, SomeScalarSeries[Double]] =",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/surface-view-connectivity/shared/src/main/scala/scalafim/connectivity/view/ConnectivitySurfaceNetwork.scala",
+      "line": 28,
+      "name": "fromStatic",
+      "declaration": "def fromStatic(",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/dataset/shared/src/main/scala/scalafim/dataset/DatasetMetadata.scala",
+      "line": 275,
+      "name": "alignedTo",
+      "declaration": "def alignedTo(timeAxis: DatasetTimeAxis): Either[DatasetError, DatasetEvents] =",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/dataset/shared/src/main/scala/scalafim/dataset/DatasetIndex.scala",
+      "line": 389,
+      "name": "unsafeSingle",
+      "declaration": "def unsafeSingle(key: RunKey, dataset: FmriDataset): DatasetIndex =",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/group/shared/src/main/scala/scalafim/fmri/group/GroupStatistic.scala",
+      "line": 20,
+      "name": "twoSidedPValue",
+      "declaration": "def twoSidedPValue(statistic: Double): Either[GroupError, PValue] =",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/group/shared/src/main/scala/scalafim/fmri/group/GroupDesign.scala",
+      "line": 19,
+      "name": "hasTerm",
+      "declaration": "def hasTerm(name: String): Boolean = termNames.contains(name)",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/group/shared/src/main/scala/scalafim/fmri/group/GroupDesign.scala",
+      "line": 20,
+      "name": "hasDesignTerm",
+      "declaration": "def hasDesignTerm(name: DesignTermName): Boolean = designTerms.contains(name)",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/group/shared/src/main/scala/scalafim/fmri/group/GroupModel.scala",
+      "line": 25,
+      "name": "reduceWith",
+      "declaration": "def reduceWith(newWeighting: GroupWeighting): GroupModel[V] = copy(weighting = newWeighting)",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/connectivity/shared/src/main/scala/scalafim/connectivity/Inference.scala",
+      "line": 14,
+      "name": "effectDf",
+      "declaration": "def effectDf: Int =",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/connectivity/shared/src/main/scala/scalafim/connectivity/Inference.scala",
+      "line": 17,
+      "name": "nuisanceDf",
+      "declaration": "def nuisanceDf: Int =",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/connectivity/shared/src/main/scala/scalafim/connectivity/Workflow.scala",
+      "line": 38,
+      "name": "hasWarnings",
+      "declaration": "def hasWarnings: Boolean =",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/connectivity/shared/src/main/scala/scalafim/connectivity/Axes.scala",
+      "line": 138,
+      "name": "sampleRateHz",
+      "declaration": "def sampleRateHz: Double =",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/connectivity/shared/src/main/scala/scalafim/connectivity/Matrices.scala",
+      "line": 171,
+      "name": "covariatesBySubject",
+      "declaration": "def covariatesBySubject: Map[SubjectId, SubjectCovariates] =",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/connectivity/shared/src/main/scala/scalafim/connectivity/Windows.scala",
+      "line": 22,
+      "name": "centerSample",
+      "declaration": "def centerSample: Double =",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/connectivity/shared/src/main/scala/scalafim/connectivity/Projection.scala",
+      "line": 602,
+      "name": "projectUndirected",
+      "declaration": "def projectUndirected[W](",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/connectivity/shared/src/main/scala/scalafim/connectivity/Projection.scala",
+      "line": 607,
+      "name": "projectDirected",
+      "declaration": "def projectDirected[W](",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/StructuralHypothesisDsl.scala",
+      "line": 51,
+      "name": "withRole",
+      "declaration": "def withRole(value: ColumnRole): SampledRef =",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/Contrasts.scala",
+      "line": 664,
+      "name": "attachedFContrasts",
+      "declaration": "def attachedFContrasts(model: FmriModel): Vector[FContrast] =",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/StructuralHypotheses.scala",
+      "line": 399,
+      "name": "fromResponseRows",
+      "declaration": "def fromResponseRows(",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FmriFitResult.scala",
+      "line": 516,
+      "name": "coefficientAxisForRun",
+      "declaration": "def coefficientAxisForRun(runIndex: Int): Option[CoefficientAxis] =",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/ImageMaps.scala",
+      "line": 32,
+      "name": "fromStatMap",
+      "declaration": "def fromStatMap(map: StatMap): FitImageMaps =",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/MaskedResponseExecutor.scala",
+      "line": 48,
+      "name": "hasMissingValues",
+      "declaration": "def hasMissingValues: Boolean = missingValueCount > 0",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/ResultArtifacts.scala",
+      "line": 532,
+      "name": "contrastMaps",
+      "declaration": "def contrastMaps(contrastId: String): Vector[ContrastMap] =",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/Lss.scala",
+      "line": 131,
+      "name": "trialWorkspace",
+      "declaration": "def trialWorkspace(trialName: String): Option[LssTrialWorkspace] =",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/fit/shared/src/main/scala/scalafim/fmri/model/FitConfig.scala",
+      "line": 1385,
+      "name": "unsafeFromLegacy",
+      "declaration": "def unsafeFromLegacy(engine: FitEngine, config: FitConfig = FitConfig()): FitStrategy =",
+      "decision": "phase-e",
+      "reason": "Typed/legacy boundary or typed constructor; decide together with literal identity fixtures, not by lexical absence."
+    },
+    {
+      "file": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/WorkReceipt.scala",
+      "line": 32,
+      "name": "minMillis",
+      "declaration": "def minMillis: Double = sorted.head / 1e6",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/WorkReceipt.scala",
+      "line": 74,
+      "name": "phaseMillis",
+      "declaration": "def phaseMillis(phase: String): Double = phases.find(_.phase == phase).map(_.millis).getOrElse(Double.NaN)",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/WorkReceipt.scala",
+      "line": 75,
+      "name": "totalMillis",
+      "declaration": "def totalMillis: Double = phases.map(_.millis).sum",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/CompactPairedComparison.scala",
+      "line": 22,
+      "name": "policyId",
+      "declaration": "def policyId: String = if enabled then CompactComparisonWorkspaceReceipt.PolicyId else \"scalar-only\"",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/archive/shared/src/main/scala/scalafim/archive/PayloadExecution.scala",
+      "line": 265,
+      "name": "appendAll",
+      "declaration": "def appendAll(values: Iterable[ReadObservation]): ReceiptAccumulator =",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/response/shared/src/main/scala/scalafim/response/ResponseBlock.scala",
+      "line": 17,
+      "name": "sameRawBits",
+      "declaration": "def sameRawBits(other: ResponseBlock): Boolean =",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/scenario-testkit/jvm/src/main/scala/scalafim/testkit/RealAssetGate.scala",
+      "line": 9,
+      "name": "requireReal",
+      "declaration": "def requireReal(present: Boolean, what: String): Unit =",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/design/shared/src/main/scala/scalafim/fmri/design/DesignSchema.scala",
+      "line": 324,
+      "name": "selectedRowCount",
+      "declaration": "def selectedRowCount: Int = selectedRows.length",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/design/shared/src/main/scala/scalafim/fmri/design/DesignSchema.scala",
+      "line": 1270,
+      "name": "sourceIndexForLocal",
+      "declaration": "def sourceIndexForLocal(localIndex: Int): Option[Int] =",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/design/shared/src/main/scala/scalafim/fmri/design/Residualize.scala",
+      "line": 82,
+      "name": "residualizeByName",
+      "declaration": "def residualizeByName(data: Mat, cols: Seq[String], tol: Double = 1e-7, pivot: Boolean = true): Mat =",
+      "decision": "remove",
+      "reason": "No source, test, documentation or maintained PLSNeuro caller; redundant wrapper or private obsolete implementation. Independent caller audit confirms."
+    },
+    {
+      "file": "modules/design/shared/src/main/scala/scalafim/fmri/design/DesignExports.scala",
+      "line": 729,
+      "name": "selectColumnIndices",
+      "declaration": "def selectColumnIndices(",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/design/shared/src/main/scala/scalafim/fmri/design/DesignSelectors.scala",
+      "line": 96,
+      "name": "termIndexOneBased",
+      "declaration": "def termIndexOneBased(value: Int): Either[DesignError, DesignColumnSelector] =",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/design/shared/src/main/scala/scalafim/fmri/design/DesignSelectors.scala",
+      "line": 99,
+      "name": "unsafeTermIndexOneBased",
+      "declaration": "inline def unsafeTermIndexOneBased(value: Int): DesignColumnSelector =",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/design/shared/src/main/scala/scalafim/fmri/design/DesignSelectors.scala",
+      "line": 111,
+      "name": "runOneBased",
+      "declaration": "def runOneBased(value: Int): Either[DesignError, DesignColumnSelector] =",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/design/shared/src/main/scala/scalafim/fmri/design/DesignSelectors.scala",
+      "line": 123,
+      "name": "basisIndexOneBased",
+      "declaration": "def basisIndexOneBased(value: Int): Either[DesignError, DesignColumnSelector] =",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/design/shared/src/main/scala/scalafim/fmri/design/hrf/HrfRegistry.scala",
+      "line": 46,
+      "name": "listRegisteredHrfBases",
+      "declaration": "def listRegisteredHrfBases(): Vector[String] =",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/design/shared/src/main/scala/scalafim/fmri/design/hrf/HrfRegistry.scala",
+      "line": 52,
+      "name": "labelFor",
+      "declaration": "def labelFor(hrf: Hrf, basisIx: Int): String =",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/design/shared/src/main/scala/scalafim/fmri/design/baseline/BaselineModel.scala",
+      "line": 89,
+      "name": "issueLabel",
+      "declaration": "def issueLabel: String = issue.label",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/design/shared/src/main/scala/scalafim/fmri/design/formula/EventModelBuilder.scala",
+      "line": 196,
+      "name": "bindFormula",
+      "declaration": "def bindFormula(",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/design/shared/src/main/scala/scalafim/fmri/design/contrast/FContrasts.scala",
+      "line": 11,
+      "name": "forEventTerm",
+      "declaration": "def forEventTerm(term: EventTerm, maxInter: Int = 4): VectorMap[String, ContrastWeights] =",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/design/shared/src/main/scala/scalafim/fmri/design/contrast/ContrastSpec.scala",
+      "line": 213,
+      "name": "typedPair",
+      "declaration": "def typedPair(",
+      "decision": "phase-e",
+      "reason": "Typed/legacy boundary or typed constructor; decide together with literal identity fixtures, not by lexical absence."
+    },
+    {
+      "file": "modules/design/shared/src/main/scala/scalafim/fmri/design/contrast/ContrastSpec.scala",
+      "line": 222,
+      "name": "typedUnit",
+      "declaration": "def typedUnit(",
+      "decision": "phase-e",
+      "reason": "Typed/legacy boundary or typed constructor; decide together with literal identity fixtures, not by lexical absence."
+    },
+    {
+      "file": "modules/design/shared/src/main/scala/scalafim/fmri/design/contrast/ContrastSpec.scala",
+      "line": 229,
+      "name": "typedOneway",
+      "declaration": "def typedOneway(",
+      "decision": "phase-e",
+      "reason": "Typed/legacy boundary or typed constructor; decide together with literal identity fixtures, not by lexical absence."
+    },
+    {
+      "file": "modules/design/shared/src/main/scala/scalafim/fmri/design/contrast/ContrastSpec.scala",
+      "line": 237,
+      "name": "typedInteraction",
+      "declaration": "def typedInteraction(",
+      "decision": "phase-e",
+      "reason": "Typed/legacy boundary or typed constructor; decide together with literal identity fixtures, not by lexical absence."
+    },
+    {
+      "file": "modules/design/shared/src/main/scala/scalafim/fmri/design/contrast/ContrastRegistry.scala",
+      "line": 15,
+      "name": "withContrastSet",
+      "declaration": "def withContrastSet(termKey: String, set: ContrastSpec.ContrastSet, merge: Boolean = true): EventModel =",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/design/shared/src/main/scala/scalafim/fmri/design/contrast/ContrastRegistry.scala",
+      "line": 31,
+      "name": "contrastSpecs",
+      "declaration": "def contrastSpecs: VectorMap[String, ContrastSpec] =",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/design/shared/src/main/scala/scalafim/fmri/design/contrast/ContrastRegistry.scala",
+      "line": 117,
+      "name": "compiledFContrastWeights",
+      "declaration": "def compiledFContrastWeights(maxInter: Int = 4): Either[ContrastError, VectorMap[String, CompiledContrast]] =",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/design/shared/src/main/scala/scalafim/fmri/design/contrast/ContrastCore.scala",
+      "line": 279,
+      "name": "weightedAll",
+      "declaration": "def weightedAll(weights: Seq[Double]): BasisSelection =",
+      "decision": "phase-e",
+      "reason": "Typed/legacy boundary or typed constructor; decide together with literal identity fixtures, not by lexical absence."
+    },
+    {
+      "file": "modules/design/shared/src/main/scala/scalafim/fmri/design/contrast/ContrastCore.scala",
+      "line": 344,
+      "name": "fromLegacyLocal",
+      "declaration": "def fromLegacyLocal(weights: ContrastWeights): LocalContrastWeights =",
+      "decision": "phase-e",
+      "reason": "Typed/legacy boundary or typed constructor; decide together with literal identity fixtures, not by lexical absence."
+    },
+    {
+      "file": "modules/design/shared/src/main/scala/scalafim/fmri/design/contrast/ContrastCore.scala",
+      "line": 375,
+      "name": "levelValues",
+      "declaration": "def levelValues: Vector[String] =",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/design/shared/src/main/scala/scalafim/fmri/design/event/Event.scala",
+      "line": 15,
+      "name": "eventId",
+      "declaration": "def eventId: EventId =",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/design/shared/src/main/scala/scalafim/fmri/design/event/EventModel.scala",
+      "line": 82,
+      "name": "withDiagnostics",
+      "declaration": "def withDiagnostics(values: Vector[EventModelDiagnostic]): EventModel =",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/design/shared/src/main/scala/scalafim/fmri/design/event/EventModel.scala",
+      "line": 157,
+      "name": "withPolicyEvidence",
+      "declaration": "def withPolicyEvidence(",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/Library.scala",
+      "line": 7,
+      "name": "hrfSet",
+      "declaration": "def hrfSet(hrfs: Seq[Hrf], name: String = \"hrf_set\"): Hrf =",
+      "decision": "remove",
+      "reason": "No source, test, documentation or maintained PLSNeuro caller; redundant wrapper or private obsolete implementation. Independent caller audit confirms."
+    },
+    {
+      "file": "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/Basis.scala",
+      "line": 95,
+      "name": "oneBasedIndex",
+      "declaration": "def oneBasedIndex: Int =",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/Basis.scala",
+      "line": 548,
+      "name": "isDiagonal",
+      "declaration": "def isDiagonal: Boolean =",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/Decorators.scala",
+      "line": 267,
+      "name": "derivDoubles",
+      "declaration": "def derivDoubles(times: Seq[Double], eps: Double = 1e-4): Mat =",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/Decorators.scala",
+      "line": 273,
+      "name": "reconstructionMatrix",
+      "declaration": "def reconstructionMatrix(times: Seq[Double]): Mat =",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/design/SamplingFrame.scala",
+      "line": 13,
+      "name": "allBlocks",
+      "declaration": "def allBlocks: BlockSelection =",
+      "decision": "retain",
+      "reason": "Public domain constructor, accessor or scientific entrypoint, not established redundant. Lexical singleton is a candidate signal, not evidence of a dispensable API."
+    },
+    {
+      "file": "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/linalg/Complex.scala",
+      "line": 9,
+      "name": "conj",
+      "declaration": "def conj: Complex = Complex(re, -im)",
+      "decision": "remove",
+      "reason": "No source, test, documentation or maintained PLSNeuro caller; redundant wrapper or private obsolete implementation. Independent caller audit confirms."
+    },
+    {
+      "file": "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/linalg/Complex.scala",
+      "line": 13,
+      "name": "expi",
+      "declaration": "def expi(theta: Double): Complex = Complex(math.cos(theta), math.sin(theta))",
+      "decision": "remove",
+      "reason": "No source, test, documentation or maintained PLSNeuro caller; redundant wrapper or private obsolete implementation. Independent caller audit confirms."
+    }
+  ]
+}

@@ -29,3 +29,30 @@ Independent source/build/move review found no blockers. These are local
 qualification results, not hosted CI, native display acceptance or publication.
 Other Phase D decisions and the unfinished PHRF study remain outside this
 user-authorized merge/delete slice. Stages A, C and E follow in the same goal.
+
+## A: remaining hygiene
+
+Removed the unused private boxed Complex implementation, Library.hrfSet alias,
+Residualize.residualizeByName and its private name lookup, and unused research
+Fs.moveAtomic/CpuMeter.childSeconds helpers. FitPlanExecutor now calls the
+existing package-private legacyDatasetReader; return type, reader admission and
+error mapping are identical. No numerical kernel, atomic write, CPU accounting,
+public failure policy or type visibility was weakened.
+
+The current owner audit finds no @deprecated definitions or PrimitiveBuffers
+in ScalaFIM; earlier image/spatial findings do not authorize deleting APIs now
+owned by extracted libraries. Original unused dependencies/edges and stale build
+checks were already removed. [a-public-audit.json](a-public-audit.json) records
+93 lexical singleton candidates: 6 removed, 80 retained public scientific or
+compile-contract surfaces, 7 deferred to the separately authorized typed bridge
+refactor. Absence of a lexical caller is not proof of a dispensable public API.
+The selected removals were independently searched across source, tests, docs and
+the maintained PLS Neuro consumer. Unknown third-party binary compatibility is
+not claimed for the two removed public convenience methods; their underlying
+composition APIs remain.
+
+Full affected suites pass: JVM HRF412/design588/fit869/research544; Scala.js
+HRF412/design588/fit811/research254: 4,478 passes, four existing JVM skips.
+No Scala source warnings or new failures. Independent review found no blockers.
+Raw log and actual exit metadata: [a-checks.json](a-checks.json). No new scientific
+or performance acceptance is inferred from these regression checks.
