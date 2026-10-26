@@ -1,0 +1,534 @@
+[
+  {
+    "cache_root": "/Users/bbuchsbaum/.cache/scalafim-sbt",
+    "counts": {
+      "directories": 9752,
+      "files": 36160,
+      "symlinks": 0
+    },
+    "destination": "/Volumes/My Passport for Mac/codex-work/module-simplification-20261026/templates/016ea4a1891186a6",
+    "key": "016ea4a1891186a6",
+    "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/templates/016ea4a1891186a6",
+    "tree_digest": "486d41e376e7093dff543e3d5eed907bec87403c6876418fe7414e2b5cd72994",
+    "version": 1,
+    "volume_uuid": "51B72C66-64BB-3C5F-8853-2219CA2FFA9F"
+  },
+  {
+    "cache_root": "/Users/bbuchsbaum/.cache/scalafim-sbt",
+    "counts": {
+      "directories": 8826,
+      "files": 24865,
+      "symlinks": 0
+    },
+    "destination": "/Volumes/My Passport for Mac/codex-work/module-simplification-20261026/templates/090778713783b460",
+    "key": "090778713783b460",
+    "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/templates/090778713783b460",
+    "tree_digest": "fb40dc87673873c00580ef021bf1ff1cda642259813d7c9bc2290bc34debc4ea",
+    "version": 1,
+    "volume_uuid": "51B72C66-64BB-3C5F-8853-2219CA2FFA9F"
+  },
+  {
+    "cache_root": "/Users/bbuchsbaum/.cache/scalafim-sbt",
+    "counts": {
+      "directories": 7731,
+      "files": 26857,
+      "symlinks": 0
+    },
+    "destination": "/Volumes/My Passport for Mac/codex-work/module-simplification-20261026/templates/0bd280a402eb3d78",
+    "key": "0bd280a402eb3d78",
+    "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/templates/0bd280a402eb3d78",
+    "tree_digest": "2f584a394e4ee016f86ab1acae0459d9c6912ac95a94b341480611318037bd12",
+    "version": 1,
+    "volume_uuid": "51B72C66-64BB-3C5F-8853-2219CA2FFA9F"
+  },
+  {
+    "cache_root": "/Users/bbuchsbaum/.cache/scalafim-sbt",
+    "counts": {
+      "directories": 12209,
+      "files": 45544,
+      "symlinks": 0
+    },
+    "destination": "/Volumes/My Passport for Mac/codex-work/module-simplification-20261026/templates/0d46f5365b79916d",
+    "key": "0d46f5365b79916d",
+    "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/templates/0d46f5365b79916d",
+    "tree_digest": "7861ca8fa69e98643e42fb22006ba7b85eaef313349bb6ec91514862034f6b4c",
+    "version": 1,
+    "volume_uuid": "51B72C66-64BB-3C5F-8853-2219CA2FFA9F"
+  },
+  {
+    "cache_root": "/Users/bbuchsbaum/.cache/scalafim-sbt",
+    "counts": {
+      "directories": 3738,
+      "files": 6940,
+      "symlinks": 0
+    },
+    "destination": "/Volumes/My Passport for Mac/codex-work/module-simplification-20261026/templates/2213f9105361ef76",
+    "key": "2213f9105361ef76",
+    "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/templates/2213f9105361ef76",
+    "tree_digest": "b3872e7a7500d459ef4a3a94930dc990c059fa469859b3fd0928a42430cedd52",
+    "version": 1,
+    "volume_uuid": "51B72C66-64BB-3C5F-8853-2219CA2FFA9F"
+  },
+  {
+    "cache_root": "/Users/bbuchsbaum/.cache/scalafim-sbt",
+    "counts": {
+      "directories": 14268,
+      "files": 62521,
+      "symlinks": 0
+    },
+    "destination": "/Volumes/My Passport for Mac/codex-work/module-simplification-20261026/templates/330a22c0af39d155",
+    "key": "330a22c0af39d155",
+    "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/templates/330a22c0af39d155",
+    "tree_digest": "3a35b8946ff7bb86a705f012fa6df8e44b66e0b870860c69919419d0eb664906",
+    "version": 1,
+    "volume_uuid": "51B72C66-64BB-3C5F-8853-2219CA2FFA9F"
+  },
+  {
+    "cache_root": "/Users/bbuchsbaum/.cache/scalafim-sbt",
+    "counts": {
+      "directories": 5213,
+      "files": 7483,
+      "symlinks": 0
+    },
+    "destination": "/Volumes/My Passport for Mac/codex-work/module-simplification-20261026/templates/34d4bbaabafbcf4c",
+    "key": "34d4bbaabafbcf4c",
+    "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/templates/34d4bbaabafbcf4c",
+    "tree_digest": "ed099879797bab4218860293d1588d37c45b7f5a4ce8ddb415a9ade641bbfe18",
+    "version": 1,
+    "volume_uuid": "51B72C66-64BB-3C5F-8853-2219CA2FFA9F"
+  },
+  {
+    "cache_root": "/Users/bbuchsbaum/.cache/scalafim-sbt",
+    "counts": {
+      "directories": 5601,
+      "files": 7798,
+      "symlinks": 0
+    },
+    "destination": "/Volumes/My Passport for Mac/codex-work/module-simplification-20261026/templates/38b0bcfcf3b0a984",
+    "key": "38b0bcfcf3b0a984",
+    "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/templates/38b0bcfcf3b0a984",
+    "tree_digest": "fd68ed2c679b181e7fb9f6d334e73b706109e8a1b8999c05166a43eec0b1283b",
+    "version": 1,
+    "volume_uuid": "51B72C66-64BB-3C5F-8853-2219CA2FFA9F"
+  },
+  {
+    "cache_root": "/Users/bbuchsbaum/.cache/scalafim-sbt",
+    "counts": {
+      "directories": 9964,
+      "files": 26430,
+      "symlinks": 0
+    },
+    "destination": "/Volumes/My Passport for Mac/codex-work/module-simplification-20261026/templates/3b596f8dba7dd0f4",
+    "key": "3b596f8dba7dd0f4",
+    "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/templates/3b596f8dba7dd0f4",
+    "tree_digest": "264ead9cadc5fa9cc50006c59103088c44315c84823d1b53d700e18fa46de7ec",
+    "version": 1,
+    "volume_uuid": "51B72C66-64BB-3C5F-8853-2219CA2FFA9F"
+  },
+  {
+    "cache_root": "/Users/bbuchsbaum/.cache/scalafim-sbt",
+    "counts": {
+      "directories": 9166,
+      "files": 9119,
+      "symlinks": 0
+    },
+    "destination": "/Volumes/My Passport for Mac/codex-work/module-simplification-20261026/templates/3c98b4c03089a562",
+    "key": "3c98b4c03089a562",
+    "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/templates/3c98b4c03089a562",
+    "tree_digest": "60355d6a235d05b7a339030fd1d10907c02817c65c3ac3904ecf4e3731546502",
+    "version": 1,
+    "volume_uuid": "51B72C66-64BB-3C5F-8853-2219CA2FFA9F"
+  },
+  {
+    "cache_root": "/Users/bbuchsbaum/.cache/scalafim-sbt",
+    "counts": {
+      "directories": 33482,
+      "files": 143347,
+      "symlinks": 0
+    },
+    "destination": "/Volumes/My Passport for Mac/codex-work/module-simplification-20261026/templates/466589e1f6117193",
+    "key": "466589e1f6117193",
+    "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/templates/466589e1f6117193",
+    "tree_digest": "fdafc0f0ca238372d40513cf03922a3b46f7fed45dda5594b602359c0144edaa",
+    "version": 1,
+    "volume_uuid": "51B72C66-64BB-3C5F-8853-2219CA2FFA9F"
+  },
+  {
+    "cache_root": "/Users/bbuchsbaum/.cache/scalafim-sbt",
+    "counts": {
+      "directories": 5385,
+      "files": 7557,
+      "symlinks": 0
+    },
+    "destination": "/Volumes/My Passport for Mac/codex-work/module-simplification-20261026/templates/4bcfbd6c67ccd1bb",
+    "key": "4bcfbd6c67ccd1bb",
+    "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/templates/4bcfbd6c67ccd1bb",
+    "tree_digest": "caf5d0c6310b53b977ec8e4b00041f706a26944eb0938c4cb039de71632f058b",
+    "version": 1,
+    "volume_uuid": "51B72C66-64BB-3C5F-8853-2219CA2FFA9F"
+  },
+  {
+    "cache_root": "/Users/bbuchsbaum/.cache/scalafim-sbt",
+    "counts": {
+      "directories": 5807,
+      "files": 7876,
+      "symlinks": 0
+    },
+    "destination": "/Volumes/My Passport for Mac/codex-work/module-simplification-20261026/templates/5a8199175db54c39",
+    "key": "5a8199175db54c39",
+    "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/templates/5a8199175db54c39",
+    "tree_digest": "9786520b91e68340e8a03c67765bc434b19e9acef84222bb3af8ccd277b80230",
+    "version": 1,
+    "volume_uuid": "51B72C66-64BB-3C5F-8853-2219CA2FFA9F"
+  },
+  {
+    "cache_root": "/Users/bbuchsbaum/.cache/scalafim-sbt",
+    "counts": {
+      "directories": 7014,
+      "files": 25466,
+      "symlinks": 0
+    },
+    "destination": "/Volumes/My Passport for Mac/codex-work/module-simplification-20261026/templates/5df1fb6ef24aff27",
+    "key": "5df1fb6ef24aff27",
+    "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/templates/5df1fb6ef24aff27",
+    "tree_digest": "630b1f1043abbbdf569e9a80bf4a68645217dda890d9d444d68503b6b4e3d562",
+    "version": 1,
+    "volume_uuid": "51B72C66-64BB-3C5F-8853-2219CA2FFA9F"
+  },
+  {
+    "cache_root": "/Users/bbuchsbaum/.cache/scalafim-sbt",
+    "counts": {
+      "directories": 5041,
+      "files": 7032,
+      "symlinks": 0
+    },
+    "destination": "/Volumes/My Passport for Mac/codex-work/module-simplification-20261026/templates/6b53c87841442de2",
+    "key": "6b53c87841442de2",
+    "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/templates/6b53c87841442de2",
+    "tree_digest": "3803466722ae52899bcc2b5b70d530376d09a465eac1a4315a1e1e380b654788",
+    "version": 1,
+    "volume_uuid": "51B72C66-64BB-3C5F-8853-2219CA2FFA9F"
+  },
+  {
+    "cache_root": "/Users/bbuchsbaum/.cache/scalafim-sbt",
+    "counts": {
+      "directories": 7179,
+      "files": 25625,
+      "symlinks": 0
+    },
+    "destination": "/Volumes/My Passport for Mac/codex-work/module-simplification-20261026/templates/6ea912fcd9f2445f",
+    "key": "6ea912fcd9f2445f",
+    "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/templates/6ea912fcd9f2445f",
+    "tree_digest": "a9bac54f6e2d29d3f9caa2671335ebbed70454b57549c48490fb4efd3d483b57",
+    "version": 1,
+    "volume_uuid": "51B72C66-64BB-3C5F-8853-2219CA2FFA9F"
+  },
+  {
+    "cache_root": "/Users/bbuchsbaum/.cache/scalafim-sbt",
+    "counts": {
+      "directories": 32348,
+      "files": 133954,
+      "symlinks": 0
+    },
+    "destination": "/Volumes/My Passport for Mac/codex-work/module-simplification-20261026/templates/70d2a7ee44509d1f",
+    "key": "70d2a7ee44509d1f",
+    "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/templates/70d2a7ee44509d1f",
+    "tree_digest": "e0eed8fa398d79616fb5896c1900ca1b877ca44c0a50e60edf2b5d934e6aeb21",
+    "version": 1,
+    "volume_uuid": "51B72C66-64BB-3C5F-8853-2219CA2FFA9F"
+  },
+  {
+    "cache_root": "/Users/bbuchsbaum/.cache/scalafim-sbt",
+    "counts": {
+      "directories": 9756,
+      "files": 9166,
+      "symlinks": 0
+    },
+    "destination": "/Volumes/My Passport for Mac/codex-work/module-simplification-20261026/templates/723b102eeeeee331",
+    "key": "723b102eeeeee331",
+    "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/templates/723b102eeeeee331",
+    "tree_digest": "d40a744e230bfebac4e2b1dba120e69f46e78643259a61f42e4b64c65bc603f8",
+    "version": 1,
+    "volume_uuid": "51B72C66-64BB-3C5F-8853-2219CA2FFA9F"
+  },
+  {
+    "cache_root": "/Users/bbuchsbaum/.cache/scalafim-sbt",
+    "counts": {
+      "directories": 5021,
+      "files": 7594,
+      "symlinks": 0
+    },
+    "destination": "/Volumes/My Passport for Mac/codex-work/module-simplification-20261026/templates/7884c6af42654cc2",
+    "key": "7884c6af42654cc2",
+    "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/templates/7884c6af42654cc2",
+    "tree_digest": "4f74d7dfce12bd6fed05aafdaad3c6b4de8771683947224191e49c0bf3e58aa8",
+    "version": 1,
+    "volume_uuid": "51B72C66-64BB-3C5F-8853-2219CA2FFA9F"
+  },
+  {
+    "cache_root": "/Users/bbuchsbaum/.cache/scalafim-sbt",
+    "counts": {
+      "directories": 10137,
+      "files": 25421,
+      "symlinks": 0
+    },
+    "destination": "/Volumes/My Passport for Mac/codex-work/module-simplification-20261026/templates/7b6ee4a0702f2c1a",
+    "key": "7b6ee4a0702f2c1a",
+    "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/templates/7b6ee4a0702f2c1a",
+    "tree_digest": "efc0393fd253f2e47f0f533215ba5810469a468253caa3a3471c8949e65256f7",
+    "version": 1,
+    "volume_uuid": "51B72C66-64BB-3C5F-8853-2219CA2FFA9F"
+  },
+  {
+    "cache_root": "/Users/bbuchsbaum/.cache/scalafim-sbt",
+    "counts": {
+      "directories": 31991,
+      "files": 132574,
+      "symlinks": 0
+    },
+    "destination": "/Volumes/My Passport for Mac/codex-work/module-simplification-20261026/templates/7ea59d466e6decf9",
+    "key": "7ea59d466e6decf9",
+    "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/templates/7ea59d466e6decf9",
+    "tree_digest": "2c1446e6f01f15dc96638b732b24b5c2e15a59167438f0f42283b8c16ec8264b",
+    "version": 1,
+    "volume_uuid": "51B72C66-64BB-3C5F-8853-2219CA2FFA9F"
+  },
+  {
+    "cache_root": "/Users/bbuchsbaum/.cache/scalafim-sbt",
+    "counts": {
+      "directories": 9233,
+      "files": 8965,
+      "symlinks": 0
+    },
+    "destination": "/Volumes/My Passport for Mac/codex-work/module-simplification-20261026/templates/80550ea1951f555d",
+    "key": "80550ea1951f555d",
+    "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/templates/80550ea1951f555d",
+    "tree_digest": "0998157af2d40a1b3305821ab3a4c513f943caf5aa6e1087b1950f4df9a91b02",
+    "version": 1,
+    "volume_uuid": "51B72C66-64BB-3C5F-8853-2219CA2FFA9F"
+  },
+  {
+    "cache_root": "/Users/bbuchsbaum/.cache/scalafim-sbt",
+    "counts": {
+      "directories": 9031,
+      "files": 30603,
+      "symlinks": 0
+    },
+    "destination": "/Volumes/My Passport for Mac/codex-work/module-simplification-20261026/templates/93ad45d4ed588f22",
+    "key": "93ad45d4ed588f22",
+    "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/templates/93ad45d4ed588f22",
+    "tree_digest": "f2c5cf35a0b586ebb234133b2ae0ead9cf7e5276994dd1f19325389640f21a32",
+    "version": 1,
+    "volume_uuid": "51B72C66-64BB-3C5F-8853-2219CA2FFA9F"
+  },
+  {
+    "cache_root": "/Users/bbuchsbaum/.cache/scalafim-sbt",
+    "counts": {
+      "directories": 13853,
+      "files": 27976,
+      "symlinks": 0
+    },
+    "destination": "/Volumes/My Passport for Mac/codex-work/module-simplification-20261026/templates/946465e5904354f1",
+    "key": "946465e5904354f1",
+    "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/templates/946465e5904354f1",
+    "tree_digest": "fb801a8d2d8aaa56573db209290d009068f2eaea874b01ed019daa21ac9935fb",
+    "version": 1,
+    "volume_uuid": "51B72C66-64BB-3C5F-8853-2219CA2FFA9F"
+  },
+  {
+    "cache_root": "/Users/bbuchsbaum/.cache/scalafim-sbt",
+    "counts": {
+      "directories": 10274,
+      "files": 37157,
+      "symlinks": 0
+    },
+    "destination": "/Volumes/My Passport for Mac/codex-work/module-simplification-20261026/templates/9a1f5f0223947e53",
+    "key": "9a1f5f0223947e53",
+    "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/templates/9a1f5f0223947e53",
+    "tree_digest": "f39e3c0fff24d62b8130615b5a990e14da4b79e5a638c20572de0656693aeff7",
+    "version": 1,
+    "volume_uuid": "51B72C66-64BB-3C5F-8853-2219CA2FFA9F"
+  },
+  {
+    "cache_root": "/Users/bbuchsbaum/.cache/scalafim-sbt",
+    "counts": {
+      "directories": 8460,
+      "files": 8693,
+      "symlinks": 0
+    },
+    "destination": "/Volumes/My Passport for Mac/codex-work/module-simplification-20261026/templates/9e89ac938c1e0a32",
+    "key": "9e89ac938c1e0a32",
+    "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/templates/9e89ac938c1e0a32",
+    "tree_digest": "580ee271300a79b625e4aafcf8e019a907727b63b8e76f13ecab91b28154ab4e",
+    "version": 1,
+    "volume_uuid": "51B72C66-64BB-3C5F-8853-2219CA2FFA9F"
+  },
+  {
+    "cache_root": "/Users/bbuchsbaum/.cache/scalafim-sbt",
+    "counts": {
+      "directories": 1803,
+      "files": 5106,
+      "symlinks": 0
+    },
+    "destination": "/Volumes/My Passport for Mac/codex-work/module-simplification-20261026/templates/a5971e3f696b381a",
+    "key": "a5971e3f696b381a",
+    "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/templates/a5971e3f696b381a",
+    "tree_digest": "51097686e7659c199873a5441bca1f267c3241950645c5abb2ca798ddeb41cb7",
+    "version": 1,
+    "volume_uuid": "51B72C66-64BB-3C5F-8853-2219CA2FFA9F"
+  },
+  {
+    "cache_root": "/Users/bbuchsbaum/.cache/scalafim-sbt",
+    "counts": {
+      "directories": 8493,
+      "files": 32317,
+      "symlinks": 0
+    },
+    "destination": "/Volumes/My Passport for Mac/codex-work/module-simplification-20261026/templates/b044acc04306f3ae",
+    "key": "b044acc04306f3ae",
+    "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/templates/b044acc04306f3ae",
+    "tree_digest": "a1f81c8ad5eeb55d1ec74e9f792e25e485ade3eda96f8e11b197f64001f083db",
+    "version": 1,
+    "volume_uuid": "51B72C66-64BB-3C5F-8853-2219CA2FFA9F"
+  },
+  {
+    "cache_root": "/Users/bbuchsbaum/.cache/scalafim-sbt",
+    "counts": {
+      "directories": 2852,
+      "files": 12783,
+      "symlinks": 0
+    },
+    "destination": "/Volumes/My Passport for Mac/codex-work/module-simplification-20261026/templates/b34d8b789dddea77",
+    "key": "b34d8b789dddea77",
+    "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/templates/b34d8b789dddea77",
+    "tree_digest": "05bd19c2eb6cc7bb03c8907dab32fbec139bc3c793859da8bcc553741f8e5428",
+    "version": 1,
+    "volume_uuid": "51B72C66-64BB-3C5F-8853-2219CA2FFA9F"
+  },
+  {
+    "cache_root": "/Users/bbuchsbaum/.cache/scalafim-sbt",
+    "counts": {
+      "directories": 12850,
+      "files": 49037,
+      "symlinks": 0
+    },
+    "destination": "/Volumes/My Passport for Mac/codex-work/module-simplification-20261026/templates/c67051ee3a8cd07a",
+    "key": "c67051ee3a8cd07a",
+    "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/templates/c67051ee3a8cd07a",
+    "tree_digest": "f6165ad06897503f08abd6d191777044ff7a40e534968768045dcf56873f593f",
+    "version": 1,
+    "volume_uuid": "51B72C66-64BB-3C5F-8853-2219CA2FFA9F"
+  },
+  {
+    "cache_root": "/Users/bbuchsbaum/.cache/scalafim-sbt",
+    "counts": {
+      "directories": 4811,
+      "files": 6033,
+      "symlinks": 0
+    },
+    "destination": "/Volumes/My Passport for Mac/codex-work/module-simplification-20261026/templates/cbec648781f569e3",
+    "key": "cbec648781f569e3",
+    "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/templates/cbec648781f569e3",
+    "tree_digest": "e291aa8b1553df91042891c6ad575a140d63dc718caaa260aebf20fa5c584209",
+    "version": 1,
+    "volume_uuid": "51B72C66-64BB-3C5F-8853-2219CA2FFA9F"
+  },
+  {
+    "cache_root": "/Users/bbuchsbaum/.cache/scalafim-sbt",
+    "counts": {
+      "directories": 9116,
+      "files": 9101,
+      "symlinks": 0
+    },
+    "destination": "/Volumes/My Passport for Mac/codex-work/module-simplification-20261026/templates/d037fd1d7d9c1850",
+    "key": "d037fd1d7d9c1850",
+    "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/templates/d037fd1d7d9c1850",
+    "tree_digest": "b3e4285cae7145ed3896400fc1a0c2833b2529d814ddaaa0971693506895ca96",
+    "version": 1,
+    "volume_uuid": "51B72C66-64BB-3C5F-8853-2219CA2FFA9F"
+  },
+  {
+    "cache_root": "/Users/bbuchsbaum/.cache/scalafim-sbt",
+    "counts": {
+      "directories": 13,
+      "files": 95,
+      "symlinks": 0
+    },
+    "destination": "/Volumes/My Passport for Mac/codex-work/module-simplification-20261026/templates/d41d11735861113a",
+    "key": "d41d11735861113a",
+    "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/templates/d41d11735861113a",
+    "tree_digest": "a99549514690532ec278282aa2edc486c0ee22b3dc39becf76bb95c69b15a0f1",
+    "version": 1,
+    "volume_uuid": "51B72C66-64BB-3C5F-8853-2219CA2FFA9F"
+  },
+  {
+    "cache_root": "/Users/bbuchsbaum/.cache/scalafim-sbt",
+    "counts": {
+      "directories": 1803,
+      "files": 9694,
+      "symlinks": 0
+    },
+    "destination": "/Volumes/My Passport for Mac/codex-work/module-simplification-20261026/templates/d7275d754c0b95da",
+    "key": "d7275d754c0b95da",
+    "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/templates/d7275d754c0b95da",
+    "tree_digest": "594a60f5a1933ec6b770ee4b08b5b8519021d7d08e98d8d60a688dda33a70a17",
+    "version": 1,
+    "volume_uuid": "51B72C66-64BB-3C5F-8853-2219CA2FFA9F"
+  },
+  {
+    "cache_root": "/Users/bbuchsbaum/.cache/scalafim-sbt",
+    "counts": {
+      "directories": 5913,
+      "files": 7918,
+      "symlinks": 0
+    },
+    "destination": "/Volumes/My Passport for Mac/codex-work/module-simplification-20261026/templates/ddc8027ff8cc33c2",
+    "key": "ddc8027ff8cc33c2",
+    "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/templates/ddc8027ff8cc33c2",
+    "tree_digest": "4bfc684bec96c5536707d99c09b3b15f8ff3faf2ebbf4399f22289b1d9e26c25",
+    "version": 1,
+    "volume_uuid": "51B72C66-64BB-3C5F-8853-2219CA2FFA9F"
+  },
+  {
+    "cache_root": "/Users/bbuchsbaum/.cache/scalafim-sbt",
+    "counts": {
+      "directories": 4160,
+      "files": 7264,
+      "symlinks": 0
+    },
+    "destination": "/Volumes/My Passport for Mac/codex-work/module-simplification-20261026/templates/e778a2f397754132",
+    "key": "e778a2f397754132",
+    "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/templates/e778a2f397754132",
+    "tree_digest": "ddd92a139b1be32bba36e6ca881ca0d6897658a5dabf44ce09d3cea919c906e8",
+    "version": 1,
+    "volume_uuid": "51B72C66-64BB-3C5F-8853-2219CA2FFA9F"
+  },
+  {
+    "cache_root": "/Users/bbuchsbaum/.cache/scalafim-sbt",
+    "counts": {
+      "directories": 10613,
+      "files": 39552,
+      "symlinks": 0
+    },
+    "destination": "/Volumes/My Passport for Mac/codex-work/module-simplification-20261026/templates/e954889cde38f831",
+    "key": "e954889cde38f831",
+    "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/templates/e954889cde38f831",
+    "tree_digest": "5f5e8bbbf20839fa0210010959712cd1a17ee95b1947db2fc0d455533bc35718",
+    "version": 1,
+    "volume_uuid": "51B72C66-64BB-3C5F-8853-2219CA2FFA9F"
+  },
+  {
+    "cache_root": "/Users/bbuchsbaum/.cache/scalafim-sbt",
+    "counts": {
+      "directories": 15852,
+      "files": 76275,
+      "symlinks": 0
+    },
+    "destination": "/Volumes/My Passport for Mac/codex-work/module-simplification-20261026/templates/f0cb1a8856b34a60",
+    "key": "f0cb1a8856b34a60",
+    "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/templates/f0cb1a8856b34a60",
+    "tree_digest": "64fb4f538b128cc4da461437e63684c2074115f7ad72365f42e6b29bcbe6d33f",
+    "version": 1,
+    "volume_uuid": "51B72C66-64BB-3C5F-8853-2219CA2FFA9F"
+  }
+]

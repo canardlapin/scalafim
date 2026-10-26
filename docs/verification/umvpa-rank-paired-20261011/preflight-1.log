@@ -1,8 +1,0 @@
-Traceback (most recent call last):
-  File "/private/tmp/scalafim-rank-paired-pilot-20261011/tools/mvpa-inference/paired/probe.py", line 126, in <module>
-    if __name__=='__main__':main()
-  File "/private/tmp/scalafim-rank-paired-pilot-20261011/tools/mvpa-inference/paired/probe.py", line 85, in main
-    shutdown(repo,lifecycle,env)
-  File "/private/tmp/scalafim-rank-paired-pilot-20261011/tools/mvpa-inference/paired/resources.py", line 44, in shutdown
-    raise RuntimeError('server shutdown did not establish an empty provider lifetime')
-RuntimeError: server shutdown did not establish an empty provider lifetime

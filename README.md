@@ -316,3 +316,16 @@ how the modules relate and where new code should live.
 See [docs/plans/scenario-parity-harness.md](docs/plans/scenario-parity-harness.md)
 for the Scala-native plan to add realistic workflow scenarios, parity fixtures,
 and regenerable receipts without making Python/R part of the sbt test runtime.
+
+### Historical evidence and build-cache cleanup
+
+Historical bulk captures have [verified external custody and restoration instructions](docs/verification/ARCHIVE.md).
+Completed plans live in [docs/plans/archive](docs/plans/archive/README.md); original links have forwarding pages.
+
+`python3 tools/build/sbt-warm --gc-templates` is a separate dry run for stale
+template snapshots. It protects both pin-key generations referenced by any
+retained base (including orphan bases) and the current worktree. Applying it
+requires a complete verified external mirror made by
+`tools/build/template_custody.py`, `--custody-root DIR`, and the mounted volume's
+`--volume-uuid UUID`. Unknown metadata or activity retains the template. This
+does not collect orphan bases or delete worktrees. See the tool's `--help`.

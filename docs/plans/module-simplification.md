@@ -221,3 +221,13 @@ and scenario validation, and final independent review. Raw logs retain actual
 exit status and failed attempts. Exact source moves and stage evidence live in
 `docs/verification/module-simplification-20261026/`. No publication/merge or new
 scientific performance claim is inferred from local checks.
+
+### Completion checkpoint
+
+The requested MVPA merge/delete slice is committed as `fe6fe70bb`; remaining
+Phase A hygiene is committed as `a6abc2fb9`. Phase C now has verified external
+custody for 1,554 historical files and 38 full template trees, 22 archived plans
+with forwarding pages, seven retired target-only module directories, and 36
+retired stale templates. E's typed implementation and JVM/JS qualification are
+complete in the isolated checkout; its source commit follows this archive
+checkpoint. See [the stage receipts](../verification/module-simplification-20261026/README.md).
