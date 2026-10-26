@@ -33,9 +33,9 @@ class ScenarioRegistrationSuite(unittest.TestCase):
         scenario = scenarios[identifier]
         self.assertEqual(scenario["suite_class"], f"scalafim.spike.scenarios.{name}")
         path = ROOT / scenario["suite_path"]
-        self.assertEqual(path.relative_to(ROOT).as_posix(), f"modules/provider-spike/shared/src/test/scala/scalafim/spike/scenarios/{name}.scala")
+        self.assertEqual(path.relative_to(ROOT).as_posix(), f"modules/provider-contract/shared/src/test/scala/scalafim/spike/scenarios/{name}.scala")
         self.assertIn(identifier, path.read_text())
-        self.assertEqual(scenario["acceptance_commands"], ["sbt providerSpikeJVM/test", "sbt providerSpikeJS/test"])
+        self.assertEqual(scenario["acceptance_commands"], ["sbt providerContractJVM/test", "sbt providerContractJS/test"])
         contract = {key: scenario[key] for key in ("id", "tier", "public_seam", "platforms", "allowed_statuses", "caveats")}
         contract["reference"] = {key: value for key, value in scenario["reference"].items() if key != "source_paths"}
         self.assertEqual(hashlib.sha256(json.dumps(contract, sort_keys=True, separators=(",", ":")).encode()).hexdigest(), digest)
@@ -46,7 +46,7 @@ class ScenarioRegistrationSuite(unittest.TestCase):
     batches = release_batches((ROOT / "tools/ci/full-repository-tests.sh").read_text())
     scheduled = [target for batch in batches.values() for target in batch]
     for platform in ("JVM", "JS"):
-      target = f"providerSpike{platform}/test"
+      target = f"providerContract{platform}/test"
       self.assertIn(target, targets)
       self.assertEqual(scheduled.count(target), 1)
 

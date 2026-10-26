@@ -58,8 +58,8 @@ target-only module directories (~125 MB), 37 prunable worktrees, and 10 GB of
 sbt-warm templates with no garbage collection.
 
 **Keep, despite appearances.** `interop-archived-response` reads persisted
-LNA and Zarr archives, so old files depend on it. `provider-spike` is the
-plan's provider-composition contract (rename it, do not delete it).
+LNA and Zarr archives, so old files depend on it. `provider-contract` is the
+plan's provider-composition contract (do not delete it).
 `response-laws` and `first-level-laws` are intended law kits. `FrameErasureGate`
 enforces a live typing rule. `MissingDataPolicy.Propagate` is a persisted
 identity string. The JMH benchmark projects are run by CI.
@@ -90,10 +90,12 @@ identity string. The JMH benchmark projects are run by CI.
 | `first-level-laws` | Absorbs `hrf-laws`. |
 | `dataset`, `dataset-zarr`, `archive`, `archive-lna`, `archive-zarr`, `estimates`, `estimates-io`, `interop-archived-response`, `group`, `mvpa-group`, `mvpa-artifacts`, `mvpa-spatial`, `pipeline`, `motion`, `threshold`, `connectivity`, `surface-view-connectivity`, `phrf-comparison`, `scenario-testkit` | Kept; each boundary keeps storage, graphics or IO off a consumer that does not need it. Edges corrected as above. |
 | `mvpa-pipeline` | Deleted. |
-| `provider-spike` | Renamed `provider-contract`. |
+| `provider-contract` | Renamed from `provider-spike`. |
 | examples | One `examples/workflows` cross project instead of separate JVM and JS projects. |
 
-Module count: 51 today → 34 after eco → **30**. No package renames.
+Current implementation: pending JVM/Scala.js qualification. The `model` merge
+into `fit` and the `design-view` addition are net-neutral after eco: **34
+modules** remain. No package renames.
 
 ## 4. Plan
 
@@ -125,7 +127,7 @@ identifiers byte-identical, and commits with explicit pathspecs.
 4. Split `design-view` out of `design`. plsneuro's model-studio graphics add
    one dependency in the same window.
 5. Rename `provider-spike` → `provider-contract`; merge the workflow examples
-   into one cross project.
+   into one cross project. The current implementation is pending qualification.
 
 ### Phase C — repository weight (needs decisions, §5)
 

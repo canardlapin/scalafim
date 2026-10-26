@@ -12,7 +12,7 @@ workflow.
 
 Live dependency edges are declared in `build.sbt`.
 
-`provider-spike` is an unpublished public-provider composition court. Its Test
+`provider-contract` is an unpublished public-provider composition court. Its Test
 configuration retains locus laws and the old foundation's eight provider admission
 witnesses; production axis/observation/reindexing laws live in mvpa4s. No production
 module depends on this court. The old identity prototype, standalone pin runner,
@@ -55,8 +55,8 @@ Provider libraries (no ScalaFIM backedge)
 
 ScalaFIM functional composition
   response -> response-laws, dataset, latent
-  hrf -> design -> model -> fit -> group
-  dataset + model + fit + group + bids4s -> fmri-workflow
+  hrf -> design -> fit -> group
+  dataset + fit + group + bids4s -> fmri-workflow
   archive -> archive-lna/archive-zarr -> interop-archived-response, dataset-zarr
   estimates -> estimates-io; fit + estimates -> fmri-workflow
   mvpa4s + pipeline/fit/dataset/estimates -> mvpa-* integration modules
@@ -105,10 +105,10 @@ adjacent checkout is selected automatically during extraction; an explicit
 | `response` | Axis-safe identities and ordered selections, neutral time/sample schemas, owned row-major `Double` response blocks, effectful read planning, axis-keyed locality capabilities, and read receipts. Source lineage is the provider-owned `locus4s.provenance` DAG, used directly. | Nothing internal; standalone Ravel core and locus4s-provenance; Cats Core and Cats Effect externally. | A second lineage DAG or identifier grammar, general tensors, mutable public buffers, image/surface geometry, dataset hierarchy, archive formats, representation codecs, storage interpreters, or fit policy. |
 | `hrf` | HRFs, basis functions, sampling frames, convolution primitives. | Nothing internal. | Design formulas, datasets, or model fitting. |
 | `ar` | AR/ARMA whitening plans and pure prewhitening kernels. | standalone Gale | GLM fitting orchestration or dataset IO. |
-| `design` | Event models, formulas, baselines, contrasts, design metadata, and renderer-neutral design plot exports. | `hrf`, standalone Gale, standalone Intaglio core | Dataset execution, numerical fit engines, or concrete renderers such as SVG/Java2D/Canvas. |
-| `phrf-comparison` | Unpublished comparative-evaluation preparation/scoring and JVM runners/custody. | `model`, `ar`, `hrf`, `fit`, standalone Gale | Production workflow orchestration or claims of completed S10 rehearsal/pilot qualification. |
+| `design` | Event models, formulas, baselines, contrasts, and design metadata. | `hrf`, standalone Gale | Dataset execution, numerical fit engines, or renderer-neutral/concrete graphics. |
+| `phrf-comparison` | Unpublished comparative-evaluation preparation/scoring and JVM runners/custody. | `ar`, `hrf`, `fit`, standalone Gale | Production workflow orchestration or claims of completed S10 rehearsal/pilot qualification. |
 | standalone `neuroim4s-core` / optional `neuroim4s-io` | Volumes, time series, masks, selected images, sampling, orientation, world binding and neuroimaging policy. The local image module is removed. | neuroim4s-spaces; image4s, locus4s, Ravel, Gale, reframe4s; optional image4s NIfTI on JVM | ScalaFIM, atlas, surface, MVPA or rendering dependencies; duplicate provider geometry, axes, finite domains or codecs. |
-| `provider-spike` | An unpublished JVM/Scala.js compile contract for direct provider composition; it owns no runtime abstraction. | standalone image4s, image4s-locus, locus4s, Ravel, Gale, and reframe4s | ScalaFIM packages, adapters, wrappers, policies, error algebras, or production runtime code. |
+| `provider-contract` | An unpublished JVM/Scala.js compile contract for direct provider composition; it owns no runtime abstraction. | standalone image4s, image4s-locus, locus4s, Ravel, Gale, and reframe4s | ScalaFIM packages, adapters, wrappers, policies, error algebras, or production runtime code. |
 | standalone `neuroim4s-transform` / optional `transform-io` | Toolkit transform formats (ITK/ANTs, FSL FLIRT/FNIRT, AFNI, FreeSurfer, X5), their interpretation as frame-typed world-space transforms, toolkit conversion, writers, and gated numerical inverses of dense warps over the provider solver. | standalone `neuroim4s-core`; standalone image4s-geometry and reframe4s (`lie`, `field`, `resample`); jHDF on JVM | Generic transform algebra or solvers (reframe4s), generic frame identity (`spatial4s`) or anatomical world identity (`neuroim4s-spaces`), platform IO in shared sources (the provider transform boundary checks), or graph routing (`spatial`). |
 | standalone `neuroim4s-view` | Renderer-neutral world-space slice views: typed colorizers/layers, orthogonal scene compilation, crosshairs, orientation labels, and panel receipts. | standalone `neuroim4s-core`, standalone Intaglio core | NIfTI IO, mutable toolkit widgets, DOM/JavaFX lifecycle ownership, or concrete renderer command interpretation. |
 | `standalone neuroim4s-view-canvas` | Browser Canvas rendering host plus canvas-relative pointer/wheel translation into pure viewer actions. | standalone `neuroim4s-view`, Intaglio Canvas | Image geometry, DOM ownership, application state mutation, or alternate renderer logic. |
@@ -127,8 +127,8 @@ adjacent checkout is selected automatically during extraction; an explicit
 | `latent` | Archive-independent response-representation contracts, typed inspectable decode plans, temporal bases, transport and BOLDZip response semantics, radial/HRBF mathematics, and exact locus-backed active/full-grid selection order. | `response`, standalone `neuroim4s-core`, standalone locus4s core; Gale on each platform. | Archive values or paths, physical execution, checksums, dataset storage backends, model execution, a general tensor API, or another spatial selection algebra. |
 | `interop-archived-response` | Typed logical-read lowering between representations and LNA/Zarr archives, LNA pipeline reconstruction and representation-specific latent codecs, archive/latent dataset adapters, first-class narrow persisted envelopes, canonical dense-BOLD response binding, immutable registries, and resource-safe runtime assembly. | `response`, `latent`, `archive`, `archive-lna`, `archive-zarr`, `dataset`; standalone bids4s and zarr4s | New reconstruction mathematics, core dataset query semantics, manifest attribute scraping, global mutable/plugin-loaded registries, central codec facades, or a universal payload/tensor carrier. |
 | `dataset` | Pure fMRI descriptions and run queries, semantic acquisition locus domains, explicit synchronous-reader capabilities, checked `OpenedDataset[F]` attachment, ordered run-local selections, segmented reads, and response evidence propagation. | `response`, standalone `neuroim4s-core`, `hrf`, standalone locus4s core; standalone Gale | Archive or concrete representation imports, format dispatch, hidden readers, effect-parameterized model values, storage-format inheritance, parallel study/selection/error algebras, design formulas, fit kernels, or general BIDS project ownership. |
-| `model` | Inspectable fMRI model and fit plans: dataset plus design plus fitting configuration. | `design`, `dataset`; standalone Gale | OLS/GLS kernels or backend implementations. |
-| `fit` | Numerical fit engines over pure model plans, with explicit synchronous `DatasetSeriesReader` and effectful `OpenedDataset[F]` execution boundaries. | `model`, `ar`; standalone Gale | Model description, dataset storage, hidden blocking readers, or group inference. |
+| `fit` | Inspectable fMRI model and fit plans plus numerical fit engines, with explicit synchronous `DatasetSeriesReader` and effectful `OpenedDataset[F]` execution boundaries. Packages remain `scalafim.fmri.model` and `scalafim.fmri.fit`. | `design`, `dataset`, `ar`; standalone Gale | Dataset storage, hidden blocking readers, or group inference. |
+| `design-view` | Renderer-neutral design review graphics and raster exports. | `design`; standalone Intaglio core and platform renderers | Design construction, model/fit policy, or application UI ownership. |
 | `mvpa4s` (standalone, pinned) | Identified MVPA evidence, axes and reindexing, relational/pattern analyses, measurement and execution contracts; `mvpa4s-testkit` supplies test-scope fixture identities and R parity reference data. | standalone Gale, locus4s core/provenance, Multivar, Multivar inference, Resample4s | Response, pipeline, imaging, surface, atlas, dataset or fMRI-fit types; ScalaFIM dependencies of any kind. |
 | `mvpa-pipeline` | Optional synchronous interpretation of MVPA unit evaluation through the existing local pipeline runner. | `mvpa4s`, `pipeline` | Scientific scheduling, seeds, resource cleanup, retry/commit policy or a second execution engine. |
 | `mvpa-fit` | Shared run-local composition of fit-owned trial readouts with MVPA pattern operators, checked common feature axes, trial/run metadata, fold restriction, and local task/result collection. | `fit`, `mvpa4s`; standalone multivar | QR/GLM kernels, classifier numerics, a second feature-set abstraction, workflow scheduling, or platform IO. |
@@ -152,7 +152,7 @@ and neuroimaging-facing integrations.
 ### First-level fMRI GLM
 
 ```text
-response -> dataset -> model -> fit
+response -> dataset -> fit
                         ^
                         |
                      design -> hrf
@@ -176,8 +176,9 @@ archive-zarr + dataset + image + bids4s
 `response` owns the storage-neutral selected-read contract. Standalone bids4s
 describes BIDS files and confounds. `dataset` provides pure scientific descriptions, explicit
 synchronous readers, and checked effectful attachment over that contract.
-`design`/`hrf` describe regressors. `model` joins those descriptions into an
-inspectable plan. `fit` executes the plan with Gale and optionally `ar`.
+`design`/`hrf` describe regressors. `fit` owns the inspectable plan (including
+the retained `scalafim.fmri.model` package) and executes it with Gale and
+optionally `ar`.
 `interop-archived-response` owns runtime driver/family assembly and scopes a
 validated `OpenedDataset[F]`; it does not move effects into the scientific
 description or model plan.
@@ -391,8 +392,8 @@ There are intentionally two layers:
   `dataset`; put reusable BIDS table/query logic in standalone bids4s, and
   translate BIDS entities at dataset IO boundaries with exact parsed matches
   rather than filename substring filters.
-- Put inspectable model descriptions in `model`; put numeric execution in
-  `fit`; put group-level inference in `group`.
+- Put inspectable model descriptions and numeric execution in `fit`; put
+  group-level inference in `group`.
 - Put cross-module BIDS-to-group study recipes, catalog/job identity, structural
   preflight, result references, and future pipeline lowering in `fmri-workflow`; keep
   payloads, open readers, format implementations, and scheduler types out of it.
@@ -439,7 +440,7 @@ The unpublished neurosurf4s `fixturesJVM` project owns the fsLR asset/oracle hel
 Toolkit transform formats and anatomical interpretation now belong to standalone
 `neuroim4s-transform`; optional JVM files/HDF5/X5 belong to
 `neuroim4s-transform-io`. Surface, spatial and atlas use those provider APIs
-directly. There is no local `transform` module. The unpublished `providerSpike`
+directly. There is no local `transform` module. The unpublished `providerContract`
 test configuration retains the four ScenarioHarness registration workflows with
 strict compiler checks; its runtime compile contract remains independent of them.
 

@@ -67,7 +67,7 @@ SOURCE_PATHS = (
   "modules/fit/shared/src/test/scala/scalafim/fmri/fit/fixtures/FmriArEstimatedGlsFixture.scala",
   "modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/DelayedMatchToSampleDslScenarioSuite.scala",
   "modules/fit/tools/generate_fmriar_estimated_gls_parity.R",
-  "modules/model/shared/src/main/scala/scalafim/fmri/model/FitConfig.scala",
+  "modules/fit/shared/src/main/scala/scalafim/fmri/model/FitConfig.scala",
   "project/plugins.sbt",
   "tools/benchmark/finalize_first_level_receipt.py",
   "tools/benchmark/first-level-budgets.json",

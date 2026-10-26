@@ -571,19 +571,18 @@
     },
     "E05": {
       "commands": [
-        "sbt designJVM/test modelJVM/test fitJVM/test",
-        "sbt designJS/test modelJS/test fitJS/test"
+        "sbt designJVM/test fitJVM/test",
+        "sbt designJS/test fitJS/test"
       ],
       "external_fixtures": [],
       "modules": [
         "design",
-        "model",
         "fit"
       ],
       "source_paths": [
         "modules/design/shared/src/main/scala/scalafim/fmri/design/DesignSchema.scala",
-        "modules/model/shared/src/main/scala/scalafim/fmri/model/DesignBlock.scala",
-        "modules/model/shared/src/main/scala/scalafim/fmri/model/FmriModel.scala",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/model/DesignBlock.scala",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/model/FmriModel.scala",
         "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitPlanExecutor.scala"
       ],
       "suites": [
@@ -640,22 +639,21 @@
     },
     "E07": {
       "commands": [
-        "sbt modelJVM/test fitJVM/test",
-        "sbt modelJS/test fitJS/test"
+        "sbt fitJVM/test",
+        "sbt fitJS/test"
       ],
       "external_fixtures": [],
       "modules": [
-        "model",
         "fit"
       ],
       "source_paths": [
-        "modules/model/shared/src/main/scala/scalafim/fmri/model/FmriModel.scala",
-        "modules/model/shared/src/main/scala/scalafim/fmri/model/FitPlan.scala",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/model/FmriModel.scala",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/model/FitPlan.scala",
         "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FmriFitResult.scala"
       ],
       "suites": [
         {
-          "path": "modules/model/shared/src/test/scala/scalafim/fmri/model/ModelSuite.scala",
+          "path": "modules/fit/shared/src/test/scala/scalafim/fmri/model/ModelSuite.scala",
           "tests": [
             "model and fit plan retain the canonical structural coefficient axis",
             "compatibility label changes do not change structural identity"
@@ -776,13 +774,13 @@
     },
     "E12": {
       "commands": [
-        "sbt designJVM/test modelJVM/test",
-        "sbt designJS/test modelJS/test"
+        "sbt designJVM/test fitJVM/test",
+        "sbt designJS/test fitJS/test"
       ],
       "external_fixtures": [],
       "modules": [
         "design",
-        "model"
+        "fit"
       ],
       "source_paths": [
         "modules/design/shared/src/main/scala/scalafim/fmri/design/FactorLevels.scala",
@@ -790,7 +788,7 @@
       ],
       "suites": [
         {
-          "path": "modules/model/shared/src/test/scala/scalafim/fmri/model/ModelBuilderSuite.scala",
+          "path": "modules/fit/shared/src/test/scala/scalafim/fmri/model/ModelBuilderSuite.scala",
           "tests": [
             "buildModel propagates declared factor levels through the public model path"
           ]
@@ -833,12 +831,11 @@
       ],
       "modules": [
         "design",
-        "model",
         "fit"
       ],
       "source_paths": [
         "modules/design/shared/src/main/scala/scalafim/fmri/design/HrfAssignments.scala",
-        "modules/model/shared/src/main/scala/scalafim/fmri/model/FmriModelBuilder.scala"
+        "modules/fit/shared/src/main/scala/scalafim/fmri/model/FmriModelBuilder.scala"
       ],
       "suites": [
         {
@@ -865,11 +862,10 @@
         "docs/scenarios/fixtures/fit.structural-s18-wls.v1.r.json"
       ],
       "modules": [
-        "model",
         "fit"
       ],
       "source_paths": [
-        "modules/model/shared/src/main/scala/scalafim/fmri/model/FitConfig.scala",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/model/FitConfig.scala",
         "modules/fit/shared/src/main/scala/scalafim/fmri/fit/ResponsePreparation.scala"
       ],
       "suites": [
@@ -921,24 +917,23 @@
     },
     "E17": {
       "commands": [
-        "sbt modelJVM/test fitJVM/test",
-        "sbt modelJS/test fitJS/test"
+        "sbt fitJVM/test",
+        "sbt fitJS/test"
       ],
       "external_fixtures": [
         "docs/scenarios/fixtures/fit.mixed-tr-fixed-effects.v1.r.json"
       ],
       "modules": [
-        "model",
         "fit"
       ],
       "source_paths": [
-        "modules/model/shared/src/main/scala/scalafim/fmri/model/CoefficientScope.scala",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/model/CoefficientScope.scala",
         "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FixedEffects.scala",
         "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FirstLevelFixedEffectsEstimates.scala"
       ],
       "suites": [
         {
-          "path": "modules/model/shared/src/test/scala/scalafim/fmri/model/ModelSuite.scala",
+          "path": "modules/fit/shared/src/test/scala/scalafim/fmri/model/ModelSuite.scala",
           "tests": [
             "FitPlan exposes separate-runs-then-fixed-effects as an executable scope"
           ]

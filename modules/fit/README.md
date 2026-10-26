@@ -1,6 +1,9 @@
 # scalafim-fmri-fit
 
-Portable fitting kernels for fMRI models.
+Portable model plans and fitting kernels for fMRI models.
+
+The model API remains in `scalafim.fmri.model`, owned by this module.
+See [model API](model-api.md); depend on `fitJVM` or `fitJS`.
 
 The first engine is full-rank ordinary least squares over timepoints-by-voxels
 response blocks. It is cross-built for the JVM and Scala.js and uses the
