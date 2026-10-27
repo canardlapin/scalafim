@@ -704,7 +704,7 @@ lazy val workflowExamples =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("examples/workflows"))
-    .dependsOn(mvpaSpatial, mvpaDataset, scenarioTestkit % "test->compile")
+    .dependsOn(mvpaSpatial, mvpaFmri, scenarioTestkit % "test->compile")
     .jvmConfigure(_.dependsOn(neuroatlas4sVolumeIoJVM, mvpa4sAtlasJVM, fitJVM,
       neurosurf4sIoJVM % "test->compile", neurosurf4sViewRasterJVM % "test->compile",
       neurosurf4sViewVolumeJVM % "test->compile", neurosurf4sViewLinkJVM % "test->compile"))
@@ -907,30 +907,17 @@ lazy val firstLevelLaws =
 lazy val firstLevelLawsJS  = firstLevelLaws.js
 lazy val firstLevelLawsJVM = firstLevelLaws.jvm
 
-lazy val mvpaPipeline =
+lazy val mvpaFmri =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
-    .in(file("modules/mvpa-pipeline"))
-    .dependsOn(pipeline)
-    .jvmConfigure(_.dependsOn(mvpa4sCoreJVM))
-    .jsConfigure(_.dependsOn(mvpa4sCoreJS))
-    .settings(commonSettings)
-    .settings(name := "scalafim-mvpa-pipeline")
-    .jsSettings(jsSettingsBase)
-
-lazy val mvpaPipelineJS  = mvpaPipeline.js
-lazy val mvpaPipelineJVM = mvpaPipeline.jvm
-
-lazy val mvpaFit =
-  crossProject(JSPlatform, JVMPlatform)
-    .crossType(CrossType.Full)
-    .in(file("modules/mvpa-fit"))
-    .dependsOn(fit, scenarioTestkit % "test->compile")
-    .jvmConfigure(_.dependsOn(mvpa4sCoreJVM))
-    .jsConfigure(_.dependsOn(mvpa4sCoreJS))
+    .in(file("modules/mvpa-fmri"))
+    .dependsOn(fit, dataset, scenarioTestkit % "test->compile",
+      mvpaGroup % "test->compile;test->test", mvpaArtifacts % "test->compile")
+    .jvmConfigure(_.dependsOn(mvpa4sCoreJVM, mvpa4sTestkitJVM % Test, mvpa4sPredictiveJVM, alderKernelJVM, alderDataJVM))
+    .jsConfigure(_.dependsOn(mvpa4sCoreJS, mvpa4sTestkitJS % Test, mvpa4sPredictiveJS, alderKernelJS, alderDataJS))
     .settings(commonSettings)
     .settings(
-      name := "scalafim-fmri-mvpa-fit"
+      name := "scalafim-mvpa-fmri"
     )
     .jvmConfigure(
       _.dependsOn(
@@ -946,8 +933,8 @@ lazy val mvpaFit =
     )
     .jsSettings(jsSettingsBase)
 
-lazy val mvpaFitJS  = mvpaFit.js
-lazy val mvpaFitJVM = mvpaFit.jvm
+lazy val mvpaFmriJS  = mvpaFmri.js
+lazy val mvpaFmriJVM = mvpaFmri.jvm
 
 lazy val connectivity =
   crossProject(JSPlatform, JVMPlatform)
@@ -982,25 +969,6 @@ lazy val surfaceViewConnectivity =
 
 lazy val surfaceViewConnectivityJS  = surfaceViewConnectivity.js
 lazy val surfaceViewConnectivityJVM = surfaceViewConnectivity.jvm
-
-lazy val mvpaDataset =
-  crossProject(JSPlatform, JVMPlatform)
-    .crossType(CrossType.Full)
-    .in(file("modules/mvpa-dataset"))
-    .dependsOn(mvpaFit, dataset, scenarioTestkit % "test->compile",
-      mvpaGroup % "test->compile;test->test", mvpaArtifacts % "test->compile")
-    .jvmConfigure(_.dependsOn(mvpa4sCoreJVM, mvpa4sTestkitJVM % Test))
-    .jsConfigure(_.dependsOn(mvpa4sCoreJS, mvpa4sTestkitJS % Test))
-    .settings(commonSettings)
-    .settings(
-      name := "scalafim-fmri-mvpa-dataset"
-    )
-    .jvmConfigure(_.dependsOn(mvpa4sPredictiveJVM, alderKernelJVM, alderDataJVM))
-    .jsConfigure(_.dependsOn(mvpa4sPredictiveJS, alderKernelJS, alderDataJS))
-    .jsSettings(jsSettingsBase)
-
-lazy val mvpaDatasetJS  = mvpaDataset.js
-lazy val mvpaDatasetJVM = mvpaDataset.jvm
 
 // Fitter-independent bounded pattern profiles over estimate types and archive IO.
 lazy val mvpaArtifacts =
@@ -1180,16 +1148,12 @@ lazy val root =
       phrfComparisonJVM,
       firstLevelLawsJS,
       firstLevelLawsJVM,
-      mvpaPipelineJS,
-      mvpaPipelineJVM,
-      mvpaFitJS,
-      mvpaFitJVM,
       connectivityJS,
       connectivityJVM,
       surfaceViewConnectivityJS,
       surfaceViewConnectivityJVM,
-      mvpaDatasetJS,
-      mvpaDatasetJVM,
+      mvpaFmriJS,
+      mvpaFmriJVM,
       mvpaArtifactsJS,
       mvpaArtifactsJVM,
       mvpaSpatialJS,
@@ -1284,8 +1248,8 @@ ecosystemBoundaries := {
   if (exit != 0) sys.error("Ecosystem ownership or Compile boundary check failed")
 }
 
-addCommandAlias("scalafimCompileAll", ";ecosystemBoundaries;mvpa4sImagingCompileAll;neuroatlasCompileAll;neurosurfCompileAll;neuroimViewCompileAll;pipelineJVM/compile;pipelineJS/compile;responseJVM/compile;responseJS/compile;responseLawsJVM/compile;responseLawsJS/compile;latentJVM/compile;latentJS/compile;arJVM/compile;arJS/compile;hrfJVM/compile;hrfJS/compile;scenarioTestkitJVM/compile;scenarioTestkitJS/compile;designJVM/compile;designJS/compile;designViewJVM/compile;designViewJS/compile;providerContractJVM/compile;providerContractJS/compile;thresholdJVM/compile;thresholdJS/compile;motionJVM/compile;motionJS/compile;surfaceViewConnectivityJVM/compile;surfaceViewConnectivityJS/compile;spatialJVM/compile;spatialJS/compile;archiveJVM/compile;archiveJS/compile;estimatesJVM/compile;estimatesJS/compile;estimatesIoJVM/compile;estimatesIoJS/compile;archiveLnaJVM/compile;archiveLnaJS/compile;archivedResponseInteropJVM/compile;archivedResponseInteropJS/compile;datasetJVM/compile;datasetJS/compile;fitJVM/compile;fitJS/compile;phrfComparisonJVM/compile;phrfComparisonJS/compile;firstLevelLawsJVM/compile;firstLevelLawsJS/compile;mvpaPipelineJVM/compile;mvpaPipelineJS/compile;mvpaFitJVM/compile;mvpaFitJS/compile;connectivityJVM/compile;connectivityJS/compile;mvpaDatasetJVM/compile;mvpaDatasetJS/compile;mvpaArtifactsJVM/compile;mvpaArtifactsJS/compile;mvpaSpatialJVM/compile;mvpaSpatialJS/compile;groupJVM/compile;groupJS/compile;mvpaGroupJVM/compile;mvpaGroupJS/compile;fmriWorkflowJVM/compile;fmriWorkflowJS/compile;archiveZarrJVM/compile;archiveZarrJS/compile;datasetZarrJVM/compile;datasetZarrJS/compile")
-addCommandAlias("scalafimTestAll", ";neurosurfCoreTestAll;neurosurfSpatialTestAll;neurosurfFixtureTestAll;neurosurfViewJvmTestAll;neurosurfViewJsTestAll;neurosurfBrowserTestAll;neurosurfExamplesJvmTestAll;neurosurfNativeTestAll;mvpa4sCoreTestAll;mvpa4sPredictiveTestAll;mvpa4sLocusTestAll;scalafimMvpaImagingTestAll;pipelineJVM/test;pipelineJS/test;responseJVM/test;responseJS/test;responseLawsJVM/test;responseLawsJS/test;latentJVM/test;latentJS/test;arJVM/test;arJS/test;hrfJVM/test;hrfJS/test;scenarioTestkitJVM/test;scenarioTestkitJS/test;designJVM/test;designJS/test;designViewJVM/test;designViewJS/test;neuroimTestAll;neuroimTransformTestAll;neuroimRoutingTestAll;neuroatlasCoreTestAll;neuroatlasVolumeTestAll;neuroatlasSurfaceTestAll;neuroatlasRoutingTestAll;neuroimViewJvmTestAll;neuroimViewJsTestAll;providerContractJVM/test;providerContractJS/test;thresholdJVM/test;thresholdJS/test;motionJVM/test;motionJS/test;surfaceViewConnectivityJVM/test;surfaceViewConnectivityJS/test;spatialJVM/test;spatialJS/test;archiveJVM/test;archiveJS/test;estimatesJVM/test;estimatesJS/test;estimatesIoJVM/test;estimatesIoJS/test;archiveLnaJVM/test;archiveLnaJS/test;archivedResponseInteropJVM/test;archivedResponseInteropJS/test;datasetJVM/test;datasetJS/test;fitJVM/test;fitJS/test;phrfComparisonJVM/test;phrfComparisonJS/test;firstLevelLawsJVM/test;firstLevelLawsJS/test;mvpaPipelineJVM/test;mvpaPipelineJS/test;mvpaFitJVM/test;mvpaFitJS/test;connectivityJVM/test;connectivityJS/test;mvpaDatasetJVM/test;mvpaDatasetJS/test;mvpaArtifactsJVM/test;mvpaArtifactsJS/test;mvpaSpatialJVM/test;mvpaSpatialJS/test;groupJVM/test;groupJS/test;mvpaGroupJVM/test;mvpaGroupJS/test;fmriWorkflowJVM/test;fmriWorkflowJS/test;archiveZarrJVM/test;archiveZarrJS/test;datasetZarrJVM/test;datasetZarrJS/test")
+addCommandAlias("scalafimCompileAll", ";ecosystemBoundaries;mvpa4sImagingCompileAll;neuroatlasCompileAll;neurosurfCompileAll;neuroimViewCompileAll;pipelineJVM/compile;pipelineJS/compile;responseJVM/compile;responseJS/compile;responseLawsJVM/compile;responseLawsJS/compile;latentJVM/compile;latentJS/compile;arJVM/compile;arJS/compile;hrfJVM/compile;hrfJS/compile;scenarioTestkitJVM/compile;scenarioTestkitJS/compile;designJVM/compile;designJS/compile;designViewJVM/compile;designViewJS/compile;providerContractJVM/compile;providerContractJS/compile;thresholdJVM/compile;thresholdJS/compile;motionJVM/compile;motionJS/compile;surfaceViewConnectivityJVM/compile;surfaceViewConnectivityJS/compile;spatialJVM/compile;spatialJS/compile;archiveJVM/compile;archiveJS/compile;estimatesJVM/compile;estimatesJS/compile;estimatesIoJVM/compile;estimatesIoJS/compile;archiveLnaJVM/compile;archiveLnaJS/compile;archivedResponseInteropJVM/compile;archivedResponseInteropJS/compile;datasetJVM/compile;datasetJS/compile;fitJVM/compile;fitJS/compile;phrfComparisonJVM/compile;phrfComparisonJS/compile;firstLevelLawsJVM/compile;firstLevelLawsJS/compile;mvpaFmriJVM/compile;mvpaFmriJS/compile;connectivityJVM/compile;connectivityJS/compile;mvpaArtifactsJVM/compile;mvpaArtifactsJS/compile;mvpaSpatialJVM/compile;mvpaSpatialJS/compile;groupJVM/compile;groupJS/compile;mvpaGroupJVM/compile;mvpaGroupJS/compile;fmriWorkflowJVM/compile;fmriWorkflowJS/compile;archiveZarrJVM/compile;archiveZarrJS/compile;datasetZarrJVM/compile;datasetZarrJS/compile")
+addCommandAlias("scalafimTestAll", ";neurosurfCoreTestAll;neurosurfSpatialTestAll;neurosurfFixtureTestAll;neurosurfViewJvmTestAll;neurosurfViewJsTestAll;neurosurfBrowserTestAll;neurosurfExamplesJvmTestAll;neurosurfNativeTestAll;mvpa4sCoreTestAll;mvpa4sPredictiveTestAll;mvpa4sLocusTestAll;scalafimMvpaImagingTestAll;pipelineJVM/test;pipelineJS/test;responseJVM/test;responseJS/test;responseLawsJVM/test;responseLawsJS/test;latentJVM/test;latentJS/test;arJVM/test;arJS/test;hrfJVM/test;hrfJS/test;scenarioTestkitJVM/test;scenarioTestkitJS/test;designJVM/test;designJS/test;designViewJVM/test;designViewJS/test;neuroimTestAll;neuroimTransformTestAll;neuroimRoutingTestAll;neuroatlasCoreTestAll;neuroatlasVolumeTestAll;neuroatlasSurfaceTestAll;neuroatlasRoutingTestAll;neuroimViewJvmTestAll;neuroimViewJsTestAll;providerContractJVM/test;providerContractJS/test;thresholdJVM/test;thresholdJS/test;motionJVM/test;motionJS/test;surfaceViewConnectivityJVM/test;surfaceViewConnectivityJS/test;spatialJVM/test;spatialJS/test;archiveJVM/test;archiveJS/test;estimatesJVM/test;estimatesJS/test;estimatesIoJVM/test;estimatesIoJS/test;archiveLnaJVM/test;archiveLnaJS/test;archivedResponseInteropJVM/test;archivedResponseInteropJS/test;datasetJVM/test;datasetJS/test;fitJVM/test;fitJS/test;phrfComparisonJVM/test;phrfComparisonJS/test;firstLevelLawsJVM/test;firstLevelLawsJS/test;mvpaFmriJVM/test;mvpaFmriJS/test;connectivityJVM/test;connectivityJS/test;mvpaArtifactsJVM/test;mvpaArtifactsJS/test;mvpaSpatialJVM/test;mvpaSpatialJS/test;groupJVM/test;groupJS/test;mvpaGroupJVM/test;mvpaGroupJS/test;fmriWorkflowJVM/test;fmriWorkflowJS/test;archiveZarrJVM/test;archiveZarrJS/test;datasetZarrJVM/test;datasetZarrJS/test")
 addCommandAlias("examplesCompile", ";atlasExamplesJVM/compile;workflowExamplesJVM/compile;workflowExamplesJS/compile")
 addCommandAlias("examplesTest", ";atlasExamplesJVM/test;workflowExamplesJVM/test;workflowExamplesJS/test")
 

@@ -7,10 +7,12 @@ import scalafim.dataset.{
   IndexSelection
 }
 import scalafim.fmri.model.{
+  AutocorrelationConfig,
   FitEngine,
   FitPlan,
   FitStrategy,
   FixedWeightAlignment,
+  ModelVolumeWeighting,
   MissingDataPolicy,
   NuisanceProjection,
   VolumeWeighting
@@ -343,13 +345,13 @@ private[fit] object MaskedResponseExecutor:
               FitEngine.GeneralizedLeastSquares |
               FitEngine.RunwiseLeastSquares |
               FitEngine.FixedEffects =>
-            plan.config.volumeWeighting match
+            plan.strategy.fitControls.volumeWeighting.toLegacy match
               case VolumeWeighting.Estimated(_) =>
                 Left(FitError.UnsupportedVolumeWeighting(
                   "response-derived weights do not yet define how unlike observation patterns share a temporal weight estimate"
                 ))
               case _ =>
-                plan.config.nuisanceProjection match
+                plan.strategy.fitControls.nuisanceProjection.toLegacy match
                   case NuisanceProjection.MatrixProjection(_, _) =>
                     Left(FitError.UnsupportedMissingDataPolicy(
                       "voxel-specific row omission does not yet subset an explicit nuisance-projection matrix"
@@ -366,10 +368,7 @@ private[fit] object MaskedResponseExecutor:
       pattern: ObservationPattern
   ): Either[FitError, FitPlan] =
     val retainedTimepoints = pattern.sourceTimepoints.toSet
-    val autocorrelation = plan.config.autocorrelation.copy(
-      censoredTimepoints = plan.config.autocorrelation.censoredTimepoints.filter(retainedTimepoints.contains)
-    )
-    val weighting = plan.config.volumeWeighting match
+    val weighting = plan.strategy.fitControls.volumeWeighting.toLegacy match
       case VolumeWeighting.Fixed(weights, FixedWeightAlignment.SelectedRows) =>
         if weights.length != masked.sourceTimepoints.length then
           return Left(FitError.InvalidVolumeWeights(
@@ -377,15 +376,22 @@ private[fit] object MaskedResponseExecutor:
           ))
         VolumeWeighting.Fixed(pattern.rows.map(weights), FixedWeightAlignment.SelectedRows)
       case other => other
-    val config = plan.config.copy(
-      missingData = MissingDataPolicy.Error,
-      autocorrelation = autocorrelation,
-      volumeWeighting = weighting
-    )
-    FitPlan
-      .makeLegacy(plan.model, plan.engine, config)
-      .left
-      .map(error => FitError.UnsupportedMissingDataPolicy(error.message))
+    val controls = for
+      volume <- ModelVolumeWeighting.fromLegacy(weighting)
+    yield plan.strategy.fitControls.copy(volumeWeighting = volume, missingData = MissingDataPolicy.Error)
+    controls.left.map(error => FitError.UnsupportedMissingDataPolicy(error.message)).flatMap { value =>
+      val strategy = plan.strategy match
+        case FitStrategy.GeneralizedLeastSquares(ar, _) =>
+          val adjusted = AutocorrelationConfig.unsafe(
+            order = ar.order.value, iterations = ar.iterations, global = ar.global, voxelwise = ar.voxelwise,
+            exactFirst = ar.exactFirst, censoredTimepoints = ar.censoredTimepoints.values.filter(retainedTimepoints.contains),
+            coefficients = ar.coefficients, biasCorrection = ar.biasCorrection,
+            initialization = Some(ar.initialization), censorTreatment = ar.censorTreatment, fgls = ar.fgls
+          )
+          FitStrategy.GeneralizedLeastSquares(adjusted, value)
+        case other => other.withControls(value)
+      FitPlan.make(plan.model, strategy).left.map(error => FitError.UnsupportedMissingDataPolicy(error.message))
+    }
 
   private def selectionFor(pattern: ObservationPattern): DataSelection =
     DataSelection(

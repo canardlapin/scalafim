@@ -213,7 +213,7 @@ private[fit] object PreparedFitContexts:
       interpreter <- FitInterpreters.forPlan(plan)
       context <-
         if plan.engine == FitEngine.OrdinaryLeastSquares &&
-            plan.config.volumeWeighting.isInstanceOf[scalafim.fmri.model.VolumeWeighting.Estimated]
+            plan.strategy.fitControls.volumeWeighting.toLegacy.isInstanceOf[scalafim.fmri.model.VolumeWeighting.Estimated]
         then FitPreparation.dvars(reader, plan, chunkPlan).map(FitInterpreters.olsContext(plan, _))
         else if plan.engine == FitEngine.RobustLeastSquares then
           BoundedRobustPreparation.prepare(reader, plan, chunkPlan)
@@ -399,7 +399,7 @@ object ChunkedFitExecutor:
       selection: DataSelection = DataSelection.All,
       chunking: FitChunkingStrategy = FitChunkingStrategy.WholeSelection
   ): Either[FitError, FmriFitResult] =
-    plan.config.missingData match
+    plan.strategy.fitControls.missingData match
       case MissingDataPolicy.OmitRowsPerVoxel =>
         MaskedResponseExecutor.fitChunked(reader, plan, selection, chunking)
       case _ =>
@@ -557,7 +557,7 @@ object FutureChunkedFitExecutor:
       chunking: FitChunkingStrategy = FitChunkingStrategy.WholeSelection,
       parallelism: FitParallelism = FitParallelism.unbounded
   )(using ExecutionContext): Future[Either[FitError, FmriFitResult]] =
-    plan.config.missingData match
+    plan.strategy.fitControls.missingData match
       case MissingDataPolicy.OmitRowsPerVoxel =>
         MaskedResponseExecutor.fitChunkedFuture(reader, plan, selection, chunking, parallelism)
       case _ =>

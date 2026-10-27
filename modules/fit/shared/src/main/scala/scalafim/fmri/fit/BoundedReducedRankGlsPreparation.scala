@@ -50,7 +50,7 @@ private[fit] object BoundedReducedRankGlsPreparation:
       partition: ReducedRankDesignPartition, request: ReducedRankRequest): Either[FitError, PreparedSpatialReduction] =
     for
       gls <-
-        if FitPreparation.fixedAr(source.plan.config.autocorrelation) then
+        if FitPreparation.fixedAr(source.plan.strategy.arOptions) then
           Gls.prepare(source.design, ResponseBlock.unsafe(Matrix.zeros(source.design.timepoints, 1)), source.partitions,
             config.autocorrelation.toLegacy, Vector(0)).map(_.copy(selectedVoxelIndices = source.retainedVoxelIndices))
         else PooledGlsPreparation.shared(source)

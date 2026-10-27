@@ -799,7 +799,8 @@ object ProfileHrfFit:
         else
           val admission = policy.observedAdmission.toRight(ProfileFitError.Unsupported("condition routing requires observed-family admission"))
           for
-            _ <- validateConfig(fixed.config, whitening, fixed.model.dataset, fixed.model.designMatrix).flatMap(_ =>
+            _ <- validatePreparation(ResponsePreparationPlan.fromPreparation(fixed.strategy.preparation), LssConfig(), whitening,
+              fixed.model.dataset, fixed.model.designMatrix).flatMap(_ =>
               if whitening == CanonicalTemporalWhitening.Iid then Right(())
               else Left(ProfileFitError.Unsupported("fixed condition OLS retention does not support AR whitening")))
             held <- admission
@@ -869,37 +870,46 @@ object ProfileHrfFit:
       dataset: FmriDataset,
       actualDesign: scalafim.fmri.hrf.linalg.Mat
   ): Either[ProfileFitError, Unit] =
-    if config.missingData != MissingDataPolicy.Error then Left(ProfileFitError.Unsupported("missing data policy must be Error"))
-    else if config.volumeWeighting != VolumeWeighting.Disabled then Left(ProfileFitError.Unsupported("temporal volume weights are not implemented"))
-    else if config.nuisanceProjection != NuisanceProjection.Disabled then Left(ProfileFitError.Unsupported("matrix nuisance projection is not implemented"))
-    else if config.robust != RobustOptions() then Left(ProfileFitError.Unsupported("robust settings are not implemented"))
-    else if config.lss != LssConfig() then Left(ProfileFitError.Unsupported("nondefault LSS settings are not implemented"))
-    else if config.autocorrelation.censoredTimepoints.nonEmpty then Left(ProfileFitError.Unsupported("censoring is not implemented"))
-    else if config.autocorrelation.voxelwise then Left(ProfileFitError.Unsupported("voxelwise AR is not implemented"))
-    else if config.autocorrelation.iterations != 1 then
+    validatePreparation(ResponsePreparationPlan.fromConfig(config), config.lss, whitening, dataset, actualDesign)
+
+  private def validatePreparation(
+      preparation: ResponsePreparationPlan,
+      lss: LssConfig,
+      whitening: CanonicalTemporalWhitening,
+      dataset: FmriDataset,
+      actualDesign: scalafim.fmri.hrf.linalg.Mat
+  ): Either[ProfileFitError, Unit] =
+    if preparation.missingData != MissingDataPolicy.Error then Left(ProfileFitError.Unsupported("missing data policy must be Error"))
+    else if preparation.volumeWeighting != VolumeWeighting.Disabled then Left(ProfileFitError.Unsupported("temporal volume weights are not implemented"))
+    else if preparation.nuisanceProjection != NuisanceProjection.Disabled then Left(ProfileFitError.Unsupported("matrix nuisance projection is not implemented"))
+    else if preparation.robust != RobustOptions() then Left(ProfileFitError.Unsupported("robust settings are not implemented"))
+    else if lss != LssConfig() then Left(ProfileFitError.Unsupported("nondefault LSS settings are not implemented"))
+    else if preparation.autocorrelation.censoredTimepoints.nonEmpty then Left(ProfileFitError.Unsupported("censoring is not implemented"))
+    else if preparation.autocorrelation.voxelwise then Left(ProfileFitError.Unsupported("voxelwise AR is not implemented"))
+    else if preparation.autocorrelation.iterations != 1 then
       Left(ProfileFitError.Unsupported("iterated AR settings are not implemented"))
-    else if config.autocorrelation.structure != ArStructure.Iid && !config.autocorrelation.global then
+    else if preparation.autocorrelation.structure != ArStructure.Iid && !preparation.autocorrelation.global then
       Left(ProfileFitError.Unsupported("fixed shared AR requires global coefficient scope in FitConfig"))
-    else if config.autocorrelation.structure != ArStructure.Iid &&
+    else if preparation.autocorrelation.structure != ArStructure.Iid &&
         !whiteningOption(whitening).exists(_.pooling == NoisePooling.Global) then
       Left(ProfileFitError.Unsupported("fixed shared AR requires a global whitening coefficient scope"))
-    else if config.autocorrelation.structure == ArStructure.Iid && config.autocorrelation != scalafim.fmri.model.ArOptions() then
+    else if preparation.autocorrelation.structure == ArStructure.Iid && preparation.autocorrelation != scalafim.fmri.model.ArOptions() then
       Left(ProfileFitError.Unsupported("nondefault IID autocorrelation settings are not implemented"))
-    else if config.autocorrelation.structure != ArStructure.Iid &&
-        config.autocorrelation.rho.isEmpty && config.autocorrelation.phi.isEmpty then
+    else if preparation.autocorrelation.structure != ArStructure.Iid &&
+        preparation.autocorrelation.rho.isEmpty && preparation.autocorrelation.phi.isEmpty then
       Left(ProfileFitError.Unsupported("estimated AR coefficients are not implemented"))
     else
       val rows = dataset.shape.timepoints
       val partitions = RunPartition.fromSamplingFrame(dataset.samplingFrame, (0 until rows).toVector)
       val expectedSegments = Gls.timeSegments(partitions, Vector.empty).left.map(error => ProfileFitError.Unsupported(error.message))
       expectedSegments.flatMap { segments =>
-        val identity = (config.autocorrelation.structure, whitening) match
+        val identity = (preparation.autocorrelation.structure, whitening) match
           case (ArStructure.Iid, CanonicalTemporalWhitening.Iid) => Right(())
           case (ArStructure.Ar(order), CanonicalTemporalWhitening.Shared(plan)) =>
-            val requested = config.autocorrelation.phi.getOrElse(config.autocorrelation.rho.toVector)
+            val requested = preparation.autocorrelation.phi.getOrElse(preparation.autocorrelation.rho.toVector)
             if plan.coefficients.length != 1 || plan.coefficients.head.phi != requested ||
                 plan.coefficients.head.theta.nonEmpty || plan.arOrder != order ||
-                plan.initialCondition != Gls.initialCondition(config.autocorrelation) ||
+                plan.initialCondition != Gls.initialCondition(preparation.autocorrelation) ||
                 plan.segments != segments then
               Left(ProfileFitError.Unsupported("fixed shared AR coefficients, initial condition or segments differ from FitConfig"))
             else Right(())
@@ -908,7 +918,7 @@ object ProfileHrfFit:
           if actualDesign.rows != rows then Left(ProfileFitError.Preparation("baseline rows differ from dataset time axis"))
           else if actualDesign.cols == 0 then Right(())
           else DesignMatrix.fromMatrix(toDMat(actualDesign)).left.map(error => ProfileFitError.Preparation(error.message)).flatMap { matrix =>
-            PreparedContrastGeometry.validatePreparation(ResponsePreparationPlan.fromConfig(config), matrix, partitions,
+            PreparedContrastGeometry.validatePreparation(preparation, matrix, partitions,
               TemporalPreparationScope.Fixed, whitening).left.map(error => ProfileFitError.Unsupported(error.message))
           }
         }

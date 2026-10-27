@@ -46,7 +46,7 @@ sbt 'coreJVM/testOnly mvpa4s.analysis.FoundationExtensionSuite mvpa4s.analysis.D
 
 For observations, bind run and condition columns in `ObservationMeanPlan`,
 then construct `ObservationMeanRelations`. For first-level readouts, use the
-source-bound relations in `mvpa-fit`; their scoped operators expire with the
+source-bound relations in `mvpa-fmri`; their scoped operators expire with the
 acquisition callback. A callable readout does not itself establish residual
 precision or independent errors. Missing residual evidence must be reported,
 or the analyst may explicitly choose a supported identity metric with its
@@ -69,7 +69,7 @@ sbt 'coreJVM/testOnly mvpa4s.relation.RelationConsumersSuite' \
 The suite measures source reads, retains the actual RDM, tests model-only
 invalidation and rejects retention of one-shot relations. The native readout
 examples and independent beta-free R oracle are exercised by
-`mvpaFitJVM/test` and `mvpaFitJS/test`.
+`mvpaFmriJVM/test` and `mvpaFmriJS/test`.
 
 ## Fit, confirm and summarize subjects
 

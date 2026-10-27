@@ -202,7 +202,7 @@ object FirstLevelEstimates:
     val preparation = ResponsePreparationPlan.fromPlan(plan)
     if plan.engine != engine then
       Left(FitError.UnsupportedEngine(s"${plan.engine}: this compiled selective route requires $engine"))
-    else if plan.config.missingData != MissingDataPolicy.Error then
+    else if plan.strategy.fitControls.missingData != MissingDataPolicy.Error then
       Left(FitError.UnsupportedMissingDataPolicy("compiled selective execution currently requires finite selected responses"))
     else if preparation.volumeWeighting != VolumeWeighting.Disabled then
       Left(FitError.UnsupportedVolumeWeighting("compiled selective execution does not yet admit temporal weights"))

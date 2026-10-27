@@ -1,0 +1,128 @@
+[
+  {
+    "path": "/Users/bbuchsbaum/code/scala/scalafim/modules/linalg-breeze",
+    "status": "removed with verified full-tree custody",
+    "receipt": {
+      "version": 1,
+      "source": "/Users/bbuchsbaum/code/scala/scalafim/modules/linalg-breeze",
+      "key": "linalg-breeze",
+      "cache_root": "/Users/bbuchsbaum/code/scala/scalafim",
+      "destination": "/Volumes/My Passport for Mac/codex-work/module-simplification-20261026/local-targets/linalg-breeze",
+      "volume_uuid": "51B72C66-64BB-3C5F-8853-2219CA2FFA9F",
+      "tree_digest": "df96a55e45c69853e45922f89fbf1a36c00fec307c7a9859377894889dd24c5d",
+      "counts": {
+        "directories": 172,
+        "files": 96,
+        "symlinks": 0
+      }
+    }
+  },
+  {
+    "path": "/Users/bbuchsbaum/code/scala/scalafim/modules/linalg",
+    "status": "removed with verified full-tree custody",
+    "receipt": {
+      "version": 1,
+      "source": "/Users/bbuchsbaum/code/scala/scalafim/modules/linalg",
+      "key": "linalg",
+      "cache_root": "/Users/bbuchsbaum/code/scala/scalafim",
+      "destination": "/Volumes/My Passport for Mac/codex-work/module-simplification-20261026/local-targets/linalg",
+      "volume_uuid": "51B72C66-64BB-3C5F-8853-2219CA2FFA9F",
+      "tree_digest": "2f0e168417c57fb693bc6ef000a3085eec68f47a69829b610362d63de0236a7d",
+      "counts": {
+        "directories": 387,
+        "files": 842,
+        "symlinks": 0
+      }
+    }
+  },
+  {
+    "path": "/Users/bbuchsbaum/code/scala/scalafim/modules/graph",
+    "status": "removed with verified full-tree custody",
+    "receipt": {
+      "version": 1,
+      "source": "/Users/bbuchsbaum/code/scala/scalafim/modules/graph",
+      "key": "graph",
+      "cache_root": "/Users/bbuchsbaum/code/scala/scalafim",
+      "destination": "/Volumes/My Passport for Mac/codex-work/module-simplification-20261026/local-targets/graph",
+      "volume_uuid": "51B72C66-64BB-3C5F-8853-2219CA2FFA9F",
+      "tree_digest": "15ae8647d00aab081b5855d30d61340e319511fd0e8b2db78b037de2a7766195",
+      "counts": {
+        "directories": 181,
+        "files": 431,
+        "symlinks": 0
+      }
+    }
+  },
+  {
+    "path": "/Users/bbuchsbaum/code/scala/scalafim/modules/atlas-workflows",
+    "status": "removed with verified full-tree custody",
+    "receipt": {
+      "version": 1,
+      "source": "/Users/bbuchsbaum/code/scala/scalafim/modules/atlas-workflows",
+      "key": "atlas-workflows",
+      "cache_root": "/Users/bbuchsbaum/code/scala/scalafim",
+      "destination": "/Volumes/My Passport for Mac/codex-work/module-simplification-20261026/local-targets/atlas-workflows",
+      "volume_uuid": "51B72C66-64BB-3C5F-8853-2219CA2FFA9F",
+      "tree_digest": "47eb55ef9972bddce20814ea00c5ff3f0dbc43bed3ffbf2cffc23eca9781118a",
+      "counts": {
+        "directories": 353,
+        "files": 267,
+        "symlinks": 0
+      }
+    }
+  },
+  {
+    "path": "/Users/bbuchsbaum/code/scala/scalafim/modules/locus-kernel",
+    "status": "removed with verified full-tree custody",
+    "receipt": {
+      "version": 1,
+      "source": "/Users/bbuchsbaum/code/scala/scalafim/modules/locus-kernel",
+      "key": "locus-kernel",
+      "cache_root": "/Users/bbuchsbaum/code/scala/scalafim",
+      "destination": "/Volumes/My Passport for Mac/codex-work/module-simplification-20261026/local-targets/locus-kernel",
+      "volume_uuid": "51B72C66-64BB-3C5F-8853-2219CA2FFA9F",
+      "tree_digest": "7e94c9b641221a05646038bd962ff985dc8a9a120c83ea9eeca4c043f74c6c6f",
+      "counts": {
+        "directories": 181,
+        "files": 343,
+        "symlinks": 0
+      }
+    }
+  },
+  {
+    "path": "/Users/bbuchsbaum/code/scala/scalafim/modules/mvpa-pipeline",
+    "status": "removed with verified full-tree custody",
+    "receipt": {
+      "version": 1,
+      "source": "/Users/bbuchsbaum/code/scala/scalafim/modules/mvpa-pipeline",
+      "key": "mvpa-pipeline",
+      "cache_root": "/Users/bbuchsbaum/code/scala/scalafim",
+      "destination": "/Volumes/My Passport for Mac/codex-work/module-simplification-20261026/local-targets/mvpa-pipeline",
+      "volume_uuid": "51B72C66-64BB-3C5F-8853-2219CA2FFA9F",
+      "tree_digest": "3d93b13c0f4d13139f2004e276e783478090d9de1818709944b4971085a2f118",
+      "counts": {
+        "directories": 353,
+        "files": 184,
+        "symlinks": 0
+      }
+    }
+  },
+  {
+    "path": "/Users/bbuchsbaum/code/scala/scalafim/modules/locus-laws",
+    "status": "removed with verified full-tree custody",
+    "receipt": {
+      "version": 1,
+      "source": "/Users/bbuchsbaum/code/scala/scalafim/modules/locus-laws",
+      "key": "locus-laws",
+      "cache_root": "/Users/bbuchsbaum/code/scala/scalafim",
+      "destination": "/Volumes/My Passport for Mac/codex-work/module-simplification-20261026/local-targets/locus-laws",
+      "volume_uuid": "51B72C66-64BB-3C5F-8853-2219CA2FFA9F",
+      "tree_digest": "ffce36ce9a6a5c376a365f464013949900d4769453d0ab6156507d9410029d68",
+      "counts": {
+        "directories": 65,
+        "files": 22,
+        "symlinks": 0
+      }
+    }
+  }
+]

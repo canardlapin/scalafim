@@ -1,0 +1,1 @@
+{"actor":"simplify-20261026","entity":"bd-01M59R5NQQKH4K8YVHPX48SCQJ","kind":"reserve_open","mode":"exclusive","op":"20261026T230348.333168Z-p99147-c0000-rd5dd-h703188","paths":["docs/plans/archive","tools/build/test_template_custody.py"],"reservation_id":"rv-01M5X79ABD93ZXKYK8GZC9EX46","ts":"2026-10-26T23:03:48.333168Z","ttl_s":7200,"v":2}

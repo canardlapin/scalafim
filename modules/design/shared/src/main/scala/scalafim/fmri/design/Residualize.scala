@@ -41,12 +41,6 @@ object Residualize:
       qr.applyQInPlace(out, yCols = data.cols)
       Mat.unsafe(data.rows, data.cols, out)
 
-  private def namesToIndices(all: Vector[String], selected: Seq[String]): Vector[Int] =
-    val index = all.zipWithIndex.toMap
-    selected.iterator.map { n =>
-      index.getOrElse(n, throw new IllegalArgumentException(s"Unknown column name: '$n'"))
-    }.toVector
-
   private def selectCols(m: Mat, cols: Seq[Int]): Mat =
     require(cols.nonEmpty, "cols must be non-empty")
     cols.foreach { c =>
@@ -78,12 +72,3 @@ object Residualize:
   extension [A](model: A)(using ev: HasDesignMatrix[A])
     def residualize(data: Mat, cols: Option[Seq[Int]] = None, tol: Double = 1e-7, pivot: Boolean = true): Mat =
       Residualize(ev.designMatrix(model), data, cols = cols, tol = tol, pivot = pivot)
-
-    def residualizeByName(data: Mat, cols: Seq[String], tol: Double = 1e-7, pivot: Boolean = true): Mat =
-      Residualize(
-        ev.designMatrix(model),
-        data,
-        cols = Some(namesToIndices(ev.columnNames(model), cols)),
-        tol = tol,
-        pivot = pivot
-      )

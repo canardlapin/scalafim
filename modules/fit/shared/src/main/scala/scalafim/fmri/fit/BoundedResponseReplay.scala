@@ -72,7 +72,7 @@ private[fit] object BoundedResponseReplay:
               recorded(series.voxelIndices) = checksum
               Right(series)
         }
-    val resolved = plan.config.volumeWeighting match
+    val resolved = plan.strategy.fitControls.volumeWeighting.toLegacy match
       case VolumeWeighting.Estimated(_) =>
         FitPreparation.dvars(recordingReader, plan, chunks).map(_.responsePreparation)
       case _ => FitPreparation.responsePreparation(plan, chunks.timepoints)

@@ -1,0 +1,126 @@
+{
+  "base": "a6abc2fb92389a584380754d73283e1a41adf386",
+  "source_and_test_files": [
+    {
+      "path": "modules/design/shared/src/main/scala/scalafim/fmri/design/contrast/ContrastCore.scala",
+      "sha256": "81947de5122c42cd8d9440cc9be86955e1d9f21cec42a4fc9ccb853438acacf7"
+    },
+    {
+      "path": "modules/design/shared/src/main/scala/scalafim/fmri/design/contrast/ContrastRegistry.scala",
+      "sha256": "002312e0add30b506c96bbf0bbe16b10c58a49647de96b73f578c2a7b3ccf5be"
+    },
+    {
+      "path": "modules/design/shared/src/main/scala/scalafim/fmri/design/contrast/ContrastSpec.scala",
+      "sha256": "1be76f41c44cc8a452fbddb6513af6208b02354b8a877b9f96f58054916b0a75"
+    },
+    {
+      "path": "modules/design/shared/src/main/scala/scalafim/fmri/design/contrast/ContrastWeights.scala",
+      "sha256": "9fe65da82ed5a142864e761d5042c00d850558953fc102a0eab1624d80c18e2d"
+    },
+    {
+      "path": "modules/design/shared/src/main/scala/scalafim/fmri/design/contrast/FContrasts.scala",
+      "sha256": "0a11ca9b526293ef6a15d9186eed232856be14de0c7759e4730decb12779a892"
+    },
+    {
+      "path": "modules/design/shared/src/test/scala/scalafim/fmri/design/SimplificationContrastGoldenSuite.scala",
+      "sha256": "fd85b06ffee7f190dfc2b7cdb9bbc5c14e9cdd1be39a9281e7438890eb965f0b"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/BoundedReducedRankGlsPreparation.scala",
+      "sha256": "f5cc888560b1f8a78929963c84c77bff153a1d6b56a38f87f6ffe01cc5782c83"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/BoundedResponseReplay.scala",
+      "sha256": "95b108a2c0cd471a723edf2127e83f3c0ffd1312e2b6e8d4649943a018a5a44b"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/BoundedRobustPreparation.scala",
+      "sha256": "e4762d327c9386ae3c7e1d88c0c99e6d281e3f73e455d323e5829de956853677"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FirstLevelEstimates.scala",
+      "sha256": "63a962be0c31450938ce82040ba16e5cb2fc012cf8da281f26fa43226231d286"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitBlock.scala",
+      "sha256": "b9e7687c2083c4101dc49c4832279e8ec2f68e6646f99f6bb4a8fb1c212b5ca1"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitChunks.scala",
+      "sha256": "9ba3ab555f8132689923f597ff7cd37ffa031c1c049834a2b561be8bbd825198"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitInterpreter.scala",
+      "sha256": "8e507de6ac4830717206a368ca49de69fc1a8265572cfe6581377d789e11d5f1"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitPlanExecutor.scala",
+      "sha256": "48d58346d3745bacb7f00d6b1956a698c6ddc67a1b7dcd4fdfa7a06f4dcc090b"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitPreparation.scala",
+      "sha256": "10b2c9732f5a67b46d8a7225276466013b3e541f439da46588610a24028428f3"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/MaskedResponseExecutor.scala",
+      "sha256": "b1fdef01aa51f8ca4bcd0d61690ee534a537a1097014eb3059d3ca55eaee945e"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/PooledGlsPreparation.scala",
+      "sha256": "c3e03ca1bba42b5160d7741fba9251fb13a3ef6b8b79bbdc05eca4eecae5d6f0"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/PreparedGlsArtifact.scala",
+      "sha256": "da126fd2ad99376bcf456c0ca9d9e777f3cacf29da4711f7e790846cb01d7480"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/ResponsePreparation.scala",
+      "sha256": "9aabacfc579344de94acd72eac9d570c6c15121413300f2aedba30950146f6e9"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/VoxelwiseArInterpreter.scala",
+      "sha256": "7015afc9b9fb38b8e9d4e75f93d9c77e6cb91020a8b4d515a65a1e341c512c19"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ProfileFitIdentity.scala",
+      "sha256": "4153f353e144ec0bf99335dc088a2ea1de97b5ba58daeea79918af162a34dfdf"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ProfileHrfFit.scala",
+      "sha256": "6a8dd7f02cb8ecfefee7f71231dd68ac5546fa42ea1453e65031e2a071346797"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/model/FitConfig.scala",
+      "sha256": "4c528b5918a325af6c20e720892c54a3d52af70ffe1501afb2c847f1f21ac297"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/model/ModelBuildSpecJsonCodec.scala",
+      "sha256": "8ca4cfeff8f2e2c2c778f6b4446ae16e2cbfda0af0e4c7ee2bea4fde7e39665f"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/model/ModelDocument.scala",
+      "sha256": "53f0f88f271c0b8e36c40ee5aa826d387ad14d213fd58899d7d7eb89fc9de7c0"
+    },
+    {
+      "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/FitBlockSuite.scala",
+      "sha256": "00a5bd13449e799dc60e7d3d773d442e5d347aa5089c3d86994507449d624afb"
+    },
+    {
+      "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/profile/SimplificationIdentityGoldenSuite.scala",
+      "sha256": "50b0cfb7486c8c3dbc2b3eb0670b994315d82ad353c5a89192fa7d96dafa56a6"
+    },
+    {
+      "path": "modules/fit/shared/src/test/scala/scalafim/fmri/model/FitPreparationSpecSuite.scala",
+      "sha256": "bccc7c749fd8e6c4349220bef113509a79c9f7668f3527d6193554c36fe9a93a"
+    },
+    {
+      "path": "modules/fit/shared/src/test/scala/scalafim/fmri/model/ModelBuildSpecJsonCodecSuite.scala",
+      "sha256": "15e8364b0c10b755e0cd798ace20931abe4da49cb4c6aba827430789327da554"
+    },
+    {
+      "path": "modules/fit/shared/src/test/scala/scalafim/fmri/model/ModelDocumentJsonCodecSuite.scala",
+      "sha256": "ceb1952d31bd86851dd77190bd3d5938b451ad106e19fa1b80ef8cf35e074a6b"
+    }
+  ],
+  "audit": "Only FitPlan.config and ModelBuild.config compatibility getters project strategy.config; no execution caller reconstructs the bag. Raw TrialEvents remains explicit compatibility ingress."
+}

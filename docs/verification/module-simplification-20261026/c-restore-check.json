@@ -1,0 +1,11 @@
+{
+  "archive_sha256": "9a2029a993296cc3db235ccfbdbabbde2f5a8ab4d48e63d782246d2c4af4c95a",
+  "manifest_sha256": "8211a43d2a8c04d5cc96ea6625b2a93b8faae61ab62af1d64f62977c9232182c",
+  "restored_files": 1554,
+  "independent_byte_comparisons": 1554,
+  "restored_root": "/private/tmp/scalafim-simplify-c-restored-20261026",
+  "source_removal": "complete after fresh source/archive/volume checks",
+  "bulk_files_removed": 1532,
+  "plans_archived": 22,
+  "retained_executable_inputs": 48
+}

@@ -1,8 +1,0 @@
-Traceback (most recent call last):
-  File "/private/tmp/scalafim-rank-paired-pilot-20261011/tools/mvpa-inference/paired/probe.py", line 128, in <module>
-    main()
-  File "/private/tmp/scalafim-rank-paired-pilot-20261011/tools/mvpa-inference/paired/probe.py", line 72, in main
-    receipt=monitor(repo,cmd,env,log,LIMITS,time.monotonic()+900,other)
-  File "/private/tmp/scalafim-rank-paired-pilot-20261011/tools/mvpa-inference/paired/resources.py", line 85, in monitor
-    try: os.killpg(worker.pid,signal.SIGTERM)
-PermissionError: [Errno 1] Operation not permitted

@@ -1,0 +1,137 @@
+[
+  {
+    "old": "modules/mvpa-fit/shared/src/main/scala/scalafim/fmri/mvpa/fit/CanonicalArtifacts.scala",
+    "new": "modules/mvpa-fmri/shared/src/main/scala/scalafim/fmri/mvpa/fit/CanonicalArtifacts.scala",
+    "sha256": "e7ca63ecfc351c035a09c287b01689dc855f0bc28622f373b2b08f03c8962b0d"
+  },
+  {
+    "old": "modules/mvpa-fit/shared/src/main/scala/scalafim/fmri/mvpa/fit/CanonicalEffectMvpa.scala",
+    "new": "modules/mvpa-fmri/shared/src/main/scala/scalafim/fmri/mvpa/fit/CanonicalEffectMvpa.scala",
+    "sha256": "be544459e424be8df6b3db64e244302daa2deee4f4aa4c3be4d6be5e75346632"
+  },
+  {
+    "old": "modules/mvpa-fit/shared/src/main/scala/scalafim/fmri/mvpa/fit/CanonicalRunSet.scala",
+    "new": "modules/mvpa-fmri/shared/src/main/scala/scalafim/fmri/mvpa/fit/CanonicalRunSet.scala",
+    "sha256": "eb5b81cdf6c3a0b5fa89b3e1c2e1cd8df5d4ffc022b6994d8d8102637336bfa5"
+  },
+  {
+    "old": "modules/mvpa-fit/shared/src/main/scala/scalafim/fmri/mvpa/fit/ConstrainedCanonicalMvpa.scala",
+    "new": "modules/mvpa-fmri/shared/src/main/scala/scalafim/fmri/mvpa/fit/ConstrainedCanonicalMvpa.scala",
+    "sha256": "b7b29832d0e74da53150c9fcc32a9d672bc049e93226a8cb80e37b2c6aa4b8a8"
+  },
+  {
+    "old": "modules/mvpa-fit/shared/src/main/scala/scalafim/fmri/mvpa/fit/IdentifiedReadoutRelations.scala",
+    "new": "modules/mvpa-fmri/shared/src/main/scala/scalafim/fmri/mvpa/fit/IdentifiedReadoutRelations.scala",
+    "sha256": "5291ff721342e16330b73fbc640cfcecf315ad924ba318c98fc5cdb4ce8638cf"
+  },
+  {
+    "old": "modules/mvpa-fit/shared/src/main/scala/scalafim/fmri/mvpa/fit/ManovaMvpa.scala",
+    "new": "modules/mvpa-fmri/shared/src/main/scala/scalafim/fmri/mvpa/fit/ManovaMvpa.scala",
+    "sha256": "016cdcd06e2e423a9498647e672ecaa86f15fb2526d081852cb611de1c4d73c2"
+  },
+  {
+    "old": "modules/mvpa-fit/shared/src/main/scala/scalafim/fmri/mvpa/fit/OneShotMvpaError.scala",
+    "new": "modules/mvpa-fmri/shared/src/main/scala/scalafim/fmri/mvpa/fit/OneShotMvpaError.scala",
+    "sha256": "4c1e31e2fbbbddc61fe725a4156b379f60e3b4bccd9f62fecf45f3b6db5be338"
+  },
+  {
+    "old": "modules/mvpa-fit/shared/src/main/scala/scalafim/fmri/mvpa/fit/RunTrialReadout.scala",
+    "new": "modules/mvpa-fmri/shared/src/main/scala/scalafim/fmri/mvpa/fit/RunTrialReadout.scala",
+    "sha256": "a9cce8598f1efa797db9f682f944db0adcf6544ad7931e5726df8206177e977a"
+  },
+  {
+    "old": "modules/mvpa-fit/shared/src/main/scala/scalafim/fmri/mvpa/fit/SignedCrossRunRayleighMvpa.scala",
+    "new": "modules/mvpa-fmri/shared/src/main/scala/scalafim/fmri/mvpa/fit/SignedCrossRunRayleighMvpa.scala",
+    "sha256": "71fdc7638717de5fb403cf62d9cc8b3d8f30eaf859376b2b64ce918a0c7d498d"
+  },
+  {
+    "old": "modules/mvpa-fit/shared/src/test/scala/scalafim/fmri/mvpa/fit/BetaFreeRsaAcceptanceSuite.scala",
+    "new": "modules/mvpa-fmri/shared/src/test/scala/scalafim/fmri/mvpa/fit/BetaFreeRsaAcceptanceSuite.scala",
+    "sha256": "aa1a79f14f82cde6d81bc81fa548529a05d2225d4bda2b8ef950090dcf69c563"
+  },
+  {
+    "old": "modules/mvpa-fit/shared/src/test/scala/scalafim/fmri/mvpa/fit/CanonicalEffectAcceptanceSuite.scala",
+    "new": "modules/mvpa-fmri/shared/src/test/scala/scalafim/fmri/mvpa/fit/CanonicalEffectAcceptanceSuite.scala",
+    "sha256": "6a9cdbcaf67825149b3e342ab27f4c682ce794f97fc7167e0759f01566d80fdb"
+  },
+  {
+    "old": "modules/mvpa-fit/shared/src/test/scala/scalafim/fmri/mvpa/fit/CanonicalEffectMvpaSuite.scala",
+    "new": "modules/mvpa-fmri/shared/src/test/scala/scalafim/fmri/mvpa/fit/CanonicalEffectMvpaSuite.scala",
+    "sha256": "af422596b84925fc6c7243b88591cbf46d4fe5debd599d7f3ace4f04d1ba37eb"
+  },
+  {
+    "old": "modules/mvpa-fit/shared/src/test/scala/scalafim/fmri/mvpa/fit/ConstrainedCanonicalMvpaSuite.scala",
+    "new": "modules/mvpa-fmri/shared/src/test/scala/scalafim/fmri/mvpa/fit/ConstrainedCanonicalMvpaSuite.scala",
+    "sha256": "b58742469d8906e38efc93470b4cbca57badbb9a2c41221586094dd978fcf7e8"
+  },
+  {
+    "old": "modules/mvpa-fit/shared/src/test/scala/scalafim/fmri/mvpa/fit/ConstrainedCanonicalReferenceFixtures.scala",
+    "new": "modules/mvpa-fmri/shared/src/test/scala/scalafim/fmri/mvpa/fit/ConstrainedCanonicalReferenceFixtures.scala",
+    "sha256": "08c52105dfd07b4562cc6e92d156fdbb00d0f7357037076132097eebd98494f7"
+  },
+  {
+    "old": "modules/mvpa-fit/shared/src/test/scala/scalafim/fmri/mvpa/fit/IdentifiedReadoutRelationsSuite.scala",
+    "new": "modules/mvpa-fmri/shared/src/test/scala/scalafim/fmri/mvpa/fit/IdentifiedReadoutRelationsSuite.scala",
+    "sha256": "68d3e316ee277050f0a1c4ba3bd2bbb6904699dfe916837cf04a626be09031b5"
+  },
+  {
+    "old": "modules/mvpa-fit/shared/src/test/scala/scalafim/fmri/mvpa/fit/ManovaMvpaSuite.scala",
+    "new": "modules/mvpa-fmri/shared/src/test/scala/scalafim/fmri/mvpa/fit/ManovaMvpaSuite.scala",
+    "sha256": "83def00dba07b4d51e3751aa258a9cd13f93483887efccb78cb04e3df03413d6"
+  },
+  {
+    "old": "modules/mvpa-fit/shared/src/test/scala/scalafim/fmri/mvpa/fit/ManovaReferenceFixtures.scala",
+    "new": "modules/mvpa-fmri/shared/src/test/scala/scalafim/fmri/mvpa/fit/ManovaReferenceFixtures.scala",
+    "sha256": "fad94b444dee001ee24d85c1c58dccdb0e8f427bd4bdc2a6d09dfd312cd2087f"
+  },
+  {
+    "old": "modules/mvpa-fit/shared/src/test/scala/scalafim/fmri/mvpa/fit/NativeCanonicalFixtures.scala",
+    "new": "modules/mvpa-fmri/shared/src/test/scala/scalafim/fmri/mvpa/fit/NativeCanonicalFixtures.scala",
+    "sha256": "b0c8a0bb155fa8943322cf09c59f0de7c2cd4d4457be5ab2671d5f861cc798be"
+  },
+  {
+    "old": "modules/mvpa-fit/shared/src/test/scala/scalafim/fmri/mvpa/fit/RunTrialReadoutSuite.scala",
+    "new": "modules/mvpa-fmri/shared/src/test/scala/scalafim/fmri/mvpa/fit/RunTrialReadoutSuite.scala",
+    "sha256": "4285d240f3c08d18a76c30ce3086fa83bd8fca4d4a20e33a420321d8b7f1bfe2"
+  },
+  {
+    "old": "modules/mvpa-fit/shared/src/test/scala/scalafim/fmri/mvpa/fit/SignedCrossRunRayleighMvpaSuite.scala",
+    "new": "modules/mvpa-fmri/shared/src/test/scala/scalafim/fmri/mvpa/fit/SignedCrossRunRayleighMvpaSuite.scala",
+    "sha256": "e62d84812d5fe0259e4a3fbe09f14d78806ac7bb1f87a7416bd115a422b6d118"
+  },
+  {
+    "old": "modules/mvpa-fit/shared/src/test/scala/scalafim/fmri/mvpa/fit/SignedCrossRunRayleighReferenceFixtures.scala",
+    "new": "modules/mvpa-fmri/shared/src/test/scala/scalafim/fmri/mvpa/fit/SignedCrossRunRayleighReferenceFixtures.scala",
+    "sha256": "bb02e33d4c690a5d897c0baa131d88a7e0187386c3f8eb26f44bda2b60f2b5d0"
+  },
+  {
+    "old": "modules/mvpa-dataset/shared/src/main/scala/scalafim/fmri/mvpa/dataset/DatasetObservationEvidence.scala",
+    "new": "modules/mvpa-fmri/shared/src/main/scala/scalafim/fmri/mvpa/dataset/DatasetObservationEvidence.scala",
+    "sha256": "708d7496383f50cd2937d10112a9e7f624c0a116743380518ecc14a965e43667"
+  },
+  {
+    "old": "modules/mvpa-dataset/shared/src/main/scala/scalafim/fmri/mvpa/dataset/OpenedDatasetMvpaExecutor.scala",
+    "new": "modules/mvpa-fmri/shared/src/main/scala/scalafim/fmri/mvpa/dataset/OpenedDatasetMvpaExecutor.scala",
+    "sha256": "64547d5f228b8c87f5f2e129398706a4a97abdb96d169bc8ea41a74e658ece24"
+  },
+  {
+    "old": "modules/mvpa-dataset/shared/src/main/scala/scalafim/fmri/mvpa/dataset/ResponseReindexing.scala",
+    "new": "modules/mvpa-fmri/shared/src/main/scala/scalafim/fmri/mvpa/dataset/ResponseReindexing.scala",
+    "sha256": "7c16d2789557b17297c1f3c4c1ff5d490f99fcae6527fd2d0391780050e6cf21"
+  },
+  {
+    "old": "modules/mvpa-dataset/shared/src/test/scala/scalafim/fmri/mvpa/artifacts/GroupArchiveHandoffScenarioSuite.scala",
+    "new": "modules/mvpa-fmri/shared/src/test/scala/scalafim/fmri/mvpa/artifacts/GroupArchiveHandoffScenarioSuite.scala",
+    "sha256": "0016d31b837ca395c161279c6230f85012f201d4ee4ec35b5b46d6b7e1e64f9f"
+  },
+  {
+    "old": "modules/mvpa-dataset/shared/src/test/scala/scalafim/fmri/mvpa/dataset/DatasetObservationEvidenceSuite.scala",
+    "new": "modules/mvpa-fmri/shared/src/test/scala/scalafim/fmri/mvpa/dataset/DatasetObservationEvidenceSuite.scala",
+    "sha256": "2a75aa976feb6f5f9194e0f49f44d303b0a60310635a759fe124b64a9859141d"
+  },
+  {
+    "old": "modules/mvpa-dataset/shared/src/test/scala/scalafim/fmri/mvpa/dataset/ResponseProvenanceLineageSuite.scala",
+    "new": "modules/mvpa-fmri/shared/src/test/scala/scalafim/fmri/mvpa/dataset/ResponseProvenanceLineageSuite.scala",
+    "sha256": "4194f5c2f542c1f7d698f1acf4301a65aa86f9bae4cac714118091a78bd07692"
+  }
+]

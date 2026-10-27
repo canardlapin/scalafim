@@ -52,11 +52,6 @@ object Fs:
 
   def writeAtomic(path: Path, text: String): Unit = writeAtomic(path, text.getBytes(UTF_8))
 
-  /** Moves `from` onto `to` atomically (same file system). */
-  def moveAtomic(from: Path, to: Path): Unit =
-    Files.createDirectories(to.getParent)
-    val _ = Files.move(from, to, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE)
-
   def shaPath(data: Path): Path = data.resolveSibling(data.getFileName.toString + ".sha256")
 
   /** `<sha256>  <name>` written after the data it covers. */
