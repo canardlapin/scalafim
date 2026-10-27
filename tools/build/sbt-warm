@@ -10,10 +10,13 @@ same dependency pins, and keeps one resident sbt server per worktree reached
 through `sbt --client`, so repeat gates cost about a second.
 
 usage:
-  python3 tools/build/sbt-warm [--] 'mvpaDatasetJVM/test' 'mvpaDatasetJS/test'   run commands, in order
+  python3 tools/build/sbt-warm [--] 'mvpaFmriJVM/test' 'mvpaFmriJS/test'   run commands, in order
   python3 tools/build/sbt-warm --status                          show this worktree's base/server
   python3 tools/build/sbt-warm --shutdown                        stop this worktree's server
   python3 tools/build/sbt-warm --gc [--apply]                    list (or delete) orphaned bases
+  python3 tools/build/sbt-warm --gc-templates                    list eligible template snapshots
+  python3 tools/build/sbt-warm --gc-templates --apply --custody-root DIR --volume-uuid UUID
+                                                               remove only verified externally-custodied templates
   python3 tools/build/sbt-warm -h | --help                       show this help
 
 Commands run in order; the first failing command stops the run with its exit
@@ -53,6 +56,13 @@ worktree directory no longer exists, and whose server is not alive. It is a dry
 run unless `--apply` is given. Bases created before `.worktree` existed are
 never collected; delete them by hand once no server uses them.
 
+`--gc-templates` is separate from `--gc`: it never deletes bases. It retains
+symlinks, partial/unknown names, non-matching markers, active templates, and
+every current or legacy pin key referenced by any base (including orphans) or
+the current worktree. `--apply` requires fresh, exact full-tree external
+custody created by `tools/build/template_custody.py` and an approved macOS
+mounted-volume UUID.
+
 When stdin is not a terminal (agents, CI), the client runs with TERM=dumb and
 stdin from /dev/null so a server started there cannot block on terminal probes.
 
@@ -67,9 +77,12 @@ Environment knobs (defaults in brackets):
 
 import fcntl
 import hashlib
+import importlib.machinery
+import importlib.util
 import json
 import os
 import re
+import select
 import shutil
 import socket
 import stat
@@ -79,6 +92,7 @@ import tempfile
 import time
 import uuid
 from pathlib import Path
+
 
 HOME = Path(os.environ.get("SBT_WARM_HOME", Path.home() / ".cache" / "scalafim-sbt"))
 HEAP = os.environ.get("SBT_WARM_HEAP", "6g")
@@ -99,6 +113,16 @@ CLONE_EXCLUDES = ("server", "command-receipts", WORKTREE_RECORD, STARTUP_RECORD)
 
 class UsageError(Exception):
     pass
+
+
+def custody_module():
+    """Load the sibling script even when this wrapper was imported by tests."""
+    path = Path(__file__).with_name("template_custody.py")
+    loader = importlib.machinery.SourceFileLoader("template_custody", str(path))
+    spec = importlib.util.spec_from_loader("template_custody", loader)
+    module = importlib.util.module_from_spec(spec)
+    loader.exec_module(module)
+    return module
 
 
 def log(message: str) -> None:
@@ -546,23 +570,268 @@ def gc(apply: bool) -> int:
     return 0
 
 
+TEMPLATE_KEY = re.compile(r"^[0-9a-f]{16}$")
+
+
+def marker_present(path: Path) -> bool:
+    try:
+        path.lstat()
+        return True
+    except FileNotFoundError:
+        return False
+    except OSError as error:
+        raise RuntimeError(f"cannot inspect {path}: {error}") from error
+
+
+def marker_key(path: Path) -> str:
+    """Read a present marker strictly; uncertainty protects every template."""
+    try:
+        info = path.lstat()
+        if not stat.S_ISREG(info.st_mode):
+            raise RuntimeError(f"not a regular file: {path}")
+        value = path.read_text().strip()
+    except OSError as error:
+        raise RuntimeError(f"cannot read {path}: {error}") from error
+    if not TEMPLATE_KEY.fullmatch(value):
+        raise RuntimeError(f"invalid pin key in {path}")
+    return value
+
+
+def protected_template_keys(root: Path) -> set:
+    """All base references, including orphaned bases, plus this worktree's keys."""
+    protected = {pin_key(root), legacy_pin_key(root)}
+    bases = HOME / "bases"
+    if not bases.exists():
+        return protected
+    if bases.is_symlink() or not bases.is_dir():
+        raise RuntimeError(f"cannot inspect bases directory {bases}")
+    for base in bases.iterdir():
+        try:
+            info = base.lstat()
+        except OSError as error:
+            raise RuntimeError(f"cannot inspect base {base}: {error}") from error
+        if stat.S_ISLNK(info.st_mode):
+            try:
+                marker_base = base.resolve(strict=True)
+                resolved_info = marker_base.lstat()
+            except (OSError, RuntimeError) as error:
+                raise RuntimeError(f"cannot resolve symlink base {base}: {error}") from error
+            if not stat.S_ISDIR(resolved_info.st_mode):
+                raise RuntimeError(f"symlink base {base} does not resolve to a directory")
+        elif stat.S_ISDIR(info.st_mode):
+            marker_base = base
+        else:
+            continue
+        for marker_name in (PIN_MARKER, LEGACY_PIN_MARKER):
+            marker = marker_base / marker_name
+            if marker_present(marker):
+                protected.add(marker_key(marker))
+    return protected
+
+
+def template_is_active(template: Path) -> tuple[bool, str]:
+    """Probe the complete template tree; every diagnostic is retention.
+
+    A plain directory probe misses an open descendant. ``+D`` asks lsof to
+    descend the tree. It can be expensive on a large template, hence the hard
+    timeout; a timeout, warning, or traversal error is never interpreted as
+    inactivity.
+    """
+    try:
+        result = subprocess.run(
+            ["lsof", "-Fn", "+D", str(template)], capture_output=True, text=True, timeout=10
+        )
+    except (OSError, subprocess.SubprocessError) as error:
+        return True, f"activity check unavailable: {error}"
+    if getattr(result, "stderr", "").strip():
+        return True, "activity check emitted diagnostics"
+    # BSD lsof can report found files on stdout yet return 1 after a partial
+    # recursive traversal.  A nonempty listing is evidence of activity; only a
+    # completely silent clean exit 1 establishes inactivity.
+    if getattr(result, "stdout", "").strip():
+        return True, "open file reported by lsof"
+    if result.returncode == 1:
+        return False, "inactive"
+    if result.returncode == 0:
+        return True, "open file reported by lsof"
+    return True, f"activity check failed (lsof exit {result.returncode})"
+
+
+def lsof_apply_positive_control(templates: Path) -> tuple[bool, str]:
+    """Prove lsof can see another process's open descendant before deletion.
+
+    A sandbox or OS privacy policy can make a clean lsof exit look like an
+    inactive tree even while files are open.  The apply path creates a private,
+    non-candidate directory, then starts a child process which keeps its file
+    open while the parent queries with the exact production probe. Diagnostics
+    do not count as proof: only lsof's positive open-file result permits
+    further work.
+    """
+    process = None
+    try:
+        with tempfile.TemporaryDirectory(prefix=".lsof-apply-probe-", dir=templates) as probe_name:
+            probe = Path(probe_name)
+            child = probe / "open-child"
+            child.write_bytes(b"sbt-warm lsof apply positive control\n")
+            command = (
+                "import sys; "
+                "handle = open(sys.argv[1], 'rb'); "
+                "print('ready', flush=True); "
+                "sys.stdin.readline()"
+            )
+            process = subprocess.Popen(
+                [sys.executable, "-c", command, str(child)],
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+            )
+            if process.stdout is None or not select.select([process.stdout], [], [], 5)[0]:
+                return False, "positive-control child did not become ready"
+            if process.stdout.readline().strip() != "ready":
+                return False, "positive-control child failed before opening its file"
+            active, reason = template_is_active(probe)
+            if active and reason == "open file reported by lsof":
+                return True, "positive control observed child open descendant"
+            return False, f"positive control was not observed ({reason})"
+    except (OSError, subprocess.SubprocessError) as error:
+        return False, f"cannot run lsof positive control: {error}"
+    finally:
+        if process is not None:
+            try:
+                if process.stdin is not None:
+                    process.stdin.write("\n")
+                    process.stdin.flush()
+                    process.stdin.close()
+                process.wait(timeout=5)
+            except (OSError, subprocess.SubprocessError):
+                process.terminate()
+                try:
+                    process.wait(timeout=5)
+                except (OSError, subprocess.SubprocessError):
+                    process.kill()
+                    process.wait()
+            finally:
+                for stream in (process.stdout, process.stderr):
+                    if stream is not None:
+                        stream.close()
+
+
+def gc_templates(apply: bool, custody_root: Path | None = None, volume_uuid: str | None = None) -> int:
+    """Conservative template-only collection; it never calls the base collector."""
+    templates = HOME / "templates"
+    if not templates.is_dir() or templates.is_symlink():
+        log("no safe templates directory")
+        return 0
+    if apply and (custody_root is None or volume_uuid is None):
+        raise UsageError("--gc-templates --apply requires --custody-root DIR and --volume-uuid UUID")
+    with open_home_lock() as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        if apply:
+            observed, reason = lsof_apply_positive_control(templates)
+            if not observed:
+                log(f"template GC apply refused: {reason}")
+                return 1
+        try:
+            protected = protected_template_keys(worktree())
+        except (OSError, RuntimeError) as error:
+            log(f"template GC refused: cannot determine protected pin keys: {error}")
+            return 1
+        for template in sorted(templates.iterdir(), key=lambda path: path.name):
+            if not TEMPLATE_KEY.fullmatch(template.name):
+                print(f"keep    {template.name}  (not a direct 16-hex template key)")
+                continue
+            if template.is_symlink() or not template.is_dir():
+                print(f"keep    {template.name}  (not a real directory)")
+                continue
+            matching, unsafe = False, None
+            for marker_name in (PIN_MARKER, LEGACY_PIN_MARKER):
+                marker = template / marker_name
+                try:
+                    present = marker_present(marker)
+                except RuntimeError as error:
+                    unsafe = str(error)
+                    break
+                if present:
+                    try:
+                        marker_value = marker_key(marker)
+                        matching = matching or marker_value == template.name
+                    except RuntimeError as error:
+                        unsafe = str(error)
+                        break
+            if unsafe or not matching:
+                print(f"keep    {template.name}  ({unsafe or 'no matching pin marker'})")
+                continue
+            if template.name in protected:
+                print(f"keep    {template.name}  (pin key is referenced by a retained base or current worktree)")
+                continue
+            active, reason = template_is_active(template)
+            if active:
+                print(f"keep    {template.name}  ({reason})")
+                continue
+            if not apply:
+                print(f"remove  {template.name}  (unreferenced inactive template; custody required for --apply)")
+                continue
+            destination = custody_root / template.name
+            verified, reason = custody_module().verify_custody(template, destination, HOME, volume_uuid)
+            if not verified:
+                print(f"keep    {template.name}  (custody not verified: {reason})")
+                continue
+            try:
+                if template.name in protected_template_keys(worktree()):
+                    print(f"keep    {template.name}  (became referenced during GC)")
+                    continue
+            except (OSError, RuntimeError) as error:
+                print(f"keep    {template.name}  (cannot recheck pin references: {error})")
+                continue
+            active, reason = template_is_active(template)
+            if active:
+                print(f"keep    {template.name}  ({reason})")
+                continue
+            shutil.rmtree(template)
+            print(f"removed {template.name}  (verified external custody at {destination})")
+    return 0
+
+
 def parse(argv: list):
-    """Return (mode, payload): ('help', None), ('status'|'shutdown', None), ('gc', apply), ('run', commands)."""
+    """Return (mode, payload), keeping GC modes deliberately disjoint."""
     if "--" in argv:
         split = argv.index("--")
         options, commands = argv[:split], argv[split + 1 :]
     else:
         options, commands = argv, []
-    flags = [arg for arg in options if arg.startswith("-")]
-    commands = [arg for arg in options if not arg.startswith("-")] + commands
+    leading_commands = []
+    custody_root = None
+    volume_uuid = None
+    flags = []
+    index = 0
+    while index < len(options):
+        arg = options[index]
+        if arg in ("--custody-root", "--volume-uuid"):
+            if index + 1 == len(options) or options[index + 1].startswith("-"):
+                raise UsageError(f"{arg} needs a value")
+            if arg == "--custody-root":
+                custody_root = Path(options[index + 1])
+            else:
+                volume_uuid = options[index + 1]
+            index += 2
+        elif arg.startswith("-"):
+            flags.append(arg)
+            index += 1
+        else:
+            leading_commands.append(arg)
+            index += 1
+    commands = leading_commands + commands
     if "-h" in flags or "--help" in flags:
         return "help", None
-    known = {"--status", "--shutdown", "--gc", "--apply"}
+    known = {"--status", "--shutdown", "--gc", "--gc-templates", "--apply"}
     unknown = [flag for flag in flags if flag not in known]
     if unknown:
         raise UsageError(f"unknown option(s): {' '.join(unknown)} (put sbt arguments after `--`)")
-    if "--apply" in flags and "--gc" not in flags:
-        raise UsageError("--apply is only valid with --gc")
+    if "--apply" in flags and not ({"--gc", "--gc-templates"} & set(flags)):
+        raise UsageError("--apply is only valid with --gc or --gc-templates")
+    if (custody_root is not None or volume_uuid is not None) and "--gc-templates" not in flags:
+        raise UsageError("custody options are only valid with --gc-templates")
     modes = [flag for flag in flags if flag != "--apply"]
     if len(modes) > 1:
         raise UsageError(f"choose one of {', '.join(modes)}")
@@ -570,6 +839,8 @@ def parse(argv: list):
         if commands:
             raise UsageError(f"{modes[0]} takes no commands")
         mode = modes[0][2:]
+        if mode == "gc-templates":
+            return mode, ("--apply" in flags, custody_root, volume_uuid)
         return mode, ("--apply" in flags if mode == "gc" else None)
     if not commands:
         raise UsageError("no commands given")
@@ -659,6 +930,13 @@ def main(argv: list) -> int:
         return 0
     if mode == "gc":
         return gc(apply=payload)
+    if mode == "gc-templates":
+        apply, custody_root, volume_uuid = payload
+        try:
+            return gc_templates(apply, custody_root, volume_uuid)
+        except UsageError as error:
+            print(f"sbt-warm: {error}", file=sys.stderr)
+            return 2
     root = worktree()
     if mode == "status":
         base = base_for(root)

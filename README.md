@@ -43,11 +43,9 @@ when you need one library without the functional-analysis stack.
 - `design-view`: renderer-neutral design review graphics and raster exports.
 - `phrf-comparison`: unpublished comparative-evaluation preparation and scoring on JVM/Scala.js, with JVM runners and custody tooling. [Pilot integration scope](modules/phrf-comparison/README.md) excludes the pending S10 launch and rehearsal.
 - MVPA core (identified evidence, relational/pattern analyses, measurement and execution contracts) lives in standalone [`mvpa4s`](https://github.com/canardlapin/mvpa4s), pinned by `mvpa4sRevision`, with optional Alder predictive adapters in `mvpa4s-predictive` locus measurement/scatter adapters in `mvpa4s-locus`, and optional mesh/atlas adapters in `mvpa4s-surface`/`mvpa4s-atlas`; the `mvpa-*` modules below are ScalaFIM integrations over it.
-- `mvpa-pipeline`: optional ScalaFIM pipeline interpreter for MVPA work units; the core runs directly and owns resource/commit semantics.
-- `mvpa-fit`: shared composition of fit-owned trial readouts with MVPA pattern operators, run metadata, and leave-one-run-out execution.
+- `mvpa-fmri`: fit-owned trial readouts and dataset/response adapters into identified MVPA evidence, run metadata, and leave-one-run-out execution. Reusable classifiers remain in `mvpa4s-predictive`.
 - Multivariate perturbation inference now lives in standalone [`multivar-inference`](https://github.com/canardlapin/multivar/tree/main/modules/inference); ScalaFIM keeps only downstream domain adapters.
 - `connectivity`: shared typed connectivity algebra, locus-backed node/edge domains and masks, explicit vectorization orders, static/dynamic containers, and inspectable estimator plans.
-- `mvpa-dataset`: typed synchronous-reader and effectful opened-dataset adapters into identified MVPA evidence; reusable soft-LDA fitting and Alder execution live in `mvpa4s-predictive`.
 - `mvpa-artifacts`: bounded, fitter-independent pattern profiles with verified external Float64 payloads over existing archive IO; durable fitter checkpoints are unsupported.
 - `mvpa-spatial`: functional threshold policy and fMRI spatial scenario checks. Generic neighborhoods/scatter live in `mvpa4s-locus`; anatomical mesh graphs and atlas measurement adapters live in optional `mvpa4s-surface` and `mvpa4s-atlas`.
 - `group`: second-level (group) analysis — group GLM, fixed/random-effects meta-analysis, group contrasts, and FDR over subjects-by-samples effect maps.
@@ -286,14 +284,10 @@ sbt archiveZarrJVM/test
 sbt archiveZarrJS/test
 sbt datasetZarrJVM/test
 sbt datasetZarrJS/test
-sbt mvpaPipelineJVM/test
-sbt mvpaPipelineJS/test
-sbt mvpaFitJVM/test
-sbt mvpaFitJS/test
+sbt mvpaFmriJVM/test
+sbt mvpaFmriJS/test
 sbt connectivityJVM/test
 sbt connectivityJS/test
-sbt mvpaDatasetJVM/test
-sbt mvpaDatasetJS/test
 sbt workflowExamplesJVM/test
 sbt workflowExamplesJS/test
 sbt mvpaSpatialJVM/test
@@ -322,3 +316,16 @@ how the modules relate and where new code should live.
 See [docs/plans/scenario-parity-harness.md](docs/plans/scenario-parity-harness.md)
 for the Scala-native plan to add realistic workflow scenarios, parity fixtures,
 and regenerable receipts without making Python/R part of the sbt test runtime.
+
+### Historical evidence and build-cache cleanup
+
+Historical bulk captures have [verified external custody and restoration instructions](docs/verification/ARCHIVE.md).
+Completed plans live in [docs/plans/archive](docs/plans/archive/README.md); original links have forwarding pages.
+
+`python3 tools/build/sbt-warm --gc-templates` is a separate dry run for stale
+template snapshots. It protects both pin-key generations referenced by any
+retained base (including orphan bases) and the current worktree. Applying it
+requires a complete verified external mirror made by
+`tools/build/template_custody.py`, `--custody-root DIR`, and the mounted volume's
+`--volume-uuid UUID`. Unknown metadata or activity retains the template. This
+does not collect orphan bases or delete worktrees. See the tool's `--help`.

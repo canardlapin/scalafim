@@ -3,8 +3,7 @@ package scalafim.fmri.fit
 import scalafim.dataset.{
   DataSelection,
   DatasetSeriesReader,
-  FmriSeries,
-  SynchronousFmriDataset
+  FmriSeries
 }
 import scalafim.fmri.design.event.{ConvolvedTerm, EventTermColumnRole}
 import scalafim.fmri.design.{RunCoefficientProjection, RunIndex as DesignRunIndex, ScanIndex}
@@ -24,7 +23,7 @@ object FitPlanExecutor:
       plan: FitPlan,
       selection: DataSelection
   ): Either[FitError, FmriFitResult] =
-    legacyReader(plan).flatMap(fit(_, plan, selection))
+    legacyDatasetReader(plan).flatMap(fit(_, plan, selection))
 
   def fit(
       reader: DatasetSeriesReader,
@@ -45,7 +44,7 @@ object FitPlanExecutor:
         .left
         .map(FitChunkPlan.mapDatasetError)
       result <-
-        plan.config.missingData match
+        plan.strategy.fitControls.missingData match
           case MissingDataPolicy.OmitRowsPerVoxel => MaskedResponseExecutor.fit(plan, series)
           case _                                  => interpreter.fit(plan, series)
     yield result
@@ -125,7 +124,7 @@ object FitPlanExecutor:
       selection: DataSelection,
       chunking: FitChunkingStrategy
   ): Either[FitError, FmriFitResult] =
-    legacyReader(plan).flatMap(fitChunked(_, plan, selection, chunking))
+    legacyDatasetReader(plan).flatMap(fitChunked(_, plan, selection, chunking))
 
   def fitChunked(
       reader: DatasetSeriesReader,
@@ -193,21 +192,11 @@ object FitPlanExecutor:
       chunking: FitChunkingStrategy,
       parallelism: FitParallelism
   )(using ExecutionContext): Future[Either[FitError, FmriFitResult]] =
-    legacyReader(plan) match
+    legacyDatasetReader(plan) match
       case Left(error) =>
         Future.successful(Left(error))
       case Right(reader) =>
         fitChunkedFuture(reader, plan, selection, chunking, parallelism)
-
-  private def legacyReader(
-      plan: FitPlan
-  ): Either[FitError, SynchronousFmriDataset] =
-    SynchronousFmriDataset
-      .readerFor(plan.model.dataset)
-      .left
-      .map(error =>
-        FitError.InvalidFitAxis("dataset reader", error.message)
-      )
 
   private def requireDense(result: FmriFitResult): Either[FitError, DenseFmriFitResult] =
     result match
@@ -248,7 +237,7 @@ object FitPlanExecutor:
   ): Either[FitError, FitBlockInput] =
     for
       design <- MatrixAdapters.designMatrix(plan.model, series.timepoints)
-      adaptedResponse <- MatrixAdapters.responseBlock(series, plan.config.missingData)
+      adaptedResponse <- MatrixAdapters.responseBlock(series, plan.strategy.fitControls.missingData)
       runwiseProjections <- runwiseProjections(plan, series.timepoints, partitions)
       lss <- lssDesign match
         case None        => Right(None)
@@ -341,7 +330,7 @@ object FitPlanExecutor:
       prepared <- LeastSquaresSeparate.prepare(
         trials = trialMatrix,
         fixed = fixed,
-        options = LssOptions(eps = plan.config.lss.eps, rankTol = plan.config.lss.rankTol)
+        options = LssOptions(eps = plan.strategy.lssConfig.map(_.eps).getOrElse(1e-12), rankTol = plan.strategy.lssConfig.map(_.rankTol).getOrElse(1e-7))
       )
     yield LssBlockDesign(prepared, trialColumns = termCols.trials)
 
@@ -355,7 +344,7 @@ object FitPlanExecutor:
           TrialwiseTerm(key, index, term)
       }
 
-    plan.config.lss.trialTerm match
+    plan.strategy.lssConfig.flatMap(_.trialTerm).map(_.value) match
       case Some(requested) =>
         trialwiseTerms.find(_.key == requested).toRight(FitError.UnknownLssTrialTerm(requested))
       case None =>

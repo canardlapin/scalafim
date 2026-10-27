@@ -3,7 +3,7 @@ package scalafim.fmri.fit
 import gale.linalg.{DMat, Matrix}
 import scalafim.dataset.{DatasetSeriesReader, FmriSeries}
 import scalafim.fmri.ar.{ArEstimation, ArFitOptions, ArNoiseSummary, ArOrder, ArOrderValue, NoisePooling, WhiteningPlan}
-import scalafim.fmri.model.{FitEngine, FitPlan, RobustOptions, RobustPsi, ScaleScope}
+import scalafim.fmri.model.{ArOptions, FitEngine, FitPlan, RobustOptions, RobustPsi, ScaleScope}
 
 /** Compact temporal state. Population response and coefficient matrices are
   * reconstructed one spatial block at a time. Scales describe the residuals
@@ -34,8 +34,8 @@ private[fit] final class BoundedRobustPrepared(
       initial <- Ols.fit(design, response)
       fit <- Robust.weightedLeastSquares(design, response, state.weights)
       scales <- BoundedRobustPreparation.blockScales(design, response, source.partitions,
-        source.plan.config.robust.scaleScope, state.previousWeights, state.sharedScales)
-      diagnostics = RobustDiagnostics(source.plan.config.robust.psi, source.plan.config.robust.scaleScope,
+        source.plan.strategy.preparation.robust.scaleScope, state.previousWeights, state.sharedScales)
+      diagnostics = RobustDiagnostics(source.plan.strategy.preparation.robust.psi, source.plan.strategy.preparation.robust.scaleScope,
         state.iterations, state.converged, Robust.DefaultTolerance, state.maxDelta, scales,
         RobustWeightTopology.RowWise, state.weights, sharedNormalizedCovariance = true)
       robust = RobustFit(fit.coefficients, fit.residualVariance, fit.residualDegreesOfFreedom,
@@ -53,14 +53,14 @@ private[fit] object BoundedRobustPreparation:
     result.left.map(error => plan.coefficientAxis.fold(error)(FitKernel.bindRankFailure(error, _)))
 
   private def complete(source: BoundedResponseReplay): Either[FitError, BoundedRobustPrepared] =
-    val options = source.plan.config.robust
+    val options = source.plan.strategy.preparation.robust
     var whitening = Option.empty[WhiteningPlan]
     var diagnostics = Option.empty[ArDiagnostics]
     var state = reduce(source, options, whitening) match
       case Left(error) => return Left(error)
       case Right(value) => value
     if options.reestimateAutocorrelation then
-      val ar = source.plan.config.autocorrelation
+      val ar = source.plan.strategy.arConfig.map(_.toLegacy).getOrElse(ArOptions())
       val setup = for
         config <- Gls.autocorrelationConfig(ar)
         _ <- Robust.validateRobustAutocorrelation(config)

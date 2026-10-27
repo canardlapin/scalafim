@@ -1,0 +1,152 @@
+{
+  "status": "complete",
+  "removed": [
+    "016ea4a1891186a6",
+    "090778713783b460",
+    "0bd280a402eb3d78",
+    "0d46f5365b79916d",
+    "2213f9105361ef76",
+    "330a22c0af39d155",
+    "34d4bbaabafbcf4c",
+    "38b0bcfcf3b0a984",
+    "3b596f8dba7dd0f4",
+    "3c98b4c03089a562",
+    "4bcfbd6c67ccd1bb",
+    "5a8199175db54c39",
+    "5df1fb6ef24aff27",
+    "6b53c87841442de2",
+    "6ea912fcd9f2445f",
+    "70d2a7ee44509d1f",
+    "723b102eeeeee331",
+    "7884c6af42654cc2",
+    "7b6ee4a0702f2c1a",
+    "7ea59d466e6decf9",
+    "80550ea1951f555d",
+    "93ad45d4ed588f22",
+    "946465e5904354f1",
+    "9e89ac938c1e0a32",
+    "a5971e3f696b381a",
+    "b044acc04306f3ae",
+    "b34d8b789dddea77",
+    "c67051ee3a8cd07a",
+    "cbec648781f569e3",
+    "d037fd1d7d9c1850",
+    "d41d11735861113a",
+    "d7275d754c0b95da",
+    "ddc8027ff8cc33c2",
+    "e778a2f397754132",
+    "e954889cde38f831",
+    "f0cb1a8856b34a60"
+  ],
+  "retained": [
+    {
+      "key": "020d6a715ee56221",
+      "reason": "pin key is referenced by a retained base or current worktree"
+    },
+    {
+      "key": "085338939002b3ae",
+      "reason": "pin key is referenced by a retained base or current worktree"
+    },
+    {
+      "key": "212cff9b6bed0377",
+      "reason": "pin key is referenced by a retained base or current worktree"
+    },
+    {
+      "key": "22a397e03587a77e",
+      "reason": "pin key is referenced by a retained base or current worktree"
+    },
+    {
+      "key": "2c8da53c46b91ac6",
+      "reason": "pin key is referenced by a retained base or current worktree"
+    },
+    {
+      "key": "2dc788639b5e09ab",
+      "reason": "pin key is referenced by a retained base or current worktree"
+    },
+    {
+      "key": "3016021464a48c37",
+      "reason": "pin key is referenced by a retained base or current worktree"
+    },
+    {
+      "key": "3abf7075819cabb4",
+      "reason": "pin key is referenced by a retained base or current worktree"
+    },
+    {
+      "key": "466589e1f6117193",
+      "reason": "pin key is referenced by a retained base or current worktree"
+    },
+    {
+      "key": "6ba9cf3cac53ed30",
+      "reason": "pin key is referenced by a retained base or current worktree"
+    },
+    {
+      "key": "788c6bdac97cca30",
+      "reason": "pin key is referenced by a retained base or current worktree"
+    },
+    {
+      "key": "9a1f5f0223947e53",
+      "reason": "pin key is referenced by a retained base or current worktree"
+    },
+    {
+      "key": "9caa0ceb673a73d5",
+      "reason": "pin key is referenced by a retained base or current worktree"
+    },
+    {
+      "key": "c6a9e95075e3b320",
+      "reason": "pin key is referenced by a retained base or current worktree"
+    },
+    {
+      "key": "cf296d3d8d475ea6",
+      "reason": "pin key is referenced by a retained base or current worktree"
+    },
+    {
+      "key": "d05b3c0f65623a60",
+      "reason": "pin key is referenced by a retained base or current worktree"
+    },
+    {
+      "key": "d44192f67d67e20a",
+      "reason": "pin key is referenced by a retained base or current worktree"
+    },
+    {
+      "key": "ee73e2ad70269917",
+      "reason": "pin key is referenced by a retained base or current worktree"
+    }
+  ],
+  "full_tree_mirrors": 38,
+  "positive_control": "separate child open-file visibility observed in actual apply context",
+  "source_postconditions": "all36 removed paths absent; all18 referenced templates present",
+  "collector_sha256": "b883e4b0cabba1a607894cdf075a8e00dbebc054663ca88b93e8c63f3e1f8826",
+  "first_attempt": "refused before deletion on externally linked base; reference lookup repaired and tested",
+  "logs": [
+    {
+      "path": "/private/tmp/scalafim-template-gc-apply.log",
+      "bytes": 156,
+      "sha256": "0889d1546918f5fe28a3fbfd910395aa56c9e4fdbecb4db15002eec201cd9c04"
+    },
+    {
+      "path": "/private/tmp/scalafim-template-gc-apply.log.meta.json",
+      "bytes": 679,
+      "sha256": "f1f601baf9bad39cd2ebaf169bcbf4170b0fecd3297a6ff7fa4297cc3e37ba46"
+    },
+    {
+      "path": "/private/tmp/scalafim-template-gc-final-dryrun.log",
+      "bytes": 4806,
+      "sha256": "27c4e51a4a8d066081d5bd906f0be239e99a816798d69271163b262e0cb7c49b"
+    },
+    {
+      "path": "/private/tmp/scalafim-template-gc-final-dryrun.log.meta.json",
+      "bytes": 537,
+      "sha256": "6ef5a977073d553de87593cf76a731e6a66586cbcedc38618f236a89854e9083"
+    },
+    {
+      "path": "/private/tmp/scalafim-template-gc-apply-2.log",
+      "bytes": 7182,
+      "sha256": "3af18ebfa15649a543a1a66658214aa47c24b98f76396fe177aca908dd0b32f2"
+    },
+    {
+      "path": "/private/tmp/scalafim-template-gc-apply-2.log.meta.json",
+      "bytes": 725,
+      "sha256": "59aa204dd409f28fb55f8a14beee8a4688242a510d5704af7d5a4d975b6cbc0d"
+    }
+  ]
+}

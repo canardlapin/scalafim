@@ -97,16 +97,16 @@ run_batch estimates-js \
   estimatesJS/test estimatesIoJS/test
 
 run_batch analysis-jvm \
-  fitJVM/test firstLevelLawsJVM/test mvpaPipelineJVM/test mvpaFitJVM/test
+  fitJVM/test firstLevelLawsJVM/test
 run_batch analysis-js \
-  fitJS/test firstLevelLawsJS/test mvpaPipelineJS/test mvpaFitJS/test
+  fitJS/test firstLevelLawsJS/test
 
 run_batch downstream-jvm \
-  connectivityJVM/test mvpaDatasetJVM/test mvpaArtifactsJVM/test mvpaSpatialJVM/test \
+  connectivityJVM/test mvpaFmriJVM/test mvpaArtifactsJVM/test mvpaSpatialJVM/test \
   groupJVM/test mvpaGroupJVM/test \
   fmriWorkflowJVM/test archiveZarrJVM/test datasetZarrJVM/test
 run_batch downstream-js \
-  connectivityJS/test mvpaDatasetJS/test mvpaArtifactsJS/test mvpaSpatialJS/test \
+  connectivityJS/test mvpaFmriJS/test mvpaArtifactsJS/test mvpaSpatialJS/test \
   groupJS/test mvpaGroupJS/test \
   fmriWorkflowJS/test archiveZarrJS/test datasetZarrJS/test
 

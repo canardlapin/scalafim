@@ -1,0 +1,64 @@
+{
+  "status": "passed",
+  "focused": {
+    "jvm": 40,
+    "js": 40
+  },
+  "full": {
+    "fit": [
+      874,
+      816
+    ],
+    "firstLevelLaws": [
+      221,
+      221
+    ],
+    "fmriWorkflow": [
+      82,
+      63
+    ],
+    "mvpaFmri": [
+      55,
+      55
+    ],
+    "workflowExamples": [
+      8,
+      6
+    ]
+  },
+  "full_passes": 2401,
+  "skipped": 2,
+  "js_ignored": 5,
+  "source_warnings": 0,
+  "sbt_messages": [
+    "multiple main classes detected"
+  ],
+  "advisory": "LWU admission93% below95% target reported by existing milestone fixture; no scientific acceptance claim",
+  "independent_review": "approved final affected delta pending tests; now passed",
+  "logs": [
+    {
+      "path": "/private/tmp/scalafim-simplify-e-fit-focused.log",
+      "external_path": "/Volumes/My Passport for Mac/codex-work/module-simplification-20261026/current-run-logs/scalafim-simplify-e-fit-focused.log",
+      "bytes": 9879,
+      "sha256": "7a6c1d895726ef5b2f20517a5e2618fbe9ce592dd4d29a3b103e5f4d3ae62684"
+    },
+    {
+      "path": "/private/tmp/scalafim-simplify-e-fit-focused.log.meta.json",
+      "external_path": "/Volumes/My Passport for Mac/codex-work/module-simplification-20261026/current-run-logs/scalafim-simplify-e-fit-focused.log.meta.json",
+      "bytes": 1317,
+      "sha256": "28fc95398b54833b363a7c2861487c94b997e7241e49c79cd6377ab9002a5743"
+    },
+    {
+      "path": "/private/tmp/scalafim-simplify-e-full-tests.log",
+      "external_path": "/Volumes/My Passport for Mac/codex-work/module-simplification-20261026/current-run-logs/scalafim-simplify-e-full-tests.log",
+      "bytes": 567133,
+      "sha256": "1ff4a68af6000e1f18350b39a24e9eb935f2308edfd509a309177bddfc8eaa1e"
+    },
+    {
+      "path": "/private/tmp/scalafim-simplify-e-full-tests.log.meta.json",
+      "external_path": "/Volumes/My Passport for Mac/codex-work/module-simplification-20261026/current-run-logs/scalafim-simplify-e-full-tests.log.meta.json",
+      "bytes": 738,
+      "sha256": "828701b41409725fd56c71a99879555344f615ef63c99ea4df8b938a83498e1c"
+    }
+  ]
+}

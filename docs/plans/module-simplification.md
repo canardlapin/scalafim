@@ -1,5 +1,9 @@
 # ScalaFIM module simplification
 
+Current status (2026-10-26): the authorized MVPA integration slice and remaining
+A, C and E work are complete locally. See the completion checkpoint and
+[verification receipts](../verification/module-simplification-20261026/README.md).
+
 Status: accepted with decisions (2026-10-19). Companion to `ecosystem-unification.md`, which
 moves imaging, surface, atlas and MVPA code into provider libraries. This
 plan covers what remains in ScalaFIM: boundaries that do not pay for
@@ -93,9 +97,10 @@ identity string. The JMH benchmark projects are run by CI.
 | `provider-contract` | Renamed from `provider-spike`. |
 | examples | One `examples/workflows` cross project instead of separate JVM and JS projects. |
 
-Current implementation: pending JVM/Scala.js qualification. The `model` merge
-into `fit` and the `design-view` addition are net-neutral after eco: **34
-modules** remain. No package renames.
+Current implementation (2026-10-26): Phase B is landed. The requested D merge
+and interpreter deletion are locally qualified: **32 source-bearing modules**
+remain, down from 34. Packages and persisted identities stay unchanged. See
+[stage evidence](../verification/module-simplification-20261026/README.md).
 
 ## 4. Plan
 
@@ -189,3 +194,45 @@ simplification phase or an ecosystem milestone.
    consumer: **agreed**. plsneuro already uses them; it is experimental, so it
    does not yet justify extraction, but it is the first consumer to consult
    when the question returns.
+
+## Remaining simplification execution — 2026-10-26
+
+Outcome: complete the user-authorized D integration merge/delete slice, then
+remaining A, C and E as one goal. Base: main c98148fab; Phase B Root PR68 and
+PLS Neuro PR3 are merged. This is landing evidence, not new native acceptance.
+
+D scope: merge mvpa-fit and mvpa-dataset into mvpa-fmri, delete the unused
+mvpa-pipeline interpreter and its tests, update current build/CI/docs. Package,
+source bytes, numerical fixtures and persisted identities stay unchanged.
+The other D decisions and the unfinished PHRF study are outside this slice.
+
+A scope: re-audit deprecated/dead definitions against current ownership and
+known external consumers, then remove only demonstrably obsolete code. Extraction
+may already have removed earlier findings; do not resurrect old source lists.
+
+C scope: externalize historical bulk evidence with per-file hashes, physical
+volume identity, verified restoration and retained small receipts/generators;
+archive completed plans without breaking live references. No Git history rewrite.
+Local cleanup requires fresh ownership and regenerability/custody checks.
+
+E scope: first freeze fit/contrast identity fixtures, then replace typed/legacy
+bridges with typed contracts while preserving admitted scientific behavior,
+wire identities and fail-closed input validation. Detail the API migration before
+editing identity-sensitive implementations.
+
+Acceptance: affected full JVM/JS suites, actual consumer/law checks, test-inventory
+and scenario validation, and final independent review. Raw logs retain actual
+exit status and failed attempts. Exact source moves and stage evidence live in
+`docs/verification/module-simplification-20261026/`. No publication/merge or new
+scientific performance claim is inferred from local checks.
+
+### Completion checkpoint
+
+The requested MVPA merge/delete slice is committed as `fe6fe70bb`; remaining
+Phase A hygiene is committed as `a6abc2fb9`. Phase C now has verified external
+custody for 1,554 historical files and 38 full template trees, 22 archived plans
+with forwarding pages, seven retired target-only module directories, and 36
+retired stale templates. Phase C is recorded in `1ba80c172`. Phase E is complete in this branch: typed
+fit preparation and contrast composition, unchanged literal identities, full
+JVM/Scala.js owning and consumer checks, and final repository/examples compile.
+The requested D slice plus A, C and E are complete locally; publication is separate. See [the stage receipts](../verification/module-simplification-20261026/README.md).

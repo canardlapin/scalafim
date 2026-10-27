@@ -2,9 +2,7 @@ package scalafim.fmri.fit
 
 import scalafim.dataset.FmriSeries
 import scalafim.fmri.model.{
-  ArOptions,
   DesignColumnSource,
-  FitConfig,
   FitEngine,
   FitPlan,
   FitStrategy,
@@ -185,9 +183,6 @@ object FitInterpreters:
       case FitEngine.LatentSketch            => Right(LatentSketch)
       case FitEngine.ReducedRankGls          => Right(ReducedRankGls)
 
-  private def robustAutocorrelation(config: FitConfig): Option[ArOptions] =
-    if config.robust.reestimateAutocorrelation then Some(config.autocorrelation) else None
-
   private def latentSketchConfig(plan: FitPlan): Either[FitError, LatentSketchConfig] =
     plan.strategy match
       case FitStrategy.LatentSketch(sketch, _) => Right(sketch)
@@ -221,7 +216,7 @@ object FitInterpreters:
         plan: FitPlan,
         timepoints: Vector[Int]
     ): Option[Either[FitError, OlsExecutionPrepared]] =
-      plan.config.volumeWeighting match
+      plan.strategy.fitControls.volumeWeighting.toLegacy match
         case scalafim.fmri.model.VolumeWeighting.Estimated(_) => None
         case _ => Some(FitPreparation.ols(plan, timepoints))
 
@@ -229,7 +224,7 @@ object FitInterpreters:
       val partitions = RunPartition.fromSamplingFrame(plan.model.dataset.samplingFrame, series.timepoints)
       for
         input <- FitPlanExecutor.fitBlockInput(plan, series, partitions = partitions)
-        dense <- FitKernel.fitDense(input, engine, plan.config)
+        dense <- FitKernel.fitDense(input, plan.strategy)
       yield FitPlanExecutor.denseResult(plan, dense)
 
     def prepare(plan: FitPlan, series: FmriSeries): Either[FitError, OlsExecutionPrepared] =
@@ -276,7 +271,7 @@ object FitInterpreters:
         plan: FitPlan,
         timepoints: Vector[Int]
     ): Option[Either[FitError, GlsPrepared]] =
-      if FitPreparation.fixedAr(plan.config.autocorrelation) then
+      if plan.strategy.arConfig.exists(value => FitPreparation.fixedAr(value.toLegacy)) then
         Some(FitPreparation.designSeries(plan, timepoints).flatMap(prepare(plan, _)))
       else None
 
@@ -284,7 +279,7 @@ object FitInterpreters:
       val partitions = RunPartition.fromSamplingFrame(plan.model.dataset.samplingFrame, series.timepoints)
       for
         input <- FitPlanExecutor.fitBlockInput(plan, series, partitions = partitions)
-        dense <- FitKernel.fitDense(input, engine, plan.config)
+        dense <- FitKernel.fitDense(input, plan.strategy)
       yield FitPlanExecutor.denseResult(plan, dense)
 
     def prepare(plan: FitPlan, series: FmriSeries): Either[FitError, GlsPrepared] =
@@ -292,7 +287,7 @@ object FitInterpreters:
       for
         input <- FitPlanExecutor.fitBlockInput(plan, series, partitions = partitions)
         prepared <- Gls
-          .prepare(input.design, input.response, partitions, plan.config.autocorrelation, input.voxelIndices)
+          .prepare(input.design, input.response, partitions, plan.strategy.arOptions, input.voxelIndices)
           .left
           .map(error => bindRankFailure(input, error))
       yield prepared
@@ -395,7 +390,7 @@ object FitInterpreters:
         plan: FitPlan,
         timepoints: Vector[Int]
     ): Option[Either[FitError, RunwiseGlsPrepared]] =
-      if FitPreparation.fixedAr(plan.config.autocorrelation) then
+      if FitPreparation.fixedAr(plan.strategy.arOptions) then
         Some(FitPreparation.designSeries(plan, timepoints).flatMap(prepare(plan, _)))
       else None
 
@@ -407,7 +402,7 @@ object FitInterpreters:
           input.design,
           input.response,
           partitions,
-          plan.config.autocorrelation,
+          plan.strategy.arOptions,
           input.runwiseProjections
         )
         block = RunwiseFitBlockResult.fromRunwiseGls(input, runwise)
@@ -421,7 +416,7 @@ object FitInterpreters:
           input.design,
           input.response,
           partitions,
-          plan.config.autocorrelation,
+          plan.strategy.arOptions,
           input.runwiseProjections,
           input.voxelIndices
         )
@@ -544,7 +539,7 @@ object FitInterpreters:
       val partitions = RunPartition.fromSamplingFrame(plan.model.dataset.samplingFrame, series.timepoints)
       for
         input <- FitPlanExecutor.fitBlockInput(plan, series, partitions = partitions)
-        dense <- FitKernel.fitDense(input, engine, plan.config)
+        dense <- FitKernel.fitDense(input, plan.strategy)
       yield FitPlanExecutor.denseResult(plan, dense)
 
     def prepare(plan: FitPlan, series: FmriSeries): Either[FitError, RobustPrepared] =
@@ -552,7 +547,8 @@ object FitInterpreters:
       for
         input <- FitPlanExecutor.fitBlockInput(plan, series, partitions = partitions)
         prepared <- Robust
-          .prepare(input.design, input.response, input.partitions, input.voxelIndices, plan.config.robust, robustAutocorrelation(plan.config))
+          .prepare(input.design, input.response, input.partitions, input.voxelIndices, plan.strategy.preparation.robust,
+            if plan.strategy.preparation.robust.reestimateAutocorrelation then Some(plan.strategy.arOptions) else None)
           .left
           .map(error => bindRankFailure(input, error))
       yield prepared

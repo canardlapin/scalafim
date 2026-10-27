@@ -3,8 +3,8 @@ package scalafim.fmri.hrf.linalg
 /** Radix-2 FFT on split real/imaginary `Array[Double]`.
   *
   * The arrays are deliberately primitive and split rather than an
-  * `Array[Complex]`. `Complex` is a case class, so an array of them is an array
-  * of *references*: every butterfly allocates three short-lived objects, and
+  * boxed complex-number array. In the former case-class representation,
+  * every butterfly allocated three short-lived objects, and
   * every element access is a pointer chase. Measured on a 4800-scan,
   * 3-basis, precision-0.1 regressor, that cost the FFT path 127 ms against
   * 3.6 ms for the direct convolution it was supposed to beat — an O(n log n)

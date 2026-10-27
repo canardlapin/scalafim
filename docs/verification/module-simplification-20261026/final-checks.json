@@ -1,0 +1,31 @@
+{
+  "status": "passed",
+  "commands": [
+    "scalafimCompileAll",
+    "examplesCompile"
+  ],
+  "boundary_files": 559,
+  "compile_closures": 24,
+  "boundary_errors": 0,
+  "source_warnings": 0,
+  "logs": [
+    {
+      "path": "/private/tmp/scalafim-simplify-final-compile.log",
+      "sha256": "e35da0d5c05c0ed613740ceeb58d709497707f98cc4c188a3ae6fe06f3d75a39",
+      "bytes": 528
+    },
+    {
+      "path": "/private/tmp/scalafim-simplify-final-compile.log.meta.json",
+      "sha256": "76a31a0a5c3860dd8fe9fc60598db848302b6acf8ddba1e75752d920a91104c1",
+      "bytes": 524
+    }
+  ],
+  "test_inventory": {
+    "targets": 85,
+    "batches": 37
+  },
+  "scenario_manifest_entries": 38,
+  "first_level_docs": "passed",
+  "diff_check": "passed",
+  "final_documentation": "agent command corrected; archived hard breaks normalized preserving rendering; manifest hashes refreshed"
+}

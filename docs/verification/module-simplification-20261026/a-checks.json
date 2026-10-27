@@ -1,0 +1,46 @@
+{
+  "base": "fe6fe70bb",
+  "tests": {
+    "hrfJVM": 412,
+    "designJVM": 588,
+    "fitJVM": 869,
+    "phrfComparisonJVM": {
+      "passed": 544,
+      "skipped": 4
+    },
+    "hrfJS": 412,
+    "designJS": 588,
+    "fitJS": 811,
+    "phrfComparisonJS": 254
+  },
+  "total_passed": 4478,
+  "review": "Independent lean_expert: qualified approval, no blockers; unknown-consumer binary compatibility not claimed",
+  "log": "/private/tmp/scalafim-simplify-20261026-a-tests.log",
+  "sha256": "9fdf2651aa5160f53ab6177d5190d64033f121764e760f9f98f390995acfd787",
+  "metadata": {
+    "schema_version": 1,
+    "started_utc": "2026-10-26T21:14:23.840495+00:00",
+    "finished_utc": "2026-10-26T21:27:06.792109+00:00",
+    "duration_seconds": 762.946511,
+    "command": [
+      "python3",
+      "tools/build/sbt-warm",
+      "hrfJVM/test",
+      "designJVM/test",
+      "fitJVM/test",
+      "phrfComparisonJVM/test",
+      "hrfJS/test",
+      "designJS/test",
+      "fitJS/test",
+      "phrfComparisonJS/test"
+    ],
+    "cwd": "/private/tmp/scalafim-simplify-20261026",
+    "log": "/private/tmp/scalafim-simplify-20261026-a-tests.log",
+    "exit_code": 0,
+    "child_returncode": 0,
+    "reason": "exited",
+    "detail": null,
+    "timeout_seconds": 5400.0,
+    "log_bytes": 424875
+  }
+}

@@ -8,7 +8,7 @@ import scalafim.fmri.design.hrf.KernelBasisProvenance
 import scalafim.fmri.fit.{CanonicalTemporalWhitening, ResponsePreparationIdentity, ResponsePreparationPlan}
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
-import scalafim.fmri.model.{AmplitudeStructure, FitConfig, ProfileCriterion, ProfileHrfPlan, ProfileHrfSource}
+import scalafim.fmri.model.{AmplitudeStructure, FitConfig, FitPreparationSpec, LssConfig, ProfileCriterion, ProfileHrfPlan, ProfileHrfSource}
 
 /** Canonical identities describe the prepared numerical inputs. They are not
   * serialization formats or security hashes. Version changes intentionally
@@ -80,9 +80,14 @@ private[profile] object ProfileFitIdentity:
     record("whitening", scoped, record("segments", segments*), covered.rows.toString, first, methodId)
 
   def config(value: FitConfig): String =
-    val FitConfig(_, _, _, _, _, lss) = value
+    encode(ResponsePreparationPlan.fromConfig(value), value.lss)
+
+  def preparation(value: FitPreparationSpec, lss: LssConfig): String =
+    encode(ResponsePreparationPlan.fromPreparation(value), lss)
+
+  private def encode(preparation: ResponsePreparationPlan, lss: LssConfig): String =
     val scalafim.fmri.model.LssConfig(trial, eps, tolerance) = lss
-    record("fit_config", ResponsePreparationIdentity.provenance(ResponsePreparationPlan.fromConfig(value).provenance),
+    record("fit_config", ResponsePreparationIdentity.provenance(preparation.provenance),
       record("lss", option(trial), number(eps), number(tolerance)))
 
   def datasetValue(value: DatasetValue): String = value match
@@ -156,9 +161,11 @@ private[profile] object ProfileFitIdentity:
   def canonical(plan: ProfileHrfPlan, selected: ResolvedDataSelection,
       temporal: CanonicalTemporalWhitening, policy: ProfileDecodePolicy, execution: ExecutionBudget,
       route: String, exactReadout: Boolean, ml: Option[(Double, Double)]): String =
-    val (data, nuisance, fitConfig) = plan.source match
-      case ProfileHrfSource.FixedCondition(fixed, _) => (fixed.model.dataset, fixed.model.designMatrix, fixed.config)
-      case ProfileHrfSource.TrialEvents(dataset, _, baseline, config) => (dataset, baseline.designMatrix, config)
+    val (data, nuisance, configIdentity) = plan.source match
+      case ProfileHrfSource.FixedCondition(fixed, _) =>
+        (fixed.model.dataset, fixed.model.designMatrix,
+          preparation(fixed.strategy.preparation, fixed.strategy.lssConfig.map(_.toLegacy).getOrElse(LssConfig())))
+      case ProfileHrfSource.TrialEvents(dataset, _, baseline, config) => (dataset, baseline.designMatrix, this.config(config))
     val temporalId = temporal match
       case CanonicalTemporalWhitening.Iid => record("iid")
       case CanonicalTemporalWhitening.Shared(plan) => whitening(plan)
@@ -181,7 +188,7 @@ private[profile] object ProfileFitIdentity:
     s"profile-fit/v3|dataset=${field(dataset(data))}|selected=${record("selected", ints(selected.timepoints), ints(selected.voxels))}|" +
       s"drive=${field(drive(plan.source))}|basis=${field(basis.provenance.canonical)}|basis-lags=${matrix(1, basis.fineCount, basis.lags)}|" +
       s"basis-values=${matrix(basis.fineCount, basis.rank, basisValues)}|basis-coefficients=${record("coefficient_jets", coefficientRecords*)}|" +
-      s"nuisance=${mat(nuisance)}|config=${field(config(fitConfig))}|whitening=$temporalId|amplitudes=${amplitudes(plan.amplitudes)}|" +
+      s"nuisance=${mat(nuisance)}|config=${field(configIdentity)}|whitening=$temporalId|amplitudes=${amplitudes(plan.amplitudes)}|" +
       s"criterion=${criterion(plan.criterion)}|grid=${ints(if policy.trialReferences.isEmpty then policy.nodesPerAxis else Vector.empty)}|decode=${field(ConditionProfileProvenance.budgetCanonical(policy.budget))}|" +
       s"prior=${ConditionProfileProvenance.priorCanonical(policy.prior)}|admission=${option(policy.observedAdmission.map(_.fingerprint))}|" +
       s"execution=${record("execution", blockSize.toString, workers.toString)}|route=${field(route)}|ml=${option(mlIdentity)}" +

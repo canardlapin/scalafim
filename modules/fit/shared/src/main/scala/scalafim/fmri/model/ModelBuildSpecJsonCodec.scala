@@ -325,7 +325,7 @@ object ModelBuildSpecJsonCodec:
     yield ResponseSupportRequest(scans, policy, tolerance)
 
   private[model] def versionFor(spec: ModelBuildSpec): Int =
-    if spec.responseSupport.nonEmpty then 3 else if spec.strategy.config.autocorrelation.fgls.nonEmpty then 2 else 1
+    if spec.responseSupport.nonEmpty then 3 else if spec.strategy.arConfig.exists(_.fgls.nonEmpty) then 2 else 1
 
   private[model] def fieldsForVersion(version: Int): Set[String] =
     bodyFields ++ Option.when(version >= 3)("responseSupport")
@@ -400,7 +400,7 @@ object ModelBuildSpecJsonCodec:
       _ <- v.fields(fieldsForVersion(version) ++ Set("schema", "version", "formula"))
       formula <- v.field("formula").flatMap(readFormula)
       spec <- readBody(v, formula, readStrategy)
-      _ <- ensure(version >= 2 || spec.strategy.config.autocorrelation.fgls.isEmpty, "$.version", "voxelwise FGLS requires model-build version 2")
+      _ <- ensure(version >= 2 || !spec.strategy.arConfig.exists(_.fgls.nonEmpty), "$.version", "voxelwise FGLS requires model-build version 2")
     yield spec
 
   private[model] def readFormula(cursor: Cursor): Result[String] =

@@ -84,8 +84,8 @@ object PreparedGlsArtifact:
 
   private def admit(plan: FitPlan): Either[FitError, PreparedGlsScope] =
     if FitPreparation.describe(plan).reductions != Vector(FitPreparationReduction.PooledAutocorrelation) ||
-        plan.config.volumeWeighting != VolumeWeighting.Disabled ||
-        plan.config.nuisanceProjection != NuisanceProjection.Disabled then
+        plan.strategy.fitControls.volumeWeighting.toLegacy != VolumeWeighting.Disabled ||
+        plan.strategy.fitControls.nuisanceProjection.toLegacy != NuisanceProjection.Disabled then
       Left(FitError.UnsupportedEngine("completed GLS artifacts require pooled estimated AR, disabled temporal weighting/projection, and no observation-pattern discovery"))
     else plan.strategy match
       case FitStrategy.GeneralizedLeastSquares(_, _) => Right(PreparedGlsScope.Shared)
@@ -102,7 +102,7 @@ object PreparedGlsArtifact:
       scope <- admit(bound.plan)
       _ <- if scope == artifact.scope then Right(())
         else Left(invalid("coefficient scope differs"))
-      _ <- if bound.plan.config.missingData != MissingDataPolicy.Error ||
+      _ <- if bound.plan.strategy.fitControls.missingData != MissingDataPolicy.Error ||
           artifact.retainedVoxelIndices == artifact.descriptor.voxelIndices then Right(())
         else Left(invalid("error-on-missing policy requires every selected voxel"))
       chunks <- chunkPlan(artifact.descriptor, bound.plan)

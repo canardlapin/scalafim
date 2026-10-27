@@ -1,6 +1,6 @@
 package scalafim.fmri.fit
 
-import scalafim.fmri.model.{FitConfig, FitEngine}
+import scalafim.fmri.model.{FitConfig, FitEngine, FitStrategy}
 import scalafim.fmri.design.{CoefficientAxis, RunCoefficientProjection, RunIndex as DesignRunIndex}
 import gale.linalg.{DMat, DVec, Matrix, Vec}
 
@@ -731,6 +731,23 @@ object FitKernel:
 
   def fitDense(
       input: FitBlockInput,
+      strategy: FitStrategy
+  ): Either[FitError, DenseFitBlockResult] =
+    strategy match
+      case FitStrategy.OrdinaryLeastSquares(_) =>
+        Ols.fit(input.design, input.response).left.map(bindInputRankFailure(_, input)).map(DenseFitBlockResult.fromOls(input, _, strategy.engine))
+      case FitStrategy.GeneralizedLeastSquares(autocorrelation, _) =>
+        Gls.fit(input.design, input.response, input.partitions, autocorrelation.toLegacy, input.voxelIndices).left.map(bindInputRankFailure(_, input)).map(DenseFitBlockResult.fromGls(input, _))
+      case FitStrategy.RunwiseGeneralizedLeastSquares(_, _) =>
+        Left(FitError.UnsupportedEngine("runwise GLS requires the runwise prepared interpreter"))
+      case FitStrategy.RobustLeastSquares(_, _, autocorrelation) =>
+        Robust.fit(input.design, input.response, input.partitions, strategy.preparation.robust,
+          if autocorrelation.reestimates then Some(autocorrelation.toLegacy) else None).left.map(bindInputRankFailure(_, input)).map(DenseFitBlockResult.fromRobust(input, _))
+      case other => Left(FitError.UnsupportedEngine(s"${other.engine} does not produce a dense fit block result"))
+
+  /** Legacy ingress only. Core execution should dispatch on [[FitStrategy]]. */
+  def fitDense(
+      input: FitBlockInput,
       engine: FitEngine,
       config: FitConfig = FitConfig()
   ): Either[FitError, DenseFitBlockResult] =
@@ -776,6 +793,18 @@ object FitKernel:
           )
           .map(LssFitBlockResult.fromLss(input, _))
 
+  def fit(
+      input: FitBlockInput,
+      strategy: FitStrategy
+  ): Either[FitError, FitBlockResult] =
+    strategy match
+      case FitStrategy.OrdinaryLeastSquares(_) | FitStrategy.GeneralizedLeastSquares(_, _) |
+          FitStrategy.RunwiseGeneralizedLeastSquares(_, _) | FitStrategy.RobustLeastSquares(_, _, _) => fitDense(input, strategy)
+      case FitStrategy.RunwiseLeastSquares(_) => fitRunwise(input)
+      case FitStrategy.LeastSquaresSeparate(_, _) => fitLss(input)
+      case other => Left(FitError.UnsupportedEngine(other.engine.toString))
+
+  /** Legacy ingress only. */
   def fit(
       input: FitBlockInput,
       engine: FitEngine,

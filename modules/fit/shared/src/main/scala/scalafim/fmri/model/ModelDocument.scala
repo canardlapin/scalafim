@@ -80,7 +80,7 @@ object ModelDocumentJsonCodec:
       build <- root.field("build")
       _ <- build.fields(ModelBuildSpecJsonCodec.fieldsForVersion(version))
       spec <- ModelBuildSpecJsonCodec.readBody(build, formula, readStrategy)
-      _ <- ensure(version >= 2 || spec.strategy.config.autocorrelation.fgls.isEmpty, "$.version", "voxelwise FGLS requires model document version 2")
+      _ <- ensure(version >= 2 || !spec.strategy.arConfig.exists(_.fgls.nonEmpty), "$.version", "voxelwise FGLS requires model document version 2")
       confounds <- root.field("confounds").flatMap(_.nullable(readConfounds))
       runCombination <- root.field("runCombination").flatMap(ModelJsonCodec.readRunCombination)
     yield ModelDocument(spec.copy(derived = derived), confounds, runCombination)

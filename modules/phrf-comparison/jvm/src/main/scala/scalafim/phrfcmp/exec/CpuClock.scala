@@ -23,5 +23,4 @@ final class CpuMeter(clock: CpuClock, priorSeconds: Double):
   private val children = new DoubleAdder
 
   def addChild(seconds: Double): Unit = if seconds > 0.0 then children.add(seconds)
-  def childSeconds: Double = children.sum
   def totalSeconds: Double = priorSeconds + math.max(0.0, clock.processCpuSeconds() - start) + children.sum

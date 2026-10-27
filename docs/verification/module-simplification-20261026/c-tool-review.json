@@ -1,0 +1,26 @@
+{
+  "evidence_archive": {
+    "unit_tests_passed": 8,
+    "review": "independent reviewer approved controlled use; full archive restored1554files"
+  },
+  "template_gc": {
+    "unit_tests_passed": 78,
+    "review": "independent core review; final external-link and child-probe delta parent reviewed; staged tests verified identical integrated bytes",
+    "positive_control": "exact execution context observed known open descendant",
+    "prior_findings_resolved": [
+      "recursive descendant activity",
+      "stderr and timeout retention",
+      "rc1 with stdout means active",
+      "runtime positive control",
+      "preserve command order around separator",
+      "validate every pin marker",
+      "unreadable base references failclosed; readable external links protected",
+      "resolve mount root before diskutil"
+    ],
+    "unit_tests_skipped": 0,
+    "actual_template_deletion": "36 removed after verified custody;18 referenced retained",
+    "final_integrated_check": "78 tooling tests plus8 archive tests:86 passed, zero skips, exit0"
+  },
+  "publication": "local only",
+  "actual_template_deletion": "pending full custody batch"
+}

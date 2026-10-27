@@ -328,6 +328,37 @@ final case class TypedContrastWeights[Axis <: ContrastAxis](
   require(weights.rows == rowNames.length, "weights/rowNames row mismatch")
   require(weights.cols == contrastNames.length, "weights/contrastNames col mismatch")
 
+  /** Embed by semantic column name while preserving row/selection order. */
+  def embedIn(allColumns: Vector[String]): DesignContrastWeights =
+    val idx = rowNames.zipWithIndex.toMap
+    val out = new Array[Double](allColumns.length * weights.cols)
+    var rOut = 0
+    while rOut < allColumns.length do
+      idx.get(allColumns(rOut)).foreach { rIn =>
+        System.arraycopy(weights.data, rIn * weights.cols, out, rOut * weights.cols, weights.cols)
+      }
+      rOut += 1
+    TypedContrastWeights[DesignContrastAxis](id, allColumns, contrastNames,
+      Mat.unsafe(allColumns.length, weights.cols, out), selectedRowNames.filter(allColumns.toSet))
+
+  /** Subtraction is defined only on the same typed axis and row layout. */
+  def difference(other: TypedContrastWeights[Axis], name: ContrastId): Either[ContrastError, TypedContrastWeights[Axis]] =
+    if rowNames != other.rowNames then
+      Left(ContrastError.IncompatibleWeights(name.value, "component contrasts must have matching condition names"))
+    else if weights.cols != other.weights.cols then
+      Left(ContrastError.IncompatibleWeights(name.value, "component contrasts must have matching contrast column counts"))
+    else
+      val out = new Array[Double](weights.rows * weights.cols)
+      var i = 0
+      while i < out.length do
+        out(i) = weights.data(i) - other.weights.data(i)
+        i += 1
+      val names =
+        if weights.cols == 1 then Vector(name.value)
+        else (1 to weights.cols).map(j => s"${name.value}_$j").toVector
+      Right(TypedContrastWeights[Axis](name, rowNames, names,
+        Mat.unsafe(weights.rows, weights.cols, out), (selectedRowNames ++ other.selectedRowNames).distinct))
+
   def toLegacy: ContrastWeights =
     ContrastWeights(
       name = id.value,
@@ -656,6 +687,7 @@ object ContrastCompiler:
       )
     catch case NonFatal(t) => Left(ContrastError.fromThrowable(name, t))
 
+  /** Compatibility ingress for callers supplying legacy weight maps. Core composition uses typed weights. */
   def compileMap(values: VectorMap[String, ContrastWeights], source: ContrastSource): Either[ContrastError, VectorMap[String, CompiledContrast]] =
     val out = VectorMap.newBuilder[String, CompiledContrast]
     values.foreach { case (key, weights) =>
