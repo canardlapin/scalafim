@@ -94,7 +94,7 @@ lazy val locus4sProvenanceJS  = ProjectRef(locus4sBuild, "locus4s-provenanceJS")
 // mvpa4s owns identified MVPA evidence and analyses. Ordinary builds clone the
 // exact reviewed revision. Coordinated overrides are forwarded so mvpa4s
 // resolves the same provider builds as ScalaFIM.
-lazy val mvpa4sRevision = "11b547338df58dc8b922006e0a9cca9b575fe3ff"
+lazy val mvpa4sRevision = "c4485de7d4db46dc2702e8e51388b5ab7a2bb5f0"
 lazy val mvpa4sBuild = {
   Seq("alder", "gale", "locus4s", "multivar", "resample4s", "neuroatlas4s", "neurosurf4s",
     "neuroim4s", "mesh4s", "image4s", "spatial4s", "reframe4s", "graph4s", "zarr4s", "ravel", "intaglio").foreach { provider =>
@@ -171,7 +171,7 @@ lazy val reframe4sResampleJS  = ProjectRef(reframe4sBuild, "reframe4s-resampleJS
 // neuroim4s-spaces owns the anatomical world identities (template, subject
 // scanner-RAS and tkRAS, declared and unresolved worlds) and their frames. It
 // pins the same spatial4s revision as image4s and reframe4s.
-lazy val neuroim4sRevision = "4f75c2bf141449d032f9fe3c558ef13a22a4d59f"
+lazy val neuroim4sRevision = "a086020f00d996c0a758fe13f59b4ae58760eb40"
 lazy val neuroim4sBuild = {
   Seq("spatial4s", "image4s", "gale", "ravel", "locus4s", "reframe4s", "graph4s", "intaglio").foreach { provider =>
     sys.props
@@ -204,7 +204,7 @@ lazy val neuroim4sViewJavafxJVM = ProjectRef(neuroim4sBuild, "viewJavafxJVM")
 // neuroatlas4s owns catalog/publication, optional volume/surface realizations,
 // loaders and mixed template route policy. ScalaFIM composes its public APIs.
 // Forward explicit overrides so each provider has one owner across the graph.
-lazy val neuroatlas4sRevision = "0256e98eb78d35523ce6dbd08fea4f19b76e1b68"
+lazy val neuroatlas4sRevision = "567c78e0e4e93f19d675159103c03009b7634c22"
 lazy val neuroatlas4sBuild = {
   Seq("locus4s", "neuroim4s", "neurosurf4s", "mesh4s", "zarr4s", "image4s", "spatial4s", "reframe4s", "gale", "ravel", "graph4s", "intaglio").foreach { provider =>
     sys.props.get(s"scalafim.$provider.build").foreach(System.setProperty(s"neuroatlas4s.$provider.build", _))
@@ -221,7 +221,7 @@ lazy val neuroatlas4sVolumeJS = ProjectRef(neuroatlas4sBuild, "volumeJS")
 lazy val neuroatlas4sVolumeIoJVM = ProjectRef(neuroatlas4sBuild, "volumeIoJVM")
 
 // Surface anatomy, formats, scenes and backends have one independent provider.
-lazy val neurosurf4sRevision = "4b23386bf750118b9c7c1220b6c592da9ba965e0"
+lazy val neurosurf4sRevision = "a8a1191a57af2bf60f8ded6b14210f5025f1887a"
 lazy val neurosurf4sBuild = {
   Seq("spatial4s", "locus4s", "mesh4s", "image4s", "graph4s", "zarr4s", "neuroim4s", "reframe4s", "gale", "ravel", "intaglio").foreach { provider =>
     sys.props.get(s"scalafim.$provider.build").foreach(System.setProperty(s"neurosurf4s.$provider.build", _))
