@@ -1,6 +1,6 @@
 package scalafim.fmri.group
 
-import scalafim.dataset.SubjectId
+import neuroim4s.spaces.SubjectId
 
 /** Compile-time marker for whether a group data cube carries per-subject
   * variances. Effects-only data can run OLS; variance-carrying data can also

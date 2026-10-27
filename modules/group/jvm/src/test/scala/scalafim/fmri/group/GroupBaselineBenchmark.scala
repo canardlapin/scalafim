@@ -2,7 +2,7 @@ package scalafim.fmri.group
 
 import com.sun.management.ThreadMXBean
 import gale.linalg.{DMat, Matrix}
-import scalafim.dataset.SubjectId
+import neuroim4s.spaces.SubjectId
 
 import java.lang.management.ManagementFactory
 
@@ -53,7 +53,7 @@ object GroupBaselineBenchmark:
     val design = value(GroupDesign.fromMatrix(designMatrix, Vector.tabulate(terms)(index => s"x$index")))
     val data = value(
       GroupData.withVariances(
-        Vector.tabulate(subjects)(index => SubjectId(s"s$index")),
+        Vector.tabulate(subjects)(index => SubjectId(s"s$index").toOption.get),
         GroupSpace.SampleAxis(samples),
         "effect",
         effects,

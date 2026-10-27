@@ -1,10 +1,10 @@
 package scalafim.fmri.group
 
-import scalafim.dataset.SubjectId
+import neuroim4s.spaces.SubjectId
 import scalafim.estimates.{DfRole, ScientificFact}
 
 class GroupUncertaintySuite extends munit.FunSuite:
-  private val subjects = Vector(SubjectId("s1"), SubjectId("s2"))
+  private val subjects = Vector(SubjectId("s1").toOption.get, SubjectId("s2").toOption.get)
   private val space = GroupSpace.SampleAxis(2)
   private val response = GroupResponse.unsafeWeighted(
     GroupTestMatrix.fromRows(Seq(Seq(1.0, 2.0), Seq(3.0, 4.0))),

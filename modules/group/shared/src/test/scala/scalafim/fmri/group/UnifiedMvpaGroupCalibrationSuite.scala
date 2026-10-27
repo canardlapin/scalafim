@@ -1,7 +1,7 @@
 package scalafim.fmri.group
 
 import gale.linalg.DMat
-import scalafim.dataset.SubjectId
+import neuroim4s.spaces.SubjectId
 import scalafim.fmri.group.fixtures.UnifiedMvpaGroupOracle
 
 /** Independent deterministic precursor to M5.04's simulation court.
@@ -22,7 +22,7 @@ class UnifiedMvpaGroupCalibrationSuite extends munit.FunSuite:
     fixture.expected.foreach: expected =>
       test(s"${fixture.id} ${expected.policy}: independent uncertainty and heterogeneity oracle"):
         val k = fixture.terms.size
-        val subjects = Vector.tabulate(fixture.n)(i => SubjectId(s"oracle-subject-$i"))
+        val subjects = Vector.tabulate(fixture.n)(i => SubjectId(s"oracle-subject-$i").toOption.get)
         val design = right(GroupDesign.fromMatrix(DMat.dense(fixture.n, k, fixture.design), fixture.terms))
         // Truth variances are retained in the fixture, never passed to the feasible fit.
         val data = right(GroupData.withVariances(subjects, GroupSpace.SampleAxis(1), "effect",

@@ -1,0 +1,190 @@
+{
+  "base": "47d643d5709c9d2fa877ca3e9d13489928b6de6b",
+  "logs": {
+    "focused": {
+      "path": "/private/tmp/scalafim-phase-d-focused-20261027.log",
+      "sha256": "3464c9efadba0ee60da401c8d6746d04a8f43dc51b773f06bc729f601d320104",
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-27T12:02:54.900311+00:00",
+        "finished_utc": "2026-10-27T12:06:22.539322+00:00",
+        "duration_seconds": 207.63799,
+        "command": [
+          "python3",
+          "tools/build/sbt-warm",
+          "datasetJVM/testOnly scalafim.dataset.SubjectIdSuite",
+          "datasetJS/testOnly scalafim.dataset.SubjectIdSuite",
+          "groupJVM/testOnly scalafim.fmri.group.SharedSubjectSuite",
+          "groupJS/testOnly scalafim.fmri.group.SharedSubjectSuite",
+          "mvpaGroupJVM/Test/compile",
+          "mvpaGroupJS/Test/compile"
+        ],
+        "cwd": "/private/tmp/scalafim-phase-d-20261027",
+        "log": "/private/tmp/scalafim-phase-d-focused-20261027.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 2400.0,
+        "log_bytes": 28856
+      },
+      "test_summary_rows": 4,
+      "reported_passes": 12,
+      "scala_source_warnings": []
+    },
+    "full-tests": {
+      "path": "/private/tmp/scalafim-phase-d-full-tests-20261027.log",
+      "sha256": "0e4a3ee9d3953b336c2a950feb2e45aba5bd763f7970bf34f191fcb47aec7147",
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-27T12:07:55.081574+00:00",
+        "finished_utc": "2026-10-27T12:08:41.199098+00:00",
+        "duration_seconds": 46.117097,
+        "command": [
+          "python3",
+          "tools/build/sbt-warm",
+          "datasetJVM/test",
+          "groupJVM/test",
+          "mvpaGroupJVM/test",
+          "pipelineJVM/test",
+          "mvpaSpatialJVM/test",
+          "datasetJS/test",
+          "groupJS/test",
+          "mvpaGroupJS/test",
+          "pipelineJS/test",
+          "mvpaSpatialJS/test"
+        ],
+        "cwd": "/private/tmp/scalafim-phase-d-20261027",
+        "log": "/private/tmp/scalafim-phase-d-full-tests-20261027.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 3600.0,
+        "log_bytes": 56648
+      },
+      "test_summary_rows": 10,
+      "reported_passes": 516,
+      "scala_source_warnings": []
+    },
+    "consumers": {
+      "path": "/private/tmp/scalafim-phase-d-consumers-20261027.log",
+      "sha256": "e687af1837a5bb9270cd8ce9dec721b3ca9c4a60916422d3a2f0465771f36684",
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-27T12:09:05.512875+00:00",
+        "finished_utc": "2026-10-27T12:12:50.337890+00:00",
+        "duration_seconds": 224.823937,
+        "command": [
+          "python3",
+          "tools/build/sbt-warm",
+          "fitJVM/test",
+          "fmriWorkflowJVM/test",
+          "datasetZarrJVM/test",
+          "workflowExamplesJVM/test",
+          "fitJS/test",
+          "fmriWorkflowJS/test",
+          "datasetZarrJS/test",
+          "workflowExamplesJS/test"
+        ],
+        "cwd": "/private/tmp/scalafim-phase-d-20261027",
+        "log": "/private/tmp/scalafim-phase-d-consumers-20261027.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 3600.0,
+        "log_bytes": 214677
+      },
+      "test_summary_rows": 8,
+      "reported_passes": 1871,
+      "scala_source_warnings": []
+    },
+    "final-compile": {
+      "path": "/private/tmp/scalafim-phase-d-final-compile-20261027.log",
+      "sha256": "0a40ea7df55b262e65523f1b97d99833ebb168e96aee260c0943105094fd37c9",
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-27T12:13:04.937165+00:00",
+        "finished_utc": "2026-10-27T12:17:12.246652+00:00",
+        "duration_seconds": 247.30833,
+        "command": [
+          "python3",
+          "tools/build/sbt-warm",
+          "scalafimCompileAll",
+          "examplesCompile",
+          "show groupJVM/Compile/fullClasspath",
+          "show groupJS/Compile/fullClasspath",
+          "show mvpaGroupJVM/Compile/fullClasspath",
+          "show mvpaGroupJS/Compile/fullClasspath",
+          "show fitJVM/Compile/fullClasspath",
+          "show fitJS/Compile/fullClasspath"
+        ],
+        "cwd": "/private/tmp/scalafim-phase-d-20261027",
+        "log": "/private/tmp/scalafim-phase-d-final-compile-20261027.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 2400.0,
+        "log_bytes": 66979
+      },
+      "test_summary_rows": 0,
+      "reported_passes": 0,
+      "scala_source_warnings": []
+    },
+    "final-owning": {
+      "path": "/private/tmp/scalafim-phase-d-final-owning-20261027.log",
+      "sha256": "d6d794d4556dc9054245cfa615498b3aec5125b0a52105b6a9852471ea362f1f",
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-27T12:20:34.785135+00:00",
+        "finished_utc": "2026-10-27T12:21:28.712777+00:00",
+        "duration_seconds": 53.927306,
+        "command": [
+          "python3",
+          "tools/build/sbt-warm",
+          "datasetJVM/test",
+          "groupJVM/test",
+          "datasetJS/test",
+          "groupJS/test"
+        ],
+        "cwd": "/private/tmp/scalafim-phase-d-20261027",
+        "log": "/private/tmp/scalafim-phase-d-final-owning-20261027.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 1800.0,
+        "log_bytes": 42983
+      },
+      "test_summary_rows": 4,
+      "reported_passes": 380,
+      "overlaps_previous": true
+    }
+  },
+  "owning_and_consumer_passes": 2387,
+  "focused_passes_overlap": 12,
+  "boundary": {
+    "files": 559,
+    "compile_closures": 24,
+    "errors": 0
+  },
+  "independent_review": "qualified approval; no consequential type/API findings; builds separately checked; no binary compatibility claim",
+  "publication": "local only; no hosted CI or push for this phase",
+  "inventory": {
+    "supported_targets": 85,
+    "bounded_batches": 37,
+    "scenario_entries": 38
+  },
+  "full_gates_failures": 0,
+  "full_gates_skips": 0,
+  "sbt_server": "stopped after gates",
+  "formatting": {
+    "initial_staged_check": "two new test files had extra blank lines at EOF",
+    "repair": "remove EOF-only blank lines",
+    "validation": "both affected owning modules rerun JVM/JS:380passes,0failures/skips; production code unchanged"
+  },
+  "gate_source_manifest": "gated-source-manifest.json",
+  "final_source_manifest": "source-manifest.json"
+}

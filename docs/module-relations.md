@@ -133,7 +133,7 @@ adjacent checkout is selected automatically during extraction; an explicit
 | `mvpa-fmri` | Typed dataset/response adapters and shared run-local composition of fit-owned trial readouts with MVPA pattern operators, checked common feature axes, trial/run metadata, fold restriction, and local task/result collection. | `fit`, `dataset`, `mvpa4s`, `mvpa4s-predictive`; standalone Multivar and Alder | QR/GLM kernels, classifier numerics, a second feature-set abstraction, workflow scheduling, or platform IO. |
 | `connectivity` | Shared connectivity algebra and portable kernels: ordered node axes with scientific provenance, graph4s-projected topology, locus node/edge spaces and masks, parcel time series, explicit vectorization orders, static/dynamic containers, estimator plans, ETS/event-weighted correlation, partial correlation, connectivity-set inference, dynamic stacks, diagnostics, and workflow receipts. | standalone graph4s, standalone locus4s core; Gale on each platform | Dataset backends, atlas/BIDS adapters, plotting, JVM IO, multivar execution bridges, TVGL/SRLC/phase/HMM internals, native optimizer backends, or scheduler/runtime execution. |
 | `mvpa-spatial` | Functional threshold policy and fMRI spatial scenario checks; generic locus/mesh/atlas adapters live in optional mvpa4s artifacts. | `mvpa4s-core`, `threshold`; locus, surface and predictive providers in Test scope | Classifier algorithms, atlas loading, or a second searchlight/window model. |
-| `group` | Second-level/group GLM, meta-analysis, group contrasts, FDR over subjects-by-samples maps. | standalone `neuroim4s-core`, `dataset`, `design`, `estimates`; standalone Gale | First-level model fitting or thresholding internals. |
+| `group` | Second-level/group GLM, meta-analysis, group contrasts, FDR over subjects-by-samples maps. | standalone `neuroim4s-core`, `design`, `estimates`; standalone Gale | First-level model fitting or thresholding internals. |
 | `mvpa-group` | Source-bound subject-coordinate and full joint uncertainty bridges into the existing group model; eager inputs retain covariance and df provenance. | `mvpa4s`, `group` (including adopted estimates contracts) | A second group engine, invented uncertainty, generic covariance storage disguised as anatomical geometry, or unqualified joint inference. |
 | `fmri-workflow` | Serializable study specifications, header-derived catalogs, deterministic first-level/group jobs, structural preflight, result references, estimate production, and the eager fit-to-group adapter; generic pipeline lowering is a future orchestration slice. | `fit`, `group`; standalone bids4s | Numeric kernels, concrete file readers/writers, scheduler APIs, open resources, matrices, or captured execution closures. |
 | `archive-zarr` | NeuroArchive Zarr 0.1 canonical-BOLD refinement and normalized `neuroarchive-zarr@1` metadata with a typed canonical-response payload role, measured layout profiles, scientific manifests, immutable publication, full-object validation, and cross-platform typed async execution with exact ordered object/range/byte observations. | standalone zarr4s, `archive`; Cats Core and Cats Effect externally | Response interpretation, dataset selection APIs, NIfTI/BIDS IO, catalogs, generic Zarr mechanics, hidden codec runtimes, or nondeterministic receipt aggregation. |
@@ -464,3 +464,18 @@ normalization and the nearest fallback after geometric admission. Graph-cost
 geodesics use the owner-preserving `mesh4s-graph4s` adapter over graph4s distances;
 neurosurf4s owns anatomical validation and cache policy. No surface or anatomical
 routing implementation remains in ScalaFIM.
+
+## Phase D boundary decisions (2026-10-27)
+
+`group` and `mvpa-group` consume `neuroim4s.spaces.SubjectId`; dataset's public
+subject constructors delegate to that same type while retaining dataset errors.
+The grammar is identical (String.trim followed by nonempty admission), including
+Unicode and composite namespace/subject labels. The group runtime no longer
+depends on `dataset`.
+
+`pipeline` remains optional: its real fit-workflow contracts exercise typed graph
+execution through a Test-only fit dependency. `mvpa-spatial` remains the reduced
+MVPA/threshold integration module, with imaging adapters in Test scope. These
+boundaries keep graph execution out of fitting and MVPA out of generic
+thresholding. `locus-data` and `DomainFactory` were already retired in the U6
+provider cutover; current callers use native locus4s registry contracts.

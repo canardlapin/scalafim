@@ -5,6 +5,12 @@ typed group designs, responses, weighting, contrasts, statistics, multiple
 comparison control, and result values. Plotting and concrete renderers remain
 application-boundary concerns.
 
+Subject axes use `neuroim4s.spaces.SubjectId` directly: labels are trimmed and
+must be nonempty. `scalafim.dataset.SubjectId` remains a source-compatible
+constructor and type alias for dataset callers; the group runtime has no
+`dataset` dependency. Distinct subjects and their declared order remain explicit
+in `SubjectAxis`.
+
 `EstimateGroup.prepare` compiles pinned estimate inputs into bounded group reads.
 It joins catalog IDs, requires one row per identified participant and an explicit
 `GroupEstimateAdmission` implementation for scientific and spatial admission.
@@ -22,7 +28,7 @@ run-combination, pooling, and geometry evidence remain attached to the numerical
 cube. These are provenance contracts, not claims that the supplied uncertainty
 is calibrated for a downstream inferential method.
 The group runtime does not depend on `fit`. The older eager `TContrastResult`
-convenience is now `scalafim.fmri.fit.estimates.FitGroupAdapter` in `fit-estimates`.
+convenience is now `scalafim.fmri.fit.estimates.FitGroupAdapter` in `fmri-workflow`.
 
 A group result can be projected into the shared renderer-neutral plotting DSL:
 

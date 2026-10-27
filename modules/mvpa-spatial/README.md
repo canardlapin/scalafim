@@ -23,7 +23,12 @@ bridge preserves the existing refusal of unqualified strong-FWER/FDR admission.
 The module's scenario tests compose native providers and frozen PyMVPA fixtures;
 surface and locus dependencies are test-scoped.
 
-The executable [atlas workflow](../../examples/workflows-jvm/src/main/scala/scalafim/examples/workflows/AtlasMvpaWorkflow.scala)
+Phase D retains this reduced integration boundary: combining MVPA evidence
+with threshold policy here keeps MVPA out of the general `threshold` module and
+keeps thresholding out of portable MVPA core. No generic spatial adapter or
+second spatial authority remains here. Candidate admission refusals stay intact.
+
+The executable [atlas workflow](../../examples/workflows/shared/src/main/scala/scalafim/examples/workflows/AtlasMvpaWorkflow.scala)
 uses the public atlas adapter and exact realized parcel keys, and is tested on both platforms.
 
 ```sh

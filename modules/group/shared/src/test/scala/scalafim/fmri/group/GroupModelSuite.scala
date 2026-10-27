@@ -1,6 +1,6 @@
 package scalafim.fmri.group
 
-import scalafim.dataset.SubjectId
+import neuroim4s.spaces.SubjectId
 import scalafim.fmri.design.data.{Column, DataTable}
 import gale.linalg.{DMat, Matrix}
 
@@ -10,7 +10,7 @@ class GroupModelSuite extends munit.FunSuite:
     e.fold(err => fail(err.message), identity)
 
   private def subjects(n: Int): Vector[SubjectId] =
-    (1 to n).toVector.map(i => SubjectId(s"s$i"))
+    (1 to n).toVector.map(i => SubjectId(s"s$i").toOption.get)
 
   private def column(values: Double*): DMat =
     GroupTestMatrix.fromRows(values.toVector.map(v => Vector(v)))

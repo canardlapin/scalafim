@@ -1,0 +1,17 @@
+{
+  "reviewer": "/root/typed_contract_design",
+  "scope": "working-tree delta against47d643d5709c9d2fa877ca3e9d13489928b6de6b",
+  "source_manifest_sha256": "a59403f2756dd80ad9b3313844e9646b8582b7fdbf3692f6355ea1d4325f64ff",
+  "verdict": "Qualified approval; no consequential type/API findings",
+  "evidence": [
+    "Pinned neuroim4s grammar checked at4f75c2bf141449d032f9fe3c558ef13a22a4d59f",
+    "dataset make/apply/value and exact errors retained",
+    "EstimateGroup joined key validated by ParticipantId",
+    "MVPA bridge invalid-label diagnostic retained",
+    "No dataset imports remain in group source",
+    "Numerical assertions/fixtures unchanged"
+  ],
+  "limits": "Reviewer ran no builds; owning/consumer/compile results separately verified. Binary compatibility not claimed.",
+  "reviewed_source_manifest": "gated-source-manifest.json",
+  "post_review_changes": "Two new test files normalized EOF blank lines only; affected full owning suites rerun380passes. No production or assertion changes."
+}

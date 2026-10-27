@@ -21,16 +21,18 @@ object DatasetId:
   extension (id: DatasetId)
     def value: String = id
 
-opaque type SubjectId = String
+/** Shared participant identity; the dataset ingress retains its error vocabulary. */
+type SubjectId = neuroim4s.spaces.SubjectId
 
 object SubjectId:
+  export neuroim4s.spaces.SubjectId.value
+
   def make(value: String): Either[DatasetError, SubjectId] =
-    checkedIdEither(value, "SubjectId")
+    neuroim4s.spaces.SubjectId(value)
+      .left.map(_ => DatasetError.InvalidLabel("SubjectId", value, "must be non-empty"))
 
-  def apply(value: String): SubjectId = checkedId(value, "SubjectId")
-
-  extension (id: SubjectId)
-    def value: String = id
+  def apply(value: String): SubjectId =
+    make(value).fold(_ => throw new IllegalArgumentException("requirement failed: SubjectId must be non-empty"), identity)
 
 opaque type SessionId = String
 

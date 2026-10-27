@@ -1011,7 +1011,7 @@ lazy val group =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/group"))
-    .dependsOn(dataset, design, estimates)
+    .dependsOn(design, estimates)
     .settings(commonSettings)
     .settings(
       name := "scalafim-fmri-group"

@@ -1,7 +1,7 @@
 package scalafim.fmri.group
 
 import gale.linalg.Matrix
-import scalafim.dataset.SubjectId
+import neuroim4s.spaces.SubjectId
 import scalafim.estimates.*
 import scala.util.control.NonFatal
 
@@ -139,7 +139,7 @@ final class EstimateGroup private (
                           if failure.isEmpty then
                             val pooling = unit.products.find(_.id == input.effect).map(_.pooling)
                             uncertaintySources += GroupUncertaintySource(
-                              SubjectId(s"${participants(row).dataset.value}/${participants(row).label}"),
+                              participantSubject(participants(row)),
                               estimands(target).value, samples, Some(uncertainty.product), resolved, fit, pooling)
                   target += 1
                 failure.toLeft(())
@@ -155,7 +155,7 @@ final class EstimateGroup private (
               else GroupResponse.fromEffects(effects(index).result())
             response.left.map(error => EstimateError.Invalid(error.message)).map(value => accumulated :+ (estimands(index).value -> value))
         responses.flatMap: values =>
-          val subjects = participants.map(p => SubjectId(s"${p.dataset.value}/${p.label}"))
+          val subjects = participants.map(participantSubject)
           val uncertainty = if weighted then
             GroupUncertaintyReceipt.make(subjects, estimands.map(_.value), samples, uncertaintySources.result(), geometry)
               .left.map(error => EstimateError.Invalid(error.message)).map(Some(_))
@@ -164,6 +164,11 @@ final class EstimateGroup private (
             GroupSpace.VoxelAxis(units.head.domain.space, samples), values, receipt)
             .left.map(error => EstimateError.Invalid(error.message)))
               .map(data => new GroupEstimateBlock(data, inputs, estimands, samples))
+
+  // ParticipantId already validates namespace and label; preserve the existing joined key.
+  private def participantSubject(participant: ParticipantId): SubjectId =
+    SubjectId(s"${participant.dataset.value}/${participant.label}")
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
 
   private def protect[A](body: => Either[EstimateError, A]): Either[EstimateError, A] =
     try body

@@ -5,7 +5,7 @@ import mvpa4s.analysis.*
 import gale.backend.Backend.given
 import gale.linalg.DMat
 import multivar.core.{SpaceRole, ValueId, ValueIdentity}
-import scalafim.dataset.SubjectId
+import neuroim4s.spaces.SubjectId
 import scalafim.estimates.{DfRole, PoolingScope, ScientificFact}
 import scalafim.fmri.group.*
 import mvpa4s.*

@@ -1,7 +1,7 @@
 package scalafim.fmri.group
 
 import gale.linalg.{DMat, Matrix}
-import scalafim.dataset.SubjectId
+import neuroim4s.spaces.SubjectId
 import scalafim.fmri.group.fixtures.GroupMetaforFixtures
 import scalafim.fmri.group.fixtures.GroupMetaforFixtures.{Case, Expected}
 
@@ -36,7 +36,7 @@ class GroupMetaforParitySuite extends munit.FunSuite:
     val designMatrix = matrix(fixture.subjects, fixture.terms.length, fixture.designRowMajor)
     val effects = matrix(fixture.subjects, 1, fixture.effects)
     val variances = matrix(fixture.subjects, 1, fixture.variances)
-    val subjects = Vector.tabulate(fixture.subjects)(index => SubjectId(s"subject-$index"))
+    val subjects = Vector.tabulate(fixture.subjects)(index => SubjectId(s"subject-$index").toOption.get)
     val result = for
       design <- GroupDesign.fromMatrix(designMatrix, fixture.terms)
       data <- GroupData.withVariances(

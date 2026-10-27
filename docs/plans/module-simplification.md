@@ -1,7 +1,8 @@
 # ScalaFIM module simplification
 
 Current status (2026-10-26): the authorized MVPA integration slice and remaining
-A, C and E work are complete locally. See the completion checkpoint and
+A, C and E work landed in PR #69. The remaining Phase D implementation and
+boundary decisions are recorded below. See the completion checkpoint and
 [verification receipts](../verification/module-simplification-20261026/README.md).
 
 Status: accepted with decisions (2026-10-19). Companion to `ecosystem-unification.md`, which
@@ -236,3 +237,39 @@ retired stale templates. Phase C is recorded in `1ba80c172`. Phase E is complete
 fit preparation and contrast composition, unchanged literal identities, full
 JVM/Scala.js owning and consumer checks, and final repository/examples compile.
 The requested D slice plus A, C and E are complete locally; publication is separate. See [the stage receipts](../verification/module-simplification-20261026/README.md).
+
+### Remaining Phase D — 2026-10-27
+
+Base: merged main `47d643d5709c9d2fa877ca3e9d13489928b6de6b` (PR #69).
+The MVPA merge/delete slice and A/C/E are landed. The current-source audit found
+that `locus-data` and `DomainFactory` were already removed in `0f3a57624` during
+U6; connectivity, latent, threshold and dataset use native locus4s registry
+contracts. No duplicate replacement is needed.
+
+The shared subject grammar matches exactly: dataset and pinned neuroim4s trim
+String whitespace and reject an empty result. Dataset SubjectId now aliases
+`neuroim4s.spaces.SubjectId` while preserving its constructors, DatasetError
+values, throwing-constructor message and value accessor. Group and mvpa-group
+use the provider type directly; the `group -> dataset` build edge is removed.
+Participant namespace/label keys, ordering, duplicate admission, numerical
+fixtures and persisted identities remain unchanged.
+
+Decision: retain `pipeline`. Its real first-level fit workflow contracts use
+its graph/execution API, and a separate optional module keeps pipeline execution off the
+production fit path. The obsolete MVPA interpreter was already deleted.
+
+Decision: retain the already-reduced `mvpa-spatial`. Its only production policy
+joins sealed MVPA family evidence to thresholding, keeping both lower owners
+independent. Imaging/locus/predictive adapters are test-scoped; generic adapters
+already live upstream. Existing unqualified strong-FWER/FDR refusals remain.
+
+The PHRF study remains in ScalaFIM and is revisited only at study completion,
+as separately tracked. Evidence, exact commands and qualification limits:
+[Phase D receipt](../verification/module-simplification-phase-d-20261027/README.md).
+
+Local Phase D completion: 2,387 full JVM/Scala.js owning/consumer passes, zero
+failures/skips; all-module and examples compilation passed; six resolved
+classpath witnesses confirm the removed dependency and Test-only pipeline
+boundary. Independent type/API review approved. No new publication, hosted CI,
+binary-compatibility, native or scientific acceptance is inferred. See the
+Phase D receipt for exact source hashes and commands.
