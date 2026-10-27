@@ -1,6 +1,6 @@
 package scalafim.fmri.group
 
-import scalafim.dataset.SubjectId
+import neuroim4s.spaces.SubjectId
 import gale.linalg.{DMat, Matrix}
 
 class GroupGlmSuite extends munit.FunSuite:
@@ -9,7 +9,7 @@ class GroupGlmSuite extends munit.FunSuite:
     e.fold(err => fail(err.message), identity)
 
   private def subjects(n: Int): Vector[SubjectId] =
-    (1 to n).toVector.map(i => SubjectId(s"s$i"))
+    (1 to n).toVector.map(i => SubjectId(s"s$i").toOption.get)
 
   test("one-sample OLS reproduces the one-sample t-test") {
     // t.test(c(1,2,3,4,5)): mean 3, se sqrt(0.5), t 4.2426..., df 4.

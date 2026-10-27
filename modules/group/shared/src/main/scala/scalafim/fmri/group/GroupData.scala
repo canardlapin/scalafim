@@ -1,6 +1,6 @@
 package scalafim.fmri.group
 
-import scalafim.dataset.SubjectId
+import neuroim4s.spaces.SubjectId
 import gale.linalg.DMat
 
 import scala.collection.immutable.VectorMap

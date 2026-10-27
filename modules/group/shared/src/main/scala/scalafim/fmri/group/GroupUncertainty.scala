@@ -1,6 +1,6 @@
 package scalafim.fmri.group
 
-import scalafim.dataset.SubjectId
+import neuroim4s.spaces.SubjectId
 import scalafim.estimates.{DfRole, FileReference, PoolingScope, ProductId, ScientificFact}
 
 enum GroupDfValues:

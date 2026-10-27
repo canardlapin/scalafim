@@ -5,7 +5,7 @@ import gale.linalg.DMat
 import gale.spectral.{Eigen, EigenSelection, EigenVectors}
 import gale.spectral.SpectralBackend.given
 import multivar.core.{SemanticSpace, ValueId, ValueIdentity}
-import scalafim.dataset.SubjectId
+import neuroim4s.spaces.SubjectId
 import scalafim.estimates.{DfRole, PoolingScope}
 import scalafim.fmri.group.*
 import mvpa4s.{AxisDescriptor, AxisDigest, AxisRef, Column}
@@ -299,8 +299,10 @@ object SubjectGroupBridge:
         else Left(SubjectGroupError.Binding("materialized coefficient/covariance dimensions"))
       _ <- if rows.forall(row => sameMatrix(row.estimates, row.source.coordinates.estimates) && sameMatrix(row.covariance, row.source.coordinates.covariance)) then Right(())
         else Left(SubjectGroupError.Binding("materialized values differ from their actual bound covariance/effect source"))
+      // Retain the bridge's existing invalid-label diagnostic at this ingress.
       subjectIds <- value.subjects.foldLeft[Either[SubjectGroupError, Vector[SubjectId]]](Right(Vector.empty)):
-        (previous, key) => previous.flatMap(ids => SubjectId.make(key.value).left.map(error => SubjectGroupError.Invalid(error.toString)).map(ids :+ _))
+        (previous, key) => previous.flatMap(ids => SubjectId(key.value).left.map(_ =>
+          SubjectGroupError.Invalid(s"InvalidLabel(SubjectId,${key.value},must be non-empty)")).map(ids :+ _))
       taskKeys = rows.head.source.coordinates.kind match
         case SubjectComparisonKind.SharedComponentCoefficients => value.shared.discovery.targetProjection.output.toRecord.stableKeys
         case SubjectComparisonKind.TaskLinkedForwardOperator => value.shared.discovery.targetProjection.input.toRecord.stableKeys

@@ -62,6 +62,12 @@ Execution is interpreter-based:
   happen only after a stage completes, and receipts are emitted in deterministic
   graph order.
 
+Phase D retains this optional boundary. The executable `PipelineFitWorkflowSuite`
+and `PipelineFirstLevelWorkflowScenarioSuite` compose real fit steps through its
+public graph/run contracts. Fit depends on it only in Test scope, keeping pipeline
+execution machinery off the fitting production path. The separate unconsumed
+`mvpa-pipeline` bridge has been retired.
+
 Run it directly with:
 
 ```sh

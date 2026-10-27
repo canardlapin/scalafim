@@ -1,0 +1,20 @@
+{
+  "tests_with_only_shared_import_and_checked_constructor_unwrap": [
+    "modules/group/jvm/src/test/scala/scalafim/fmri/group/GroupBaselineBenchmark.scala",
+    "modules/group/shared/src/test/scala/scalafim/fmri/group/GroupGlmSuite.scala",
+    "modules/group/shared/src/test/scala/scalafim/fmri/group/GroupHardeningSuite.scala",
+    "modules/group/shared/src/test/scala/scalafim/fmri/group/GroupInferenceSuite.scala",
+    "modules/group/shared/src/test/scala/scalafim/fmri/group/GroupMetaforParitySuite.scala",
+    "modules/group/shared/src/test/scala/scalafim/fmri/group/GroupModelSuite.scala",
+    "modules/group/shared/src/test/scala/scalafim/fmri/group/GroupNumericalBaselineSuite.scala",
+    "modules/group/shared/src/test/scala/scalafim/fmri/group/GroupUncertaintySuite.scala",
+    "modules/group/shared/src/test/scala/scalafim/fmri/group/MetaAnalysisSuite.scala",
+    "modules/group/shared/src/test/scala/scalafim/fmri/group/UnifiedMvpaGroupCalibrationSuite.scala",
+    "modules/group/shared/src/test/scala/scalafim/fmri/group/scenarios/GroupOneSampleScenarioSuite.scala",
+    "modules/group/shared/src/test/scala/scalafim/fmri/group/scenarios/GroupTwoSampleScenarioSuite.scala",
+    "modules/mvpa-group/shared/src/test/scala/scalafim/fmri/mvpa/group/SubjectGroupBridgeSuite.scala",
+    "modules/mvpa-group/shared/src/test/scala/scalafim/fmri/mvpa/group/SubjectGroupScenarioFixture.scala",
+    "modules/mvpa-group/shared/src/test/scala/scalafim/fmri/mvpa/group/SubjectGroupSummarySuite.scala"
+  ],
+  "assertions_and_numeric_inputs_unchanged": true
+}

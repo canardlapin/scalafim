@@ -1,7 +1,7 @@
 package scalafim.fmri.group
 
 import gale.linalg.{DMat, Matrix}
-import scalafim.dataset.SubjectId
+import neuroim4s.spaces.SubjectId
 
 class GroupNumericalBaselineSuite extends munit.FunSuite:
   private def value[A](result: Either[GroupError, A]): A =
@@ -25,7 +25,7 @@ class GroupNumericalBaselineSuite extends munit.FunSuite:
       variances: Vector[Vector[Double]],
       weighting: GroupWeighting
   ): Either[GroupError, GroupFit] =
-    val subjects = Vector.tabulate(designRows.length)(index => SubjectId(s"s$index"))
+    val subjects = Vector.tabulate(designRows.length)(index => SubjectId(s"s$index").toOption.get)
     for
       design <- GroupDesign.fromMatrix(matrix(designRows), termNames)
       data <- GroupData.withVariances(

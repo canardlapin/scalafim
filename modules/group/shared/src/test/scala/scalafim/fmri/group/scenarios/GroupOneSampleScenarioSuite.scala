@@ -1,6 +1,6 @@
 package scalafim.fmri.group.scenarios
 
-import scalafim.dataset.SubjectId
+import neuroim4s.spaces.SubjectId
 import scalafim.fmri.group.{GroupData, GroupDesign, GroupEngine, GroupError, GroupModel, GroupSpace, GroupStatistic}
 import scalafim.fmri.group.GroupTestMatrix
 import gale.linalg.{DMat, Matrix}
@@ -65,7 +65,7 @@ class GroupOneSampleScenarioSuite extends munit.FunSuite:
     e.fold(err => fail(err.message), identity)
 
   private def subjects(n: Int): Vector[SubjectId] =
-    (1 to n).toVector.map(i => SubjectId(s"s$i"))
+    (1 to n).toVector.map(i => SubjectId(s"s$i").toOption.get)
 
   private def columns(rows: Vector[Vector[Double]]): Vector[Vector[Double]] =
     val nCols = rows.head.length
